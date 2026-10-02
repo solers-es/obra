@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brigada — prototipo funcional de obra</title>
+<meta name="description" content="Prototipo funcional de Brigada: presupuestos, certificaciones, facturas, costes y margen en vivo. Calcula de verdad y guarda en el navegador. Sin base de datos.">
+<style>
+  :root{
+    --naranja:#f26419; --naranja2:#ff7a33;
+    --grafito:#1c2127; --grafito2:#232a32; --grafito3:#2c343e;
+    --linea:#333c47; --tx:#eef2f6; --tx2:#a9b4c0; --tx3:#76828f;
+    --verde:#2ecc71; --verde2:#1f9d57; --rojo:#ef4b55; --ambar:#f5b63d; --azul:#4f9dff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:#0c0f12;color:var(--tx);font:16px/1.5 -apple-system,"Segoe UI",system-ui,Roboto,sans-serif;}
+  input,select,button,textarea{font-family:inherit}
+  .telefono{max-width:460px;margin:0 auto;min-height:100vh;background:var(--grafito);position:relative;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(0,0,0,.6);}
+  @media(min-width:490px){
+    body{padding:18px 0;background:#070809}
+    .telefono{min-height:calc(100vh - 36px);border-radius:26px;overflow:hidden;border:1px solid #000}
+  }
+  /* barra superior */
+  .top{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#20262e,#1a1f25);border-bottom:1px solid var(--linea);padding:14px 16px 12px;}
+  .marca{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;background:linear-gradient(145deg,var(--naranja2),var(--naranja));display:flex;align-items:center;justify-content:center;font-weight:900;color:#1a1005;font-size:19px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+  .marca h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px}
+  .marca .prov{display:block;font-size:10px;color:var(--tx3);font-weight:600;margin-top:1px}
+  .marca .emp{margin-left:auto;text-align:right;font-size:11px;color:var(--tx2);line-height:1.3}
+  .marca .emp b{color:var(--tx);font-size:12px}
+  /* contenido */
+  main{flex:1;overflow:hidden}
+  .pantalla{display:none;padding:16px 16px 100px;animation:fade .22s ease}
+  .pantalla.activa{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .tit{font-size:21px;font-weight:800;margin:4px 0 2px;letter-spacing:-.2px}
+  .sub{color:var(--tx2);font-size:13px;margin:0 0 16px}
+  .volver{background:none;border:none;color:var(--tx2);font:inherit;font-size:13px;font-weight:600;padding:0;margin:0 0 6px;cursor:pointer;display:flex;align-items:center;gap:5px}
+  /* tarjetas */
+  .card{background:var(--grafito2);border:1px solid var(--linea);border-radius:14px;padding:15px;margin:0 0 12px}
+  .card.clic{cursor:pointer;transition:.15s}
+  .card.clic:active{transform:scale(.985);border-color:var(--naranja)}
+  .obra-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+  .obra-h .nom{font-weight:800;font-size:16px;line-height:1.25}
+  .obra-h .cli{color:var(--tx2);font-size:12px;margin-top:2px}
+  .estado{margin-left:auto;flex:0 0 auto;font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+  .estado.curso{background:rgba(79,157,255,.16);color:var(--azul);border:1px solid rgba(79,157,255,.4)}
+  .estado.cert{background:rgba(46,204,113,.15);color:var(--verde);border:1px solid rgba(46,204,113,.4)}
+  /* margen en vivo */
+  .margen{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;padding-top:12px;border-top:1px solid var(--linea)}
+  .margen .et{font-size:10.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+  .margen .nu{font-size:15px;font-weight:800;margin-top:2px}
+  .pct{text-align:right}
+  .pct .big{font-size:24px;font-weight:900;line-height:1}
+  .pct .lb{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+  .ok{color:var(--verde)} .mal{color:var(--rojo)} .warn{color:var(--ambar)}
+  .barra{height:7px;border-radius:5px;background:var(--grafito3);overflow:hidden;margin-top:10px}
+  .barra > span{display:block;height:100%;border-radius:5px}
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:0 0 16px}
+  .kpi{background:var(--grafito2);border:1px solid var(--linea);border-radius:12px;padding:11px 10px;text-align:center}
+  .kpi .n{font-size:18px;font-weight:900}
+  .kpi .l{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.3px;font-weight:700;margin-top:2px}
+  /* sub-tabs obra */
+  .obratabs{display:flex;gap:6px;background:var(--grafito2);border:1px solid var(--linea);border-radius:12px;padding:5px;margin:0 0 15px;overflow-x:auto}
+  .obratabs button{flex:1;min-width:84px;border:none;background:none;color:var(--tx2);font:inherit;font-weight:700;font-size:12.5px;padding:9px 6px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .obratabs button.on{background:var(--naranja);color:#1a1005}
+  .obrasub{display:none}
+  .obrasub.on{display:block}
+  /* presupuesto capitulos */
+  .cap{background:var(--grafito2);border:1px solid var(--linea);border-radius:13px;margin:0 0 11px;overflow:hidden}
+  .cap-h{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
+  .cap-h .cnom{font-weight:800;font-size:14px}
+  .cap-h .ctot{margin-left:auto;font-weight:800;font-size:14px}
+  .cap-h .chev{color:var(--tx3);transition:.2s;font-size:12px}
+  .cap.abierto .chev{transform:rotate(90deg)}
+  .cap-body{display:none;border-top:1px solid var(--linea);background:var(--grafito)}
+  .cap.abierto .cap-body{display:block}
+  .partida{padding:11px 14px;border-bottom:1px solid var(--linea);font-size:13px}
+  .partida:last-child{border-bottom:none}
+  .partida .pn{font-weight:600;margin-bottom:7px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .partida .pt{font-weight:800;text-align:right;color:var(--naranja2);white-space:nowrap}
+  .pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld label{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.3px;font-weight:700}
+  .inp{background:var(--grafito3);border:1px solid var(--linea);border-radius:8px;color:var(--tx);padding:8px 9px;font-size:13px;width:100%}
+  .inp:focus{outline:none;border-color:var(--naranja)}
+  .borrar{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:12px;font-weight:700;padding:2px 4px}
+  .borrar:active{color:var(--rojo)}
+  .total-linea{display:flex;align-items:center;padding:14px;background:var(--grafito2);border:1px solid var(--naranja);border-radius:13px;margin-top:4px}
+  .total-linea .l{font-weight:700;color:var(--tx2);font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+  .total-linea .v{margin-left:auto;font-weight:900;font-size:20px;color:var(--naranja2)}
+  /* botones */
+  .btn{width:100%;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:15px;padding:15px;border-radius:13px;color:#1a1005;background:linear-gradient(135deg,var(--naranja2),var(--naranja));box-shadow:0 4px 14px rgba(242,100,25,.3)}
+  .btn:active{transform:translateY(1px)}
+  .btn.sec{background:var(--grafito3);color:var(--tx);box-shadow:none;border:1px solid var(--linea)}
+  .btn.verde{background:linear-gradient(135deg,#2fd673,var(--verde2));color:#07210f;box-shadow:0 4px 14px rgba(46,204,113,.3)}
+  .btn.peque{padding:11px;font-size:13px}
+  .btn.mini{width:auto;padding:8px 13px;font-size:12.5px;border-radius:10px}
+  .fila-btn{display:flex;gap:9px;margin:0 0 12px}
+  /* certificaciones */
+  .cert-part{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea)}
+  .cert-part:last-child{border-bottom:none}
+  .cert-part .cn{font-size:13px;flex:1;min-width:0}
+  .cert-part .cn small{display:block;color:var(--tx3);font-size:11px}
+  .cert-part .cin{width:62px}
+  .cert-part .cim{width:78px;text-align:right;font-weight:800;font-size:12.5px}
+  .mini{width:100%;height:6px;background:var(--grafito3);border-radius:4px;overflow:hidden;margin-top:5px}
+  .mini>span{display:block;height:100%;background:var(--naranja);border-radius:4px}
+  .cert-hist{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--linea);font-size:13px}
+  .cert-hist:last-child{border-bottom:none}
+  .cert-hist .d{flex:1}
+  .cert-hist .d small{display:block;color:var(--tx3);font-size:11px}
+  .cert-hist .m{font-weight:800}
+  .pill{font-size:10px;font-weight:800;padding:3px 8px;border-radius:12px;background:rgba(245,182,61,.15);color:var(--ambar);border:1px solid rgba(245,182,61,.4)}
+  .pill.fact{background:rgba(46,204,113,.15);color:var(--verde);border-color:rgba(46,204,113,.4)}
+  /* costes */
+  .coste-blk{margin:0 0 14px}
+  .coste-blk h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 8px;font-weight:800}
+  .lin{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--linea);font-size:13px}
+  .lin:last-child{border-bottom:none}
+  .lin .d{flex:1;min-width:0}
+  .lin .d small{display:block;color:var(--tx3);font-size:11px;margin-top:1px}
+  .lin .m{font-weight:800;white-space:nowrap}
+  .resumen-margen{border-radius:14px;padding:16px;margin-top:4px;border:1px solid}
+  .resumen-margen.pos{background:linear-gradient(135deg,rgba(46,204,113,.12),rgba(31,157,87,.05));border-color:rgba(46,204,113,.4)}
+  .resumen-margen.neg{background:linear-gradient(135deg,rgba(239,75,85,.12),rgba(239,75,85,.04));border-color:rgba(239,75,85,.4)}
+  .resumen-margen .fila{display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0}
+  .resumen-margen .fila.big{border-top:1px solid var(--linea);margin-top:6px;padding-top:12px}
+  .resumen-margen .fila.big .v{font-size:22px;font-weight:900}
+  /* factura */
+  .factura-doc{background:var(--grafito);border:1px solid var(--linea);border-radius:11px;padding:14px;margin:10px 0;font-size:13px}
+  .factura-doc .r{display:flex;justify-content:space-between;padding:3px 0}
+  .factura-doc .r b{color:#fff}
+  .factura-doc .r.tot{border-top:1px solid var(--linea);margin-top:5px;padding-top:9px;font-size:15px}
+  .sellos{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .sello{font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;background:rgba(46,204,113,.14);color:var(--verde);border:1px solid rgba(46,204,113,.4)}
+  /* formularios */
+  .form-grp{margin:0 0 11px}
+  .form-grp label{display:block;font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:5px}
+  .vacio{text-align:center;color:var(--tx3);font-size:13px;padding:24px 10px;border:1.5px dashed var(--linea);border-radius:13px;margin:0 0 12px}
+  /* bottom nav */
+  nav.tabs{position:sticky;bottom:0;z-index:40;display:flex;background:rgba(26,31,37,.96);backdrop-filter:blur(10px);border-top:1px solid var(--linea);padding:7px 4px 9px}
+  nav.tabs button{flex:1;border:none;background:none;color:var(--tx3);font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;font-size:10px;font-weight:700}
+  nav.tabs button .ic{font-size:21px;line-height:1}
+  nav.tabs button.on{color:var(--naranja2)}
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+  .modal-bg.on{display:flex;animation:fade .2s}
+  .modal{background:var(--grafito2);border:1px solid var(--linea);border-radius:18px;padding:22px 20px;max-width:380px;width:100%;max-height:88vh;overflow-y:auto}
+  .modal h3{margin:0 0 4px;font-size:18px;font-weight:800;text-align:center}
+  .modal .marca-ok{width:60px;height:60px;border-radius:50%;background:rgba(46,204,113,.15);border:2px solid var(--verde);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px}
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--verde2);color:#fff;font-weight:700;font-size:13px;padding:12px 18px;border-radius:30px;z-index:120;opacity:0;transition:.3s;box-shadow:0 6px 20px rgba(0,0,0,.4);pointer-events:none;max-width:86%;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .pie-demo{text-align:center;font-size:10.5px;color:var(--tx3);padding:4px 0 2px}
+</style>
+</head>
+<body>
+<div class="telefono">
+
+  <div class="top">
+    <div class="marca">
+      <div class="logo">B</div>
+      <div>
+        <h1>Brigada</h1>
+        <span class="prov">prototipo funcional · guarda en el navegador</span>
+      </div>
+      <div class="emp"><b>Instalaciones Vega S.L.</b><br>Mallorca</div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ===== LISTA DE OBRAS ===== -->
+    <section id="p-obras" class="pantalla activa">
+      <p class="tit">Mis obras</p>
+      <p class="sub">Margen calculado en vivo a partir de certificaciones y costes reales.</p>
+      <div class="kpis" id="kpis"></div>
+      <div id="lista-obras"></div>
+      <div class="fila-btn">
+        <button class="btn" onclick="abrirNuevaObra()">+ Nueva obra</button>
+      </div>
+      <button class="btn sec peque" onclick="reiniciar()">↺ Borrar todo y reiniciar con el ejemplo</button>
+      <p class="pie-demo" style="margin-top:14px">Prototipo · todo se guarda en localStorage de este navegador · sin servidor</p>
+    </section>
+
+    <!-- ===== DETALLE DE OBRA ===== -->
+    <section id="p-obra" class="pantalla">
+      <button class="volver" onclick="irTab('obras')">‹ Mis obras</button>
+      <p class="tit" id="obra-tit">—</p>
+      <p class="sub" id="obra-sub">—</p>
+
+      <div class="obratabs">
+        <button class="on" data-sub="o-pre" onclick="obraTab(this)">Presupuesto</button>
+        <button data-sub="o-cer" onclick="obraTab(this)">Certificar</button>
+        <button data-sub="o-fac" onclick="obraTab(this)">Facturas</button>
+        <button data-sub="o-cos" onclick="obraTab(this)">Costes</button>
+        <button data-sub="o-mar" onclick="obraTab(this)">Margen</button>
+      </div>
+
+      <div id="o-pre" class="obrasub on"></div>
+      <div id="o-cer" class="obrasub"></div>
+      <div id="o-fac" class="obrasub"></div>
+      <div id="o-cos" class="obrasub"></div>
+      <div id="o-mar" class="obrasub"></div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button class="on" id="t-obras" onclick="irTab('obras')"><span class="ic">🏗️</span>Obras</button>
+    <button id="t-obra" onclick="volverAObra()"><span class="ic">📋</span>Obra</button>
+  </nav>
+
+  <div class="pie-demo">Brigada · prototipo funcional de gestión de obra · Solers</div>
+</div>
+
+<div class="modal-bg" id="modal" onclick="cerrarModalFondo(event)">
+  <div class="modal" id="modal-cont" onclick="event.stopPropagation()"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   BRIGADA · motor del prototipo
+   Fórmulas (idénticas al esquema obra-esquema.sql):
+   · partida.importe      = round(medicion * precio, 2)
+   · capitulo.total       = Σ importes de sus partidas
+   · obra.presupuesto     = Σ totales de capítulos
+   · linea_cert.importe   = round((acum - anterior) * precio, 2)   [por cantidad]
+   · certificacion.base   = Σ importes de sus líneas
+   · factura: base = cert.base ; iva = round(base*0,21;2) ; total = base+iva
+   · coste material       = Σ importes de albaranes
+   · coste mano de obra   = Σ horas * coste_hora
+   · margen €             = certificado - coste_total_imputado
+   · margen %             = round(margen*100/certificado, 2)
+   ============================================================ */
+
+var CLAVE = "brigada_proto_v1";
+var IVA = 0.21;
+var db = null;           // estado en memoria
+var obraActual = null;   // id de la obra abierta
+var subActual = "o-pre";
+
+var eur = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
+var num = new Intl.NumberFormat('es-ES',{minimumFractionDigits:0,maximumFractionDigits:2});
+function fe(n){ return eur.format(redondear(n)); }                 // formato euro
+function fn(n){ return num.format(n); }
+function redondear(n){ return Math.round((Number(n)+Number.EPSILON)*100)/100; }
+function id(){ return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+/* ---------- persistencia ---------- */
+function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(db)); }catch(e){ console.error('No se pudo guardar',e); } }
+function cargar(){
+  try{ var raw = localStorage.getItem(CLAVE); if(raw){ db = JSON.parse(raw); return true; } }
+  catch(e){ console.error('No se pudo leer',e); }
+  return false;
+}
+
+/* ============================================================
+   CÁLCULOS
+   ============================================================ */
+function totalPartida(p){ return redondear((Number(p.medicion)||0) * (Number(p.precio)||0)); }
+function totalCapitulo(c){ var t=0; c.partidas.forEach(function(p){ t+=totalPartida(p); }); return redondear(t); }
+function presupuestoObra(o){ var t=0; o.capitulos.forEach(function(c){ t+=totalCapitulo(c); }); return redondear(t); }
+
+function partidaPorId(o, pid){
+  for(var i=0;i<o.capitulos.length;i++){
+    var ps=o.capitulos[i].partidas;
+    for(var j=0;j<ps.length;j++){ if(ps[j].id===pid) return ps[j]; }
+  }
+  return null;
+}
+// % acumulado certificado de una partida ANTES de una certificación dada (por numero)
+function pctAnterior(o, pid, numeroHasta){
+  var pct=0;
+  o.certificaciones.forEach(function(ce){
+    if(ce.numero < numeroHasta && ce.lineas[pid]!=null){ pct = Math.max(pct, Number(ce.lineas[pid])||0); }
+  });
+  return pct;
+}
+// importe certificado de una partida en una certificación concreta
+function importeLineaCert(o, ce, pid){
+  var p = partidaPorId(o, pid); if(!p) return 0;
+  var acum = Number(ce.lineas[pid])||0;
+  var ant  = pctAnterior(o, pid, ce.numero);
+  var periodo = acum - ant;                       // puntos porcentuales de este periodo
+  var medPeriodo = (Number(p.medicion)||0) * (periodo/100);
+  return redondear(medPeriodo * (Number(p.precio)||0));
+}
+function baseCertificacion(o, ce){
+  var t=0;
+  for(var pid in ce.lineas){ if(ce.lineas.hasOwnProperty(pid)) t += importeLineaCert(o, ce, pid); }
+  return redondear(t);
+}
+function totalCertificadoObra(o){
+  var t=0; o.certificaciones.forEach(function(ce){ if(ce.estado!=='anulada') t += baseCertificacion(o, ce); });
+  return redondear(t);
+}
+function costeMaterial(o){ var t=0; o.costesMaterial.forEach(function(a){ t+=Number(a.importe)||0; }); return redondear(t); }
+function costeManoObra(o){ var t=0; o.costesManoObra.forEach(function(m){ t+=(Number(m.horas)||0)*(Number(m.costeHora)||0); }); return redondear(t); }
+function costeTotal(o){ return redondear(costeMaterial(o)+costeManoObra(o)); }
+function margenObra(o){
+  var cert = totalCertificadoObra(o);
+  var margen = redondear(cert - costeTotal(o));
+  var pct = cert!==0 ? redondear(margen*100/cert) : null;
+  return {certificado:cert, coste:costeTotal(o), margen:margen, pct:pct};
+}
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+var MAP = {obras:'p-obras', obra:'p-obra'};
+function irTab(clave){
+  document.querySelectorAll('.pantalla').forEach(function(s){ s.classList.remove('activa'); });
+  var d = document.getElementById(MAP[clave]); if(d) d.classList.add('activa');
+  document.getElementById('t-obras').classList.toggle('on', clave==='obras');
+  document.getElementById('t-obra').classList.toggle('on', clave==='obra');
+  if(clave==='obras') pintarObras();
+  window.scrollTo(0,0);
+}
+function volverAObra(){ if(obraActual){ abrirObra(obraActual); } else { toast('Abre una obra desde la lista'); } }
+function obraTab(btn){
+  btn.parentElement.querySelectorAll('button').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+  subActual = btn.dataset.sub;
+  document.querySelectorAll('#p-obra .obrasub').forEach(function(s){ s.classList.remove('on'); });
+  document.getElementById(subActual).classList.add('on');
+  pintarSub();
+}
+
+/* ============================================================
+   PINTAR · LISTA DE OBRAS
+   ============================================================ */
+function pintarObras(){
+  var cont = document.getElementById('lista-obras');
+  // KPIs
+  var nCurso = db.obras.length, sumaPct=0, cuentaPct=0, porCert=0;
+  db.obras.forEach(function(o){
+    var m = margenObra(o);
+    if(m.pct!=null){ sumaPct+=m.pct; cuentaPct++; }
+    porCert += Math.max(0, presupuestoObra(o) - m.certificado);
+  });
+  var medio = cuentaPct? redondear(sumaPct/cuentaPct) : 0;
+  document.getElementById('kpis').innerHTML =
+    '<div class="kpi"><div class="n">'+nCurso+'</div><div class="l">Obras</div></div>'+
+    '<div class="kpi"><div class="n '+(medio>=0?'ok':'mal')+'">'+fn(medio)+'%</div><div class="l">Margen medio</div></div>'+
+    '<div class="kpi"><div class="n">'+fe(porCert).replace(/\s?€/,'€')+'</div><div class="l">Por certificar</div></div>';
+
+  if(db.obras.length===0){ cont.innerHTML = '<div class="vacio">No hay obras todavía.<br>Crea la primera con “+ Nueva obra”.</div>'; return; }
+  var html='';
+  db.obras.forEach(function(o){
+    var pre = presupuestoObra(o);
+    var m = margenObra(o);
+    var certificada = o.certificaciones.length>0;
+    var pctAvance = pre>0 ? Math.min(100, Math.round(m.certificado*100/pre)) : 0;
+    var color = m.pct==null?'var(--tx3)':(m.pct>=0?'var(--verde)':'var(--rojo)');
+    var clase = m.pct==null?'':(m.pct>=0?'ok':'mal');
+    html +=
+      '<div class="card clic" onclick="abrirObra(\''+o.id+'\')">'+
+        '<div class="obra-h">'+
+          '<div><div class="nom">'+esc(o.nombre)+'</div><div class="cli">'+esc(o.cliente||'Sin promotor')+'</div></div>'+
+          '<span class="estado '+(certificada?'cert':'curso')+'">'+(certificada?'Certificando':'En curso')+'</span>'+
+        '</div>'+
+        '<div class="margen">'+
+          '<div><div class="et">Certificado</div><div class="nu">'+fe(m.certificado)+'</div></div>'+
+          '<div><div class="et">Coste real</div><div class="nu '+(m.coste>m.certificado&&m.certificado>0?'mal':'')+'">'+fe(m.coste)+'</div></div>'+
+          '<div class="pct"><div class="big '+clase+'">'+(m.pct==null?'—':fn(m.pct)+'%')+'</div><div class="lb">Margen</div></div>'+
+        '</div>'+
+        '<div class="barra"><span style="width:'+pctAvance+'%;background:'+color+'"></span></div>'+
+      '</div>';
+  });
+  cont.innerHTML = html;
+}
+
+/* ============================================================
+   ABRIR OBRA
+   ============================================================ */
+function obraPorId(oid){ for(var i=0;i<db.obras.length;i++){ if(db.obras[i].id===oid) return db.obras[i]; } return null; }
+function abrirObra(oid){
+  obraActual = oid;
+  var o = obraPorId(oid); if(!o) return;
+  document.getElementById('obra-tit').textContent = o.nombre;
+  var m = margenObra(o);
+  var mt = m.pct==null? 'sin certificar aún' : ('Margen en vivo '+fn(m.pct)+'%');
+  document.getElementById('obra-sub').innerHTML = esc(o.cliente||'Sin promotor')+' · <span class="'+(m.pct==null?'':(m.pct>=0?'ok':'mal'))+'" style="font-weight:800">'+mt+'</span>';
+  irTab('obra');
+  pintarSub();
+}
+
+function pintarSub(){
+  var o = obraPorId(obraActual); if(!o) return;
+  if(subActual==='o-pre') pintarPresupuesto(o);
+  else if(subActual==='o-cer') pintarCertificar(o);
+  else if(subActual==='o-fac') pintarFacturas(o);
+  else if(subActual==='o-cos') pintarCostes(o);
+  else if(subActual==='o-mar') pintarMargen(o);
+  // refrescar subtítulo de margen
+  var m = margenObra(o);
+  var mt = m.pct==null? 'sin certificar aún' : ('Margen en vivo '+fn(m.pct)+'%');
+  document.getElementById('obra-sub').innerHTML = esc(o.cliente||'Sin promotor')+' · <span class="'+(m.pct==null?'':(m.pct>=0?'ok':'mal'))+'" style="font-weight:800">'+mt+'</span>';
+}
+
+/* ---------- PRESUPUESTO ---------- */
+function pintarPresupuesto(o){
+  var html='';
+  if(o.capitulos.length===0){ html += '<div class="vacio">Sin capítulos.<br>Añade el primero abajo.</div>'; }
+  o.capitulos.forEach(function(c, ci){
+    var abierto = c._abierto!==false;
+    html += '<div class="cap'+(abierto?' abierto':'')+'">'+
+      '<div class="cap-h" onclick="togCap(\''+c.id+'\')">'+
+        '<span class="cnom">'+esc(c.nombre)+'</span>'+
+        '<span class="ctot">'+fe(totalCapitulo(c))+'</span>'+
+        '<span class="chev">›</span>'+
+      '</div>'+
+      '<div class="cap-body">';
+    c.partidas.forEach(function(p){
+      html += '<div class="partida">'+
+        '<div class="pn"><span>'+esc(p.descripcion)+'</span>'+
+          '<span><span class="pt">'+fe(totalPartida(p))+'</span> '+
+          '<button class="borrar" onclick="borrarPartida(\''+c.id+'\',\''+p.id+'\')">✕</button></span></div>'+
+        '<div class="pgrid">'+
+          '<div class="fld"><label>Medición</label><input class="inp" type="number" step="any" value="'+(p.medicion)+'" onchange="editarPartida(\''+c.id+'\',\''+p.id+'\',\'medicion\',this.value)"></div>'+
+          '<div class="fld"><label>Precio/ud ('+esc(p.unidad||'ud')+')</label><input class="inp" type="number" step="any" value="'+(p.precio)+'" onchange="editarPartida(\''+c.id+'\',\''+p.id+'\',\'precio\',this.value)"></div>'+
+        '</div></div>';
+    });
+    html += '<div class="partida"><button class="btn sec mini" onclick="abrirNuevaPartida(\''+c.id+'\')">+ Añadir partida</button></div>';
+    html += '</div></div>';
+  });
+  html += '<div class="total-linea"><span class="l">Total presupuesto</span><span class="v">'+fe(presupuestoObra(o))+'</span></div>';
+  html += '<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="abrirNuevoCapitulo()">+ Añadir capítulo</button></div>';
+  document.getElementById('o-pre').innerHTML = html;
+}
+function togCap(cid){ var o=obraPorId(obraActual); var c=o.capitulos.find(function(x){return x.id===cid;}); c._abierto = !(c._abierto!==false); guardar(); pintarPresupuesto(o); }
+function editarPartida(cid,pid,campo,val){
+  var o=obraPorId(obraActual); var c=o.capitulos.find(function(x){return x.id===cid;});
+  var p=c.partidas.find(function(x){return x.id===pid;});
+  var v=parseFloat(String(val).replace(',','.')); p[campo]= isNaN(v)?0:v;
+  guardar(); pintarPresupuesto(o); pintarSub();
+}
+function borrarPartida(cid,pid){
+  var o=obraPorId(obraActual); var c=o.capitulos.find(function(x){return x.id===cid;});
+  c.partidas = c.partidas.filter(function(x){return x.id!==pid;});
+  // limpiar líneas de certificación que apuntaban a esa partida
+  o.certificaciones.forEach(function(ce){ delete ce.lineas[pid]; });
+  guardar(); pintarPresupuesto(o); pintarSub(); toast('Partida borrada');
+}
+
+/* ---------- CERTIFICAR ---------- */
+function pintarCertificar(o){
+  var html='';
+  // histórico
+  if(o.certificaciones.length){
+    html += '<div class="card"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 6px;font-weight:800">Certificaciones emitidas</h3>';
+    o.certificaciones.slice().sort(function(a,b){return a.numero-b.numero;}).forEach(function(ce){
+      var fact = o.facturas.find(function(f){return f.certId===ce.id;});
+      html += '<div class="cert-hist">'+
+        '<div class="d">Certificación nº '+ce.numero+'<small>'+esc(ce.fecha)+'</small></div>'+
+        '<span class="m">'+fe(baseCertificacion(o,ce))+'</span>'+
+        (fact? '<span class="pill fact">Facturada</span>' : '<span class="pill">Sin facturar</span>')+
+        '</div>';
+    });
+    html += '</div>';
+  }
+  if(o.capitulos.length===0 || presupuestoObra(o)===0){
+    html += '<div class="vacio">Primero crea el presupuesto (capítulos y partidas) para poder certificar.</div>';
+    document.getElementById('o-cer').innerHTML = html; return;
+  }
+  html += '<div class="card"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 4px;font-weight:800">Nueva certificación · % ejecutado acumulado por partida</h3>'+
+          '<p class="sub" style="margin:4px 0 10px">Escribe el % total ejecutado de cada partida. Se certifica la diferencia con lo ya certificado antes.</p>';
+  o.capitulos.forEach(function(c){
+    c.partidas.forEach(function(p){
+      var ant = pctAnterior(o, p.id, 999999);
+      html += '<div class="cert-part">'+
+        '<div class="cn">'+esc(p.descripcion)+'<small>'+esc(c.nombre)+' · ya cert. '+fn(ant)+'%</small>'+
+          '<div class="mini"><span id="bar-'+p.id+'" style="width:'+Math.min(100,ant)+'%"></span></div></div>'+
+        '<input class="inp cin" type="number" min="'+ant+'" max="100" step="any" value="'+ant+'" id="pct-'+p.id+'" oninput="previewLinea(\''+p.id+'\','+ant+','+totalPartida(p)+')">'+
+        '<div class="cim" id="im-'+p.id+'">'+fe(0)+'</div>'+
+      '</div>';
+    });
+  });
+  html += '<div class="total-linea" style="margin-top:12px"><span class="l">Total a certificar</span><span class="v" id="cert-total">'+fe(0)+'</span></div>';
+  html += '<div class="fila-btn" style="margin-top:12px">'+
+          '<button class="btn verde" onclick="guardarYFacturar(true)">Certificar y facturar ✓</button></div>'+
+          '<button class="btn sec peque" onclick="guardarYFacturar(false)">Guardar certificación sin facturar</button>';
+  html += '</div>';
+  document.getElementById('o-cer').innerHTML = html;
+}
+function previewLinea(pid, ant, totalPart){
+  var inp = document.getElementById('pct-'+pid);
+  var acum = parseFloat(String(inp.value).replace(',','.')); if(isNaN(acum)) acum=ant;
+  if(acum<ant) acum=ant; if(acum>100) acum=100;
+  var periodo = acum - ant;
+  var o = obraPorId(obraActual);
+  var p = partidaPorId(o, pid);
+  var imp = redondear((Number(p.medicion)||0)*(periodo/100)*(Number(p.precio)||0));
+  document.getElementById('im-'+pid).textContent = fe(imp);
+  document.getElementById('bar-'+pid).style.width = Math.min(100,acum)+'%';
+  // recalcular total
+  var tot=0;
+  o.capitulos.forEach(function(c){ c.partidas.forEach(function(pp){
+    var i2=document.getElementById('im-'+pp.id);
+    if(i2){ var n = parseFloat(i2.textContent.replace(/[^\d,-]/g,'').replace('.','').replace(',','.')); tot += isNaN(n)?0:n; }
+  }); });
+  document.getElementById('cert-total').textContent = fe(tot);
+}
+function guardarYFacturar(facturar){
+  var o = obraPorId(obraActual);
+  var numero = o.certificaciones.reduce(function(mx,c){return Math.max(mx,c.numero);},0) + 1;
+  var lineas={}; var algo=false;
+  o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){
+    var inp=document.getElementById('pct-'+p.id); if(!inp) return;
+    var ant = pctAnterior(o, p.id, 999999);
+    var acum = parseFloat(String(inp.value).replace(',','.')); if(isNaN(acum)) acum=ant;
+    if(acum<ant) acum=ant; if(acum>100) acum=100;
+    lineas[p.id]=acum;
+    if(acum>ant) algo=true;
+  }); });
+  if(!algo){ toast('No hay avance nuevo que certificar'); return; }
+  var ce = {id:id(), numero:numero, fecha:hoy(), lineas:lineas, estado:'aprobada'};
+  o.certificaciones.push(ce);
+  var base = baseCertificacion(o, ce);
+  if(facturar){
+    emitirFactura(o, ce, base);
+  } else {
+    guardar(); toast('Certificación nº '+numero+' guardada: '+fe(base));
+  }
+  pintarSub();
+}
+function emitirFactura(o, ce, base){
+  db.contadorFactura = (db.contadorFactura||0)+1;
+  var iva = redondear(base*IVA);
+  var total = redondear(base+iva);
+  var numCompleto = 'A-'+new Date().getFullYear()+'/'+String(db.contadorFactura).padStart(4,'0');
+  var fac = {id:id(), certId:ce.id, numero:db.contadorFactura, numeroCompleto:numCompleto,
+             base:base, iva:iva, total:total, fecha:hoy(), estado:'emitida', verifactu:true};
+  o.facturas.push(fac);
+  guardar();
+  mostrarModalFactura(o, fac, ce);
+}
+function mostrarModalFactura(o, fac, ce){
+  document.getElementById('modal-cont').innerHTML =
+    '<div class="marca-ok">✓</div>'+
+    '<h3>Factura emitida</h3>'+
+    '<p class="sub" style="text-align:center">Certificación nº '+ce.numero+' de <b style="color:#fff">'+esc(o.nombre)+'</b> convertida en factura.</p>'+
+    '<div class="factura-doc">'+
+      '<div class="r"><span>Factura</span><b>'+esc(fac.numeroCompleto)+'</b></div>'+
+      '<div class="r"><span>Fecha</span><b>'+esc(fac.fecha)+'</b></div>'+
+      '<div class="r"><span>Base imponible</span><b>'+fe(fac.base)+'</b></div>'+
+      '<div class="r"><span>IVA 21%</span><b>'+fe(fac.iva)+'</b></div>'+
+      '<div class="r tot"><span>Total</span><b>'+fe(fac.total)+'</b></div>'+
+    '</div>'+
+    '<div class="sellos"><span class="sello">✓ VeriFactu</span><span class="sello">✓ Emitida</span></div>'+
+    '<p class="sub" style="font-size:11px;text-align:center;margin:10px 0 14px">Sello VeriFactu de ejemplo (prototipo): no se envía nada a la AEAT.</p>'+
+    '<button class="btn" onclick="cerrarModal()">Hecho</button>';
+  document.getElementById('modal').classList.add('on');
+}
+
+/* ---------- FACTURAS ---------- */
+function pintarFacturas(o){
+  var html='';
+  if(o.facturas.length===0){ html='<div class="vacio">Aún no hay facturas.<br>Emite una desde “Certificar”.</div>'; document.getElementById('o-fac').innerHTML=html; return; }
+  o.facturas.slice().sort(function(a,b){return b.numero-a.numero;}).forEach(function(f){
+    var ce = o.certificaciones.find(function(c){return c.id===f.certId;});
+    html += '<div class="card">'+
+      '<div class="obra-h" style="margin-bottom:10px"><div><div class="nom">'+esc(f.numeroCompleto)+'</div>'+
+        '<div class="cli">'+esc(f.fecha)+(ce?' · certificación nº '+ce.numero:'')+'</div></div>'+
+        '<span class="estado cert">Emitida</span></div>'+
+      '<div class="factura-doc" style="margin:0">'+
+        '<div class="r"><span>Base imponible</span><b>'+fe(f.base)+'</b></div>'+
+        '<div class="r"><span>IVA 21%</span><b>'+fe(f.iva)+'</b></div>'+
+        '<div class="r tot"><span>Total</span><b>'+fe(f.total)+'</b></div>'+
+      '</div>'+
+      '<div class="sellos"><span class="sello">✓ VeriFactu</span></div>'+
+    '</div>';
+  });
+  var baseTot=0,ivaTot=0,totTot=0;
+  o.facturas.forEach(function(f){baseTot+=f.base;ivaTot+=f.iva;totTot+=f.total;});
+  html += '<div class="total-linea"><span class="l">Total facturado (base)</span><span class="v">'+fe(baseTot)+'</span></div>';
+  document.getElementById('o-fac').innerHTML = html;
+}
+
+/* ---------- COSTES ---------- */
+function pintarCostes(o){
+  var html='';
+  html += '<div class="card"><div class="coste-blk"><h3>📦 Material (albaranes)</h3>';
+  if(o.costesMaterial.length===0){ html+='<p class="sub" style="margin:0 0 8px">Sin albaranes imputados.</p>'; }
+  o.costesMaterial.forEach(function(a){
+    html += '<div class="lin"><div class="d">'+esc(a.proveedor)+'<small>Albarán '+esc(a.albaran||'—')+' · '+esc(a.fecha||'')+'</small></div>'+
+            '<div class="m">'+fe(a.importe)+'</div>'+
+            '<button class="borrar" onclick="borrarCoste(\'mat\',\''+a.id+'\')">✕</button></div>';
+  });
+  html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal material</div><div class="m">'+fe(costeMaterial(o))+'</div></div>';
+  html += '<button class="btn sec mini" style="margin-top:10px" onclick="abrirNuevoMaterial()">+ Añadir albarán</button></div>';
+
+  html += '<div class="coste-blk"><h3>👷 Mano de obra (horas × coste/hora)</h3>';
+  if(o.costesManoObra.length===0){ html+='<p class="sub" style="margin:0 0 8px">Sin partes imputados.</p>'; }
+  o.costesManoObra.forEach(function(m){
+    var imp = redondear((Number(m.horas)||0)*(Number(m.costeHora)||0));
+    html += '<div class="lin"><div class="d">'+esc(m.operario)+'<small>'+fn(m.horas)+' h × '+fe(m.costeHora)+'/h</small></div>'+
+            '<div class="m">'+fe(imp)+'</div>'+
+            '<button class="borrar" onclick="borrarCoste(\'mo\',\''+m.id+'\')">✕</button></div>';
+  });
+  html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal mano de obra</div><div class="m">'+fe(costeManoObra(o))+'</div></div>';
+  html += '<button class="btn sec mini" style="margin-top:10px" onclick="abrirNuevaManoObra()">+ Añadir parte</button></div></div>';
+
+  html += '<div class="total-linea"><span class="l">Coste real imputado</span><span class="v">'+fe(costeTotal(o))+'</span></div>';
+  document.getElementById('o-cos').innerHTML = html;
+}
+function borrarCoste(tipo,cid){
+  var o=obraPorId(obraActual);
+  if(tipo==='mat') o.costesMaterial=o.costesMaterial.filter(function(x){return x.id!==cid;});
+  else o.costesManoObra=o.costesManoObra.filter(function(x){return x.id!==cid;});
+  guardar(); pintarSub(); toast('Coste borrado');
+}
+
+/* ---------- MARGEN ---------- */
+function pintarMargen(o){
+  var m = margenObra(o);
+  var pre = presupuestoObra(o);
+  var pos = m.margen>=0;
+  var html = '<div class="card">'+
+    '<div class="resumen-margen '+(pos?'pos':'neg')+'">'+
+      '<div class="fila"><span>Presupuesto (venta)</span><span style="font-weight:800">'+fe(pre)+'</span></div>'+
+      '<div class="fila"><span>Producción certificada</span><span style="font-weight:800">'+fe(m.certificado)+'</span></div>'+
+      '<div class="fila"><span>— Coste material</span><span>'+fe(costeMaterial(o))+'</span></div>'+
+      '<div class="fila"><span>— Coste mano de obra</span><span>'+fe(costeManoObra(o))+'</span></div>'+
+      '<div class="fila"><span style="font-weight:700">Coste real total</span><span style="font-weight:800">'+fe(m.coste)+'</span></div>'+
+      '<div class="fila big"><span style="font-weight:800">Margen de la obra</span>'+
+        '<span class="v '+(pos?'ok':'mal')+'">'+fe(m.margen)+' · '+(m.pct==null?'—':fn(m.pct)+'%')+'</span></div>'+
+    '</div></div>';
+  html += '<p class="sub" style="text-align:center">Margen = producción certificada − coste real imputado. % sobre lo certificado. Se recalcula solo al meter datos en Presupuesto, Certificar o Costes.</p>';
+  if(m.certificado===0){ html += '<div class="vacio">Todavía no has certificado nada: el margen en % aparecerá en cuanto emitas la primera certificación.</div>'; }
+  document.getElementById('o-mar').innerHTML = html;
+}
+
+/* ============================================================
+   MODALES / FORMULARIOS
+   ============================================================ */
+function abrirModal(html){ document.getElementById('modal-cont').innerHTML = html; document.getElementById('modal').classList.add('on'); }
+function cerrarModal(){ document.getElementById('modal').classList.remove('on'); }
+function cerrarModalFondo(e){ if(e.target.id==='modal') cerrarModal(); }
+
+function abrirNuevaObra(){
+  abrirModal(
+    '<h3 style="text-align:left">Nueva obra</h3>'+
+    '<div class="form-grp"><label>Nombre de la obra</label><input class="inp" id="f-nom" placeholder="p. ej. Reforma piso C/ Sol 3"></div>'+
+    '<div class="form-grp"><label>Cliente / promotor</label><input class="inp" id="f-cli" placeholder="p. ej. Promotora Sol · Palma"></div>'+
+    '<div class="form-grp"><label>Importe de contrato (opcional)</label><input class="inp" id="f-pre" type="number" step="any" placeholder="Se calcula solo del presupuesto"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearObra()">Crear</button></div>');
+  setTimeout(function(){var e=document.getElementById('f-nom'); if(e) e.focus();},100);
+}
+function crearObra(){
+  var nom=document.getElementById('f-nom').value.trim();
+  if(!nom){ toast('Pon un nombre'); return; }
+  var o={id:id(), nombre:nom, cliente:document.getElementById('f-cli').value.trim(),
+         contrato:parseFloat(document.getElementById('f-pre').value.replace(',','.'))||0,
+         capitulos:[], certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
+  db.obras.push(o); guardar(); cerrarModal(); abrirObra(o.id); toast('Obra creada');
+}
+
+function abrirNuevoCapitulo(){
+  abrirModal('<h3 style="text-align:left">Nuevo capítulo</h3>'+
+    '<div class="form-grp"><label>Nombre del capítulo</label><input class="inp" id="f-cap" placeholder="p. ej. ⚡ Electricidad"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearCapitulo()">Añadir</button></div>');
+  setTimeout(function(){var e=document.getElementById('f-cap'); if(e) e.focus();},100);
+}
+function crearCapitulo(){
+  var nom=document.getElementById('f-cap').value.trim(); if(!nom){ toast('Pon un nombre'); return; }
+  var o=obraPorId(obraActual);
+  o.capitulos.push({id:id(), nombre:nom, _abierto:true, partidas:[]});
+  guardar(); cerrarModal(); pintarPresupuesto(o); toast('Capítulo añadido');
+}
+
+function abrirNuevaPartida(cid){
+  abrirModal('<h3 style="text-align:left">Nueva partida</h3>'+
+    '<div class="form-grp"><label>Descripción</label><input class="inp" id="f-pd" placeholder="p. ej. Punto de luz LED"></div>'+
+    '<div class="pgrid">'+
+      '<div class="form-grp"><label>Unidad</label><input class="inp" id="f-pu" value="ud"></div>'+
+      '<div class="form-grp"><label>Medición</label><input class="inp" id="f-pm" type="number" step="any" value="1"></div>'+
+    '</div>'+
+    '<div class="form-grp"><label>Precio por unidad (€)</label><input class="inp" id="f-pp" type="number" step="any" value="0"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearPartida(\''+cid+'\')">Añadir</button></div>');
+  setTimeout(function(){var e=document.getElementById('f-pd'); if(e) e.focus();},100);
+}
+function crearPartida(cid){
+  var o=obraPorId(obraActual); var c=o.capitulos.find(function(x){return x.id===cid;});
+  var d=document.getElementById('f-pd').value.trim(); if(!d){ toast('Pon una descripción'); return; }
+  c.partidas.push({id:id(), descripcion:d, unidad:document.getElementById('f-pu').value.trim()||'ud',
+    medicion:parseFloat(document.getElementById('f-pm').value.replace(',','.'))||0,
+    precio:parseFloat(document.getElementById('f-pp').value.replace(',','.'))||0});
+  c._abierto=true; guardar(); cerrarModal(); pintarPresupuesto(o); pintarSub(); toast('Partida añadida');
+}
+
+function abrirNuevoMaterial(){
+  abrirModal('<h3 style="text-align:left">Albarán de material</h3>'+
+    '<div class="form-grp"><label>Proveedor</label><input class="inp" id="f-prov" placeholder="p. ej. Material Eléctrico SL"></div>'+
+    '<div class="pgrid">'+
+      '<div class="form-grp"><label>Nº albarán</label><input class="inp" id="f-alb" placeholder="2241"></div>'+
+      '<div class="form-grp"><label>Importe (€)</label><input class="inp" id="f-imp" type="number" step="any" value="0"></div>'+
+    '</div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearMaterial()">Imputar</button></div>');
+  setTimeout(function(){var e=document.getElementById('f-prov'); if(e) e.focus();},100);
+}
+function crearMaterial(){
+  var o=obraPorId(obraActual);
+  var prov=document.getElementById('f-prov').value.trim(); if(!prov){ toast('Pon el proveedor'); return; }
+  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(),
+    importe:parseFloat(document.getElementById('f-imp').value.replace(',','.'))||0, fecha:hoy()});
+  guardar(); cerrarModal(); pintarSub(); toast('Albarán imputado');
+}
+
+function abrirNuevaManoObra(){
+  abrirModal('<h3 style="text-align:left">Parte de mano de obra</h3>'+
+    '<div class="form-grp"><label>Operario</label><input class="inp" id="f-op" placeholder="p. ej. Carlos (electricista)"></div>'+
+    '<div class="pgrid">'+
+      '<div class="form-grp"><label>Horas</label><input class="inp" id="f-h" type="number" step="any" value="8"></div>'+
+      '<div class="form-grp"><label>Coste/hora (€)</label><input class="inp" id="f-ch" type="number" step="any" value="22.40"></div>'+
+    '</div>'+
+    '<p class="sub" id="f-prev" style="margin:2px 0 0">Coste = 0,00 €</p>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearManoObra()">Imputar</button></div>');
+  setTimeout(function(){
+    var fh=document.getElementById('f-h'), fch=document.getElementById('f-ch');
+    function prev(){ var h=parseFloat(fh.value.replace(',','.'))||0, c=parseFloat(fch.value.replace(',','.'))||0; document.getElementById('f-prev').textContent='Coste = '+fe(redondear(h*c)); }
+    fh.oninput=prev; fch.oninput=prev; prev();
+    var e=document.getElementById('f-op'); if(e) e.focus();
+  },100);
+}
+function crearManoObra(){
+  var o=obraPorId(obraActual);
+  var op=document.getElementById('f-op').value.trim(); if(!op){ toast('Pon el operario'); return; }
+  o.costesManoObra.push({id:id(), operario:op,
+    horas:parseFloat(document.getElementById('f-h').value.replace(',','.'))||0,
+    costeHora:parseFloat(document.getElementById('f-ch').value.replace(',','.'))||0, fecha:hoy()});
+  guardar(); cerrarModal(); pintarSub(); toast('Parte imputado');
+}
+
+/* ============================================================
+   TOAST / UTILES
+   ============================================================ */
+var toastT=null;
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); if(toastT) clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove('on');},2600); }
+function hoy(){ var d=new Date(); return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear(); }
+
+function reiniciar(){
+  abrirModal('<h3>¿Borrar todo?</h3>'+
+    '<p class="sub" style="text-align:center">Se borran todas las obras que tengas y se vuelve a cargar el ejemplo de fábrica. No se puede deshacer.</p>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" style="background:linear-gradient(135deg,#ff6b6b,#ef4b55);color:#fff" onclick="hacerReset()">Sí, reiniciar</button></div>');
+}
+function hacerReset(){ db=sembrar(); guardar(); cerrarModal(); obraActual=null; irTab('obras'); toast('Reiniciado con el ejemplo'); }
+function empezarVacio(){ db={obras:[], contadorFactura:0}; guardar(); cerrarModal(); irTab('obras'); toast('Empezando de cero'); }
+
+/* ============================================================
+   SEMILLA (ejemplo del primer arranque)
+   ============================================================ */
+function sembrar(){
+  var pElec = [
+    {id:id(), descripcion:'Punto de luz empotrado LED', unidad:'ud', medicion:36, precio:70},
+    {id:id(), descripcion:'Toma de corriente schuko',   unidad:'ud', medicion:48, precio:32.5},
+    {id:id(), descripcion:'Cuadro general de mando',     unidad:'ud', medicion:1,  precio:1400},
+    {id:id(), descripcion:'Cableado y canalización',     unidad:'partida', medicion:1, precio:1000}
+  ];
+  var pFont = [
+    {id:id(), descripcion:'Instalación agua fría/caliente PEX', unidad:'partida', medicion:1, precio:2100},
+    {id:id(), descripcion:'Sanitarios y grifería', unidad:'ud', medicion:4, precio:430},
+    {id:id(), descripcion:'Red de desagües PVC',   unidad:'partida', medicion:1, precio:1000}
+  ];
+  var cap1 = {id:id(), nombre:'⚡ Electricidad', _abierto:true, partidas:pElec};
+  var cap2 = {id:id(), nombre:'🚿 Fontanería',  _abierto:false, partidas:pFont};
+
+  // Certificación nº1: electricidad 100%, PEX 50%, sanitarios 50%, desagües 0%
+  var lineas={};
+  lineas[pElec[0].id]=100; lineas[pElec[1].id]=100; lineas[pElec[2].id]=100; lineas[pElec[3].id]=100;
+  lineas[pFont[0].id]=50;  lineas[pFont[1].id]=50;  lineas[pFont[2].id]=0;
+  var cert1 = {id:id(), numero:1, fecha:hoy(), lineas:lineas, estado:'aprobada'};
+
+  var obra = {
+    id:id(), nombre:'Reforma Local C/ Mallorca 12', cliente:'Promotora Sol · Palma', contrato:11300,
+    capitulos:[cap1, cap2],
+    certificaciones:[cert1],
+    facturas:[],
+    costesMaterial:[
+      {id:id(), proveedor:'Material Eléctrico SL', albaran:'2241',  importe:342.18, fecha:hoy()},
+      {id:id(), proveedor:'Saneamientos Baleares', albaran:'A-907', importe:2180.00, fecha:hoy()}
+    ],
+    costesManoObra:[
+      {id:id(), operario:'Carlos (electricista)', horas:82, costeHora:22.40, fecha:hoy()},
+      {id:id(), operario:'Diego (fontanero)',     horas:68, costeHora:21.80, fecha:hoy()}
+    ]
+  };
+  return {obras:[obra], contadorFactura:0};
+}
+
+/* ============================================================
+   ARRANQUE
+   ============================================================ */
+(function init(){
+  if(!cargar()){ db = sembrar(); guardar(); }
+  // saneado por si faltan campos
+  if(!db.obras) db.obras=[];
+  if(db.contadorFactura==null) db.contadorFactura=0;
+  pintarObras();
+})();
+</script>
+</body>
+</html>
