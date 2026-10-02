@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brigada · Modelo de datos</title>
+<meta name="description" content="Modelo de datos y esquema SQL del MVP de Brigada, el programa de gestión de obra: presupuesto, certificaciones, factura, costes y margen.">
+<style>
+  :root{
+    --bg:#f4f6f8; --panel:#ffffff; --tinta:#111827; --suave:#5b6675;
+    --linea:#e4e8ee; --acento:#c2410c; --acento-suave:#fff1e8;
+    --verde:#15803d; --azul:#1d4ed8; --morado:#7c3aed; --ambar:#b45309;
+    --sombra:0 1px 3px rgba(17,24,39,.08),0 8px 24px rgba(17,24,39,.05);
+    --radio:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --tinta:#e6edf3; --suave:#9aa6b2;
+      --linea:#283039; --acento:#fb923c; --acento-suave:#2a1810;
+      --verde:#4ade80; --azul:#60a5fa; --morado:#c084fc; --ambar:#fbbf24;
+      --sombra:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --tinta:#e6edf3; --suave:#9aa6b2;
+    --linea:#283039; --acento:#fb923c; --acento-suave:#2a1810;
+    --verde:#4ade80; --azul:#60a5fa; --morado:#c084fc; --ambar:#fbbf24;
+    --sombra:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--tinta);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .envoltura{max-width:1080px; margin:0 auto; padding:0 16px 80px}
+  header.hero{
+    padding:56px 16px 40px; text-align:center;
+    background:linear-gradient(180deg,var(--acento-suave),transparent);
+    border-bottom:1px solid var(--linea); margin-bottom:8px;
+  }
+  .marca{
+    display:inline-block; font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--acento); font-weight:700; border:1px solid var(--acento);
+    padding:4px 12px; border-radius:999px; margin-bottom:16px;
+  }
+  h1{font-size:clamp(1.9rem,5vw,2.8rem); margin:.1em 0 .2em; letter-spacing:-.02em}
+  .subtitulo{color:var(--suave); max-width:640px; margin:0 auto; font-size:1.05rem}
+  h2{
+    font-size:1.5rem; margin:48px 0 6px; letter-spacing:-.01em;
+    display:flex; align-items:center; gap:10px;
+  }
+  h2 .num{
+    font-size:.85rem; color:var(--panel); background:var(--acento);
+    width:28px; height:28px; border-radius:8px; display:inline-grid; place-items:center; font-weight:700;
+  }
+  h3{font-size:1.1rem; margin:28px 0 4px}
+  p{margin:.5em 0}
+  .lede{color:var(--suave)}
+  .tarjeta{
+    background:var(--panel); border:1px solid var(--linea); border-radius:var(--radio);
+    padding:22px 24px; box-shadow:var(--sombra); margin:16px 0;
+  }
+  code{
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:.86em;
+    background:var(--acento-suave); color:var(--acento); padding:1px 6px; border-radius:6px;
+  }
+  /* Flujo */
+  .flujo{display:flex; flex-wrap:wrap; align-items:stretch; gap:10px; margin:18px 0}
+  .paso{
+    flex:1 1 150px; background:var(--panel); border:1px solid var(--linea);
+    border-radius:12px; padding:14px 16px; position:relative; min-width:140px;
+  }
+  .paso .et{font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:var(--suave); font-weight:700}
+  .paso .tt{font-weight:700; margin-top:2px}
+  .paso .ds{font-size:.85rem; color:var(--suave); margin-top:4px}
+  .paso.ingreso{border-top:3px solid var(--azul)}
+  .paso.coste{border-top:3px solid var(--ambar)}
+  .paso.margen{border-top:3px solid var(--verde)}
+  .flecha{align-self:center; color:var(--acento); font-size:1.4rem; font-weight:700}
+  @media(max-width:720px){ .flecha{transform:rotate(90deg)} .paso{flex-basis:100%} }
+  /* Tabla de tablas */
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:.92rem}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--linea); vertical-align:top}
+  th{font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--suave)}
+  td code{white-space:nowrap}
+  .grupo-cab td{background:var(--acento-suave); font-weight:700; color:var(--acento); border-bottom:1px solid var(--linea)}
+  .pill{display:inline-block; font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:999px}
+  .pill.t{background:rgba(29,78,216,.12); color:var(--azul)}
+  .pill.ok{background:rgba(21,128,61,.14); color:var(--verde)}
+  /* Caja destacada */
+  .nota{border-left:3px solid var(--acento); background:var(--acento-suave); padding:14px 18px; border-radius:0 10px 10px 0; margin:16px 0}
+  .formula{
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:1.02rem; text-align:center;
+    background:var(--panel); border:1px dashed var(--acento); border-radius:12px; padding:20px; margin:16px 0;
+  }
+  .formula b{color:var(--verde)}
+  .cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin:16px 0}
+  .mini{background:var(--panel); border:1px solid var(--linea); border-radius:12px; padding:16px}
+  .mini h4{margin:0 0 4px; font-size:1rem}
+  .mini p{margin:0; font-size:.88rem; color:var(--suave)}
+  ul.limpia{padding-left:18px} ul.limpia li{margin:4px 0}
+  footer{text-align:center; color:var(--suave); font-size:.85rem; margin-top:56px; padding-top:20px; border-top:1px solid var(--linea)}
+  .toggle{position:fixed; top:14px; right:14px; background:var(--panel); border:1px solid var(--linea); color:var(--tinta); border-radius:999px; padding:7px 14px; font-size:.8rem; cursor:pointer; box-shadow:var(--sombra)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">◐ Tema</button>
+
+<header class="hero">
+  <span class="marca">Brigada · MVP</span>
+  <h1>Modelo de datos de obra</h1>
+  <p class="subtitulo">Base de datos nueva e independiente (PostgreSQL / Supabase). Multiempresa con <code>tenant_id</code> y seguridad a nivel de fila (RLS) en todas las tablas. Todo en español.</p>
+</header>
+
+<div class="envoltura">
+
+  <div class="nota">
+    <strong>De un vistazo:</strong> 20 tablas, las 20 con RLS activada. 18 llevan <code>tenant_id</code>;
+    las otras dos son <code>tenants</code> (la propia empresa: su <code>id</code> <em>es</em> el tenant) y
+    <code>usuarios</code> (perfil global 1:1 con <code>auth.users</code>, que se aísla por <code>membresias</code>).
+    Los importes los calcula la base de datos, nunca el navegador.
+  </div>
+
+  <!-- ============ FLUJO ============ -->
+  <h2><span class="num">1</span>El flujo que cubre</h2>
+  <p class="lede">De presupuestar una obra a saber cuánto se gana con ella. Dos corrientes se juntan en el margen: lo que se factura (ingreso) y lo que cuesta ejecutar (coste).</p>
+
+  <div class="flujo">
+    <div class="paso ingreso"><div class="et">Presupuesto</div><div class="tt">Obra → Capítulos → Partidas</div><div class="ds">Medición × precio/unidad</div></div>
+    <div class="flecha">→</div>
+    <div class="paso ingreso"><div class="et">Avance</div><div class="tt">Certificaciones</div><div class="ds">Cuánto se ejecuta cada período</div></div>
+    <div class="flecha">→</div>
+    <div class="paso ingreso"><div class="et">Cobro</div><div class="tt">Factura + VeriFactu</div><div class="ds">Registro inalterable AEAT</div></div>
+  </div>
+  <div class="flujo">
+    <div class="paso coste"><div class="et">Coste material</div><div class="tt">Albaranes de proveedor</div><div class="ds">Líneas: cantidad × precio</div></div>
+    <div class="flecha">+</div>
+    <div class="paso coste"><div class="et">Coste mano de obra</div><div class="tt">Partes de trabajo</div><div class="ds">Horas × coste/hora real vigente</div></div>
+    <div class="flecha">→</div>
+    <div class="paso margen"><div class="et">Resultado</div><div class="tt">Margen por obra</div><div class="ds">Certificado − costes imputados</div></div>
+  </div>
+
+  <div class="formula">
+    margen = <span style="color:var(--azul)">producción certificada</span> − ( <span style="color:var(--ambar)">material</span> + <span style="color:var(--ambar)">mano de obra</span> + otros )  →  <b>obra_margen</b>
+  </div>
+  <p class="lede">Todos los costes, vengan de un albarán o de un parte, se vuelcan en un libro único (<code>imputacion_costes</code>). El margen se lee en vivo de la vista <code>obra_margen</code>: no se almacena, para que siempre refleje el estado real.</p>
+
+  <!-- ============ TABLAS ============ -->
+  <h2><span class="num">2</span>Las 20 tablas</h2>
+  <p class="lede">Agrupadas por función. Casi todas siguen el mismo patrón de RLS: leer si el tenant es visible, escribir si es editable.</p>
+
+  <div class="tarjeta" style="padding:0; overflow:hidden">
+  <table>
+    <thead><tr><th>Tabla</th><th>Qué guarda</th><th>Relaciones</th><th>tenant_id · RLS</th></tr></thead>
+    <tbody>
+      <tr class="grupo-cab"><td colspan="4">Identidad y seguridad</td></tr>
+      <tr><td><code>tenants</code></td><td>Empresas constructoras. Unidad de aislamiento.</td><td>Raíz de todo</td><td><span class="pill t">es el tenant</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>usuarios</code></td><td>Perfil 1:1 con <code>auth.users</code> de Supabase.</td><td>— (global)</td><td><span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>membresias</code></td><td>Usuario ↔ empresa, con su rol (admin, jefe de obra, administrativo, operario, solo lectura).</td><td>→ tenants, usuarios</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+
+      <tr class="grupo-cab"><td colspan="4">Maestros</td></tr>
+      <tr><td><code>clientes</code></td><td>Promotores para los que se ejecuta la obra.</td><td>→ tenants</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>proveedores</code></td><td>De material, maquinaria y subcontratas.</td><td>→ tenants</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>operarios</code></td><td>Personal que imputa horas; opcionalmente ligado a un usuario.</td><td>→ tenants, usuarios</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>costes_hora</code></td><td>Coste/hora real de cada operario, <strong>con vigencia</strong> (desde/hasta).</td><td>→ operarios</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+
+      <tr class="grupo-cab"><td colspan="4">Presupuesto</td></tr>
+      <tr><td><code>obras</code></td><td>El proyecto: código, estado, contrato, retención de garantía.</td><td>→ clientes</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>capitulos</code></td><td>Primer nivel del presupuesto (cimentación, estructura…).</td><td>→ obras</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>partidas</code></td><td>Unidad presupuestaria: medición × precio_unidad = importe.</td><td>→ obras, capitulos</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+
+      <tr class="grupo-cab"><td colspan="4">Certificación y factura (ingreso)</td></tr>
+      <tr><td><code>certificaciones</code></td><td>Avance de obra de un período; correlativa por obra.</td><td>→ obras</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>lineas_certificacion</code></td><td>Cuánto se certifica de cada partida (acumulado − anterior).</td><td>→ certificaciones, partidas</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>facturas</code></td><td>Venta al promotor; nace de una certificación o libre.</td><td>→ obras, clientes, certificaciones</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>lineas_factura</code></td><td>Líneas con base, IVA e IRPF calculados por la base.</td><td>→ facturas</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>registros_verifactu</code></td><td>Cadena de registros de facturación VeriFactu (append-only, huella).</td><td>→ facturas</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+
+      <tr class="grupo-cab"><td colspan="4">Costes (material + mano de obra)</td></tr>
+      <tr><td><code>albaranes</code></td><td>Material recibido para una obra, de un proveedor.</td><td>→ obras, proveedores</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>lineas_albaran</code></td><td>Materiales: cantidad × precio; se pueden imputar a una partida.</td><td>→ albaranes, partidas</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>partes_trabajo</code></td><td>Parte diario de un operario (una fila por operario y día).</td><td>→ operarios</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>lineas_parte</code></td><td>Horas a una obra/partida × coste/hora aplicado = importe.</td><td>→ partes_trabajo, obras, partidas</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+      <tr><td><code>imputacion_costes</code></td><td>Libro único de costes de la obra. Base del margen.</td><td>→ obras, capitulos, partidas, albaranes, partes</td><td><span class="pill t">tenant_id</span> <span class="pill ok">RLS</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- ============ DECISIONES ============ -->
+  <h2><span class="num">3</span>Decisiones de diseño</h2>
+  <div class="cols">
+    <div class="mini"><h4>La base calcula los importes</h4><p>Partidas, líneas de certificación, de factura, de albarán y de parte usan columnas <em>generated</em>. El total de factura, certificación, albarán y parte lo ponen triggers. El navegador no cuadra importes: los lee.</p></div>
+    <div class="mini"><h4>Coste/hora con vigencia</h4><p><code>costes_hora</code> guarda un histórico por operario. <code>app.coste_hora_vigente()</code> devuelve el tramo correcto a la fecha del parte, y la línea congela ese valor para que no cambie si luego se edita la tarifa.</p></div>
+    <div class="mini"><h4>Precios congelados al certificar</h4><p>Cada línea de certificación copia el precio de la partida. Una certificación aprobada no debe moverse porque después se retoque el presupuesto.</p></div>
+    <div class="mini"><h4>VeriFactu: contenedor, no cálculo</h4><p>La tabla define <em>dónde</em> vive el registro y su huella, inalterable por trigger. El algoritmo de huella, QR y XML se programan contra la especificación oficial de la AEAT, no se inventan.</p></div>
+    <div class="mini"><h4>Aislamiento por tenant, doble capa</h4><p>RLS decide qué filas; los GRANT por columna, qué campos. <code>numero</code> de factura, totales y <code>es_superadmin</code> quedan fuera del GRANT: solo los mueve el proceso de emisión.</p></div>
+    <div class="mini"><h4>Coherencia de árbol</h4><p>Triggers verifican que la partida pertenece a la obra de su capítulo, que la línea pertenece a la empresa de su cabecera, y que no se cambia el <code>tenant_id</code> de una fila existente.</p></div>
+  </div>
+
+  <h2><span class="num">4</span>Cómo se calcula el margen</h2>
+  <div class="tarjeta">
+    <p>La vista <code>obra_margen</code> (con <code>security_invoker</code>, así respeta la RLS) une por obra:</p>
+    <ul class="limpia">
+      <li><strong>total_certificado</strong> — suma de bases de las certificaciones no anuladas.</li>
+      <li><strong>total_facturado</strong> — suma de bases de las facturas emitidas.</li>
+      <li><strong>coste_material / coste_mano_obra / coste_otros</strong> — desglose de <code>imputacion_costes</code> por tipo.</li>
+      <li><strong>margen</strong> = certificado − coste total, y <strong>margen_porcentaje</strong> sobre lo certificado.</li>
+    </ul>
+  </div>
+
+  <footer>
+    Brigada · esquema SQL: <code>obra-esquema.sql</code> · Base nueva PostgreSQL/Supabase · generado el 02/10/2026
+  </footer>
+
+</div>
+</body>
+</html>

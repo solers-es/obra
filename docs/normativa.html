@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Normativa de obra e instaladores</title>
+<style>
+  :root{
+    --bg:#0f1115; --bg2:#161a21; --card:#1b212b; --card2:#212834;
+    --tx:#e7ecf3; --tx2:#aab4c2; --mut:#7e8a9a;
+    --bd:#2a3340; --acc:#4fa3ff; --acc2:#7cc4ff;
+    --ok:#3ecf8e; --okbg:#133028; --warn:#ffb454; --warnbg:#332512;
+    --obl:#ff6b6b; --oblbg:#331818; --vent:#5bb0ff; --ventbg:#13273b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--acc2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  header.top{border-bottom:1px solid var(--bd);padding-bottom:22px;margin-bottom:10px}
+  h1{font-size:30px;line-height:1.2;margin:0 0 8px}
+  .sub{color:var(--tx2);font-size:16px;margin:0}
+  .meta{color:var(--mut);font-size:13px;margin-top:10px}
+  .lead{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:18px 20px;margin:22px 0}
+  .lead p{margin:0 0 8px}
+  .lead p:last-child{margin:0}
+  nav.toc{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px 20px;margin:22px 0}
+  nav.toc h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
+  nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+  @media(max-width:640px){nav.toc ol{columns:1}}
+  nav.toc li{margin:4px 0;break-inside:avoid}
+  section.block{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:22px 24px;margin:20px 0;scroll-margin-top:16px}
+  h2.bt{font-size:21px;margin:0 0 4px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  h2.bt .n{color:var(--acc);font-variant-numeric:tabular-nums;font-size:18px;font-weight:700}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    padding:2px 9px;border-radius:999px;vertical-align:middle}
+  .tag.obl{color:#ffd2d2;background:var(--oblbg);border:1px solid #5a2a2a}
+  .tag.vent{color:#cfe6ff;background:var(--ventbg);border:1px solid #2a4a6a}
+  .tag.mix{color:#ffe6c2;background:var(--warnbg);border:1px solid #5a4420}
+  h3{font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:var(--acc2);margin:18px 0 6px}
+  h3.es{color:var(--tx2)}
+  p{margin:8px 0}
+  ul{margin:8px 0;padding-left:22px}
+  li{margin:5px 0}
+  .fuente{font-size:13px;color:var(--mut);margin-top:14px;border-top:1px dashed var(--bd);padding-top:10px}
+  .fuente strong{color:var(--tx2)}
+  code{background:var(--bg2);border:1px solid var(--bd);border-radius:5px;padding:1px 6px;font-size:13px;color:var(--acc2)}
+  .soft{color:var(--tx2)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  tr:last-child td{border-bottom:none}
+  .check{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--bd);border-radius:14px;padding:24px;margin-top:30px}
+  .check h2{font-size:24px;margin:0 0 4px}
+  .ck{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--bd)}
+  .ck:last-child{border-bottom:none}
+  .ck .bx{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:2px solid var(--mut);margin-top:2px}
+  .ck.o .bx{border-color:var(--obl);background:var(--oblbg)}
+  .ck.v .bx{border-color:var(--vent);background:var(--ventbg)}
+  .ck .t{flex:1}
+  .ck .t b{display:block}
+  .ck .t span{color:var(--tx2);font-size:14px}
+  .ck .lbl{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.05em;padding:3px 8px;border-radius:6px;margin-top:2px}
+  .ck.o .lbl{color:#ffd2d2;background:var(--oblbg);border:1px solid #5a2a2a}
+  .ck.v .lbl{color:#cfe6ff;background:var(--ventbg);border:1px solid #2a4a6a}
+  .note{font-size:13px;color:var(--mut);margin-top:18px;line-height:1.55}
+  .warnbox{background:var(--warnbg);border:1px solid #5a4420;border-radius:10px;padding:12px 16px;margin:14px 0;color:#ffe6c2;font-size:14px}
+  .footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(--bd);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Normativa española para un software de gestión de obra e instaladores</h1>
+  <p class="sub">Qué exige la ley, qué debe hacer nuestro producto para ser legal y creíble, y en qué podemos pasar por encima de la competencia cumpliendo mejor.</p>
+  <p class="meta">Preparado el 2 de octubre de 2026 · Todas las fuentes son oficiales (BOE, AEAT, Facturae, INSST, diputaciones forales). Donde algo no se ha podido confirmar en fuente oficial, se dice expresamente.</p>
+</header>
+
+<div class="lead">
+  <p>Un software de obra toca <strong>tres mundos normativos a la vez</strong>: el <strong>fiscal</strong> (cómo se factura: VeriFactu, TicketBAI, Facturae), el <strong>sectorial de construcción</strong> (subcontratación, edificación, seguridad y salud, certificaciones, presupuestos BC3) y el <strong>laboral</strong> (registro de jornada, tarjeta profesional). Cumplir los tres es lo que diferencia un producto legal y vendible de una herramienta bonita que una gestoría no puede recomendar.</p>
+  <p class="soft">Aviso: este documento es un mapa normativo para desarrollo de producto, no asesoramiento jurídico. Antes de dar nada por cerrado se lee el texto oficial enlazado en cada bloque.</p>
+</div>
+
+<nav class="toc">
+  <h2>Contenido</h2>
+  <ol>
+    <li><a href="#s1">VeriFactu (RD 1007/2023)</a></li>
+    <li><a href="#s2">TicketBAI (País Vasco)</a></li>
+    <li><a href="#s3">Facturae y FACe (Ley 25/2013)</a></li>
+    <li><a href="#s4">Subcontratación y REA (Ley 32/2006)</a></li>
+    <li><a href="#s5">LOE (Ley 38/1999)</a></li>
+    <li><a href="#s6">Certificaciones de obra (LCSP)</a></li>
+    <li><a href="#s7">Seguridad y salud (RD 1627/1997)</a></li>
+    <li><a href="#s8">Formato FIEBDC-3 / BC3</a></li>
+    <li><a href="#s9">Registro de jornada y TPC</a></li>
+    <li><a href="#check">Checklist de cumplimiento</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section class="block" id="s1">
+  <h2 class="bt"><span class="n">1</span> VeriFactu — RD 1007/2023 y Orden HAC/1177/2024 <span class="tag obl">Obligatorio</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>Reglamento que fija los requisitos que deben cumplir <strong>todos los sistemas y programas informáticos de facturación</strong> (SIF) de empresarios y profesionales, para garantizar que los registros de factura sean <strong>íntegros, conservados, accesibles, legibles, trazables e inalterables</strong>. Es la respuesta a la "ley antifraude" (Ley 11/2021). El reglamento base es el <strong>RD 1007/2023</strong>; las especificaciones técnicas (estructura XML, huella, QR, webservice) están en la <strong>Orden HAC/1177/2024</strong>.</p>
+  <p>Tiene dos modos: <strong>VERI*FACTU</strong> (el sistema envía cada registro a la AEAT en tiempo casi real) y <strong>modo no verificable / "no VERI*FACTU"</strong> (no envía, pero debe cumplir requisitos reforzados de inalterabilidad y conservación, con firma electrónica y registro de eventos). Nuestro producto debería soportar como mínimo el modo VERI*FACTU, que es el más simple de cumplir y el que da confianza.</p>
+  <h3>Qué debe hacer el software</h3>
+  <ul>
+    <li><strong>Huella encadenada (hash):</strong> cada registro de facturación incorpora el hash del registro anterior, formando una cadena que detecta cualquier alteración o borrado.</li>
+    <li><strong>Registro de alta y de anulación:</strong> generar un registro por cada factura emitida y otro por cada anulación. No se borra ni se modifica: se encadena un registro de anulación.</li>
+    <li><strong>Código QR en la factura</strong> con los datos de cotejo, más la mención <em>"Factura verificable en la sede electrónica de la AEAT"</em> (o <em>"VERI*FACTU"</em>) cuando se opera en ese modo.</li>
+    <li><strong>Envío a la AEAT</strong> por servicio web en formato XML (UTF-8) según la Orden, en modo VERI*FACTU.</li>
+    <li><strong>Registro de eventos</strong> interno y medidas de inalterabilidad; prohibido el software de "doble uso" (que permita llevar dos contabilidades).</li>
+    <li><strong>Declaración responsable del fabricante:</strong> como desarrolladores debemos emitir una declaración responsable formal de que el producto cumple el RD 1007/2023 y la LGT. Es un requisito del reglamento y, de cara al cliente, un sello de credibilidad.</li>
+  </ul>
+  <div class="warnbox"><strong>Fechas (actualizadas por el RD-ley 15/2025, convalidado):</strong> sociedades (Impuesto sobre Sociedades) desde el <strong>1 de enero de 2027</strong>; resto de obligados —autónomos/IRPF, no residentes con establecimiento permanente, entidades en atribución de rentas— desde el <strong>1 de julio de 2027</strong>. Los <strong>fabricantes de software</strong> deben ofrecer productos adaptados antes (plazo ligado a la orden ministerial). Antes se hablaba de 2025/2026: esas fechas quedaron derogadas.</div>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://boe.es/eli/es/rd/2023/12/05/1007">RD 1007/2023 (BOE)</a> ·
+    <a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2024-22138">Orden HAC/1177/2024 (BOE)</a> ·
+    <a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2025-24446">RD-ley 15/2025, nuevos plazos (BOE)</a> ·
+    <a href="https://sede.agenciatributaria.gob.es/Sede/normativa-criterios-interpretativos/analisis/El__Reglamento_Veri_factu_.html">AEAT — El Reglamento Veri*factu</a>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="block" id="s2">
+  <h2 class="bt"><span class="n">2</span> TicketBAI — País Vasco <span class="tag obl">Obligatorio (si hay clientes vascos)</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>Sistema de control fiscal propio de las tres <strong>Haciendas forales</strong> del País Vasco (Álava, Bizkaia y Gipuzkoa). Obliga a que cada factura o ticket se genere con un software homologado que firma el registro, lo encadena y lo comunica a la Diputación. Es anterior y paralelo a VeriFactu: un cliente con actividad en el País Vasco cumple TicketBAI, no VeriFactu.</p>
+  <ul>
+    <li><strong>Álava:</strong> obligatorio desde el 1 de diciembre de 2022.</li>
+    <li><strong>Gipuzkoa:</strong> implantación sectorial escalonada 2022–2023; hoy obligatorio para toda actividad económica.</li>
+    <li><strong>Bizkaia:</strong> integrado en el sistema <strong>Batuz</strong> junto al <strong>LROE</strong> (Libro Registro de Operaciones Económicas). Calendario con plena obligatoriedad hacia 2026.</li>
+  </ul>
+  <h3>Qué debe hacer el software</h3>
+  <ul>
+    <li>Generar un <strong>fichero XML TicketBAI por cada factura</strong>, con firma electrónica y encadenado al anterior.</li>
+    <li>Incluir en la factura el <strong>código identificativo TBAI y el código QR</strong>.</li>
+    <li><strong>Impedir modificar o borrar</strong> registros; mantener traza de auditoría completa.</li>
+    <li>Enviar la información a la <strong>Hacienda Foral</strong> correspondiente (y, en Bizkaia, alimentar el LROE de Batuz).</li>
+    <li>Estar <strong>homologado / incluido</strong> en el registro de software de cada diputación (no basta con cumplir: hay que figurar).</li>
+  </ul>
+  <div class="warnbox">El software debe <strong>detectar el territorio fiscal del cliente</strong> y aplicar TicketBAI (con sus tres variantes forales) o VeriFactu según corresponda. Es un diferenciador fuerte frente a competidores que solo cubren el régimen común.</div>
+  <div class="fuente">
+    <strong>Fuentes oficiales forales:</strong>
+    <a href="https://www.araba.eus/web/TicketBai">Diputación Foral de Álava — TicketBAI</a> ·
+    <a href="https://www.batuz.eus/es/ticketbai">Diputación Foral de Bizkaia — Batuz/TicketBAI</a> ·
+    <a href="https://www.gipuzkoa.eus/es/web/ogasuna/ticketbai">Diputación Foral de Gipuzkoa — TicketBAI</a>
+    <br><span class="soft">Nota: estas URLs son los portales oficiales de las diputaciones; conviene re-verificar la ruta exacta antes de enlazarla en producto, porque las haciendas forales reorganizan sus webs con frecuencia.</span>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="block" id="s3">
+  <h2 class="bt"><span class="n">3</span> Facturae y FACe — Ley 25/2013 (factura a las AAPP) <span class="tag obl">Obligatorio en obra pública</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>La <strong>Ley 25/2013</strong> obliga a que las facturas dirigidas a las Administraciones Públicas sean <strong>electrónicas y en formato estructurado</strong>. Desde el <strong>15 de enero de 2015</strong> es obligatorio. Para quien hace <strong>obra pública</strong> (ayuntamientos, diputaciones, CCAA, Estado) esto es ineludible: sin Facturae no se cobra.</p>
+  <h3>Qué debe hacer el software</h3>
+  <ul>
+    <li>Generar la factura en formato <strong>Facturae (XML, versión 3.2.x)</strong>.</li>
+    <li><strong>Firmarla electrónicamente</strong> con firma avanzada <strong>XAdES</strong> basada en certificado reconocido.</li>
+    <li>Permitir el <strong>envío a FACe</strong> (<a href="https://face.gob.es">face.gob.es</a>), el punto general de entrada de facturas electrónicas del Estado y de la mayoría de CCAA y entidades locales.</li>
+    <li>Incluir los <strong>códigos DIR3</strong> (oficina contable, órgano gestor y unidad tramitadora) que la AAPP exige para enrutar la factura.</li>
+    <li>Gestionar los <strong>estados de la factura</strong> (registrada, contabilizada, pagada, rechazada) que devuelve FACe.</li>
+  </ul>
+  <p class="soft">Ojo a no confundir: Facturae/FACe es para facturar <em>a la Administración</em>. VeriFactu/TicketBAI es para el registro fiscal de <em>toda</em> la facturación. Son compatibles y a menudo conviven.</p>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-13722">Ley 25/2013 (BOE)</a> ·
+    <a href="https://www.facturae.gob.es/formato">Facturae — especificación del formato</a> ·
+    <a href="https://face.gob.es">FACe — Punto General de Entrada</a>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="block" id="s4">
+  <h2 class="bt"><span class="n">4</span> Subcontratación — Ley 32/2006 + REA + Libro de Subcontratación <span class="tag obl">Obligatorio</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>La <strong>Ley 32/2006</strong> regula la subcontratación en construcción para mejorar seguridad y salud. Sus dos piezas prácticas, desarrolladas por el <strong>RD 1109/2007</strong>, son el <strong>REA</strong> (Registro de Empresas Acreditadas) y el <strong>Libro de Subcontratación</strong>. La ley <strong>limita la cadena de subcontratación a 3 niveles</strong> y obliga a que toda empresa que contrate exija al subcontratista estar inscrito en el REA.</p>
+  <h3>Qué debe hacer el software (datos que debe llevar)</h3>
+  <ul>
+    <li><strong>Ficha de cada empresa</strong> con su número y vigencia de inscripción en el <strong>REA</strong> de la autoridad laboral competente, y alerta cuando caduca o falta.</li>
+    <li><strong>Libro de Subcontratación por obra</strong>, que refleje en <strong>orden cronológico desde el inicio</strong> todas las subcontrataciones: contratista y subcontratista, nivel en la cadena, objeto, fecha, representantes, delegado de prevención, etc.</li>
+    <li><strong>Control del límite de 3 niveles</strong>: avisar cuando una subcontratación excede el nivel permitido.</li>
+    <li>Verificación de que cada subcontratista tiene <strong>≥30% de plantilla con contrato indefinido</strong> y organización preventiva propia (exigencias del RD 1109/2007).</li>
+    <li>Exportable/imprimible para mostrarlo en la obra y a la Inspección (el libro debe estar en la obra en todo momento).</li>
+  </ul>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.boe.es/buscar/doc.php?id=BOE-A-2006-18205">Ley 32/2006 (BOE)</a> ·
+    <a href="https://www.boe.es/buscar/pdf/2006/BOE-A-2006-18205-consolidado.pdf">Texto consolidado (PDF BOE)</a> ·
+    <span class="soft">RD 1109/2007 (desarrollo del REA y del Libro de Subcontratación) — <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2007-15766">BOE-A-2007-15766</a>.</span>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="block" id="s5">
+  <h2 class="bt"><span class="n">5</span> LOE — Ley 38/1999 de Ordenación de la Edificación <span class="tag mix">Obligatorio documentar · ventaja gestionarlo</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>Regula el <strong>proceso de edificación</strong>: define los <strong>agentes</strong> (promotor, proyectista, constructor, dirección facultativa, etc.), sus obligaciones y responsabilidades, las <strong>garantías</strong> frente a daños y el <strong>Libro del Edificio</strong>.</p>
+  <h3>Lo relevante para gestión de obra</h3>
+  <ul>
+    <li><strong>Agentes de la edificación:</strong> el software debe modelar los roles y sus datos (quién es promotor, dirección de obra, dirección de ejecución, constructor…), porque de ahí cuelgan responsabilidades y firmas.</li>
+    <li><strong>Garantías por plazos:</strong> 1 año (daños por ejecución deficiente, responde el constructor), 3 años (defectos de habitabilidad) y 10 años (defectos estructurales). Útil para avisos y seguimiento posventa.</li>
+    <li><strong>Libro del Edificio:</strong> recopilar y entregar la documentación final de obra (proyecto final, identificación de agentes, instrucciones de uso y <strong>plan de mantenimiento</strong>). Un módulo que compone el Libro del Edificio automáticamente es una ventaja clara.</li>
+    <li><strong>Seguros/garantías obligatorias</strong> (según uso del edificio) cuyo control de vigencia el software puede llevar.</li>
+  </ul>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.boe.es/buscar/act.php?id=BOE-A-1999-21567">Ley 38/1999, LOE (BOE)</a> ·
+    <a href="https://www.boe.es/buscar/pdf/1999/BOE-A-1999-21567-consolidado.pdf">Texto consolidado (PDF BOE)</a> ·
+    <a href="https://www.codigotecnico.org">Código Técnico de la Edificación (CTE)</a>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="block" id="s6">
+  <h2 class="bt"><span class="n">6</span> Certificaciones de obra — LCSP (Ley 9/2017) <span class="tag mix">Obligatorio en obra pública</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>La <strong>certificación de obra</strong> es el documento con el que se reconoce y abona la obra ejecutada en un periodo. En <strong>obra pública</strong> la regula la <strong>LCSP (Ley 9/2017)</strong>: la dirección facultativa expide <strong>certificaciones mensuales</strong> durante los diez primeros días del mes siguiente al ejecutado (art. 240), a partir de la <strong>relación valorada</strong> (medición de cada unidad de obra por su precio unitario). Son <strong>abonos a cuenta</strong> sujetos a la medición final: no suponen aprobación ni recepción de la obra.</p>
+  <h3>Qué debe hacer el software</h3>
+  <ul>
+    <li>Partir del <strong>presupuesto por capítulos y partidas</strong> y registrar <strong>mediciones</strong> por periodo.</li>
+    <li>Generar la <strong>relación valorada</strong> (medición × precio unitario) y, a partir de ella, la <strong>certificación mensual</strong> (origen y por diferencia con la anterior).</li>
+    <li>Controlar el flujo de <strong>conformidad del contratista</strong> (plazo de 10 días hábiles para conformidad u observaciones).</li>
+    <li>Distinguir certificación <strong>a origen</strong> vs. <strong>del periodo</strong>, y acumulados, con control de desviaciones frente a presupuesto.</li>
+    <li>Gestionar <strong>modificados, precios contradictorios, revisión de precios y liquidación final</strong>.</li>
+    <li>Emitir la <strong>factura</strong> asociada a cada certificación (que en obra pública irá en Facturae a FACe — ver bloque 3).</li>
+  </ul>
+  <p class="soft">En obra privada no hay un formato legal impuesto, pero el mecanismo (presupuesto → medición → relación valorada → certificación → factura) es el mismo y el mercado lo espera igual.</p>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2017-12902">Ley 9/2017, LCSP (BOE)</a> — ver art. 240 (certificaciones y abonos) y disposiciones sobre ejecución del contrato de obras.
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="block" id="s7">
+  <h2 class="bt"><span class="n">7</span> Seguridad y salud — RD 1627/1997 <span class="tag obl">Obligatorio</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p>Establece las <strong>disposiciones mínimas de seguridad y salud en las obras de construcción</strong> (transpone la Directiva 92/57/CEE y desarrolla la Ley 31/1995 de PRL). Define el <strong>Estudio de Seguridad y Salud</strong> (o Estudio Básico), el <strong>Plan de Seguridad y Salud</strong>, la figura del <strong>coordinador</strong> (en fase de proyecto y de ejecución) y documentos como el <strong>Libro de Incidencias</strong> y el <strong>aviso previo</strong> a la autoridad laboral.</p>
+  <h3>Qué documentación gestiona el software</h3>
+  <ul>
+    <li><strong>Estudio / Estudio Básico de Seguridad y Salud</strong> asociado al proyecto.</li>
+    <li><strong>Plan de Seguridad y Salud</strong> del contratista y su aprobación por el coordinador.</li>
+    <li><strong>Libro de Incidencias</strong> y registro de visitas del coordinador.</li>
+    <li><strong>Aviso previo</strong> a la autoridad laboral y apertura del centro de trabajo.</li>
+    <li><strong>Coordinación de actividades empresariales (CAE):</strong> acopio y control de vigencia de la documentación de cada empresa y trabajador en obra (formación PRL, reconocimientos médicos, EPIs, altas en SS, etc.) — directamente ligado a la <strong>TPC</strong> del bloque 9.</li>
+    <li>Identificación del <strong>coordinador de seguridad y salud</strong> designado por el promotor.</li>
+  </ul>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.boe.es/buscar/doc.php?id=BOE-A-1997-22614">RD 1627/1997 (BOE)</a> ·
+    <a href="https://www.boe.es/buscar/pdf/1997/BOE-A-1997-22614-consolidado.pdf">Texto consolidado (PDF BOE)</a> ·
+    <a href="https://www.insst.es/documents/94886/6185182/g_obras+2012.pdf/a3d419b4-e0c6-1a60-cc58-1d059fbab5b0">Guía Técnica del INSST</a>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="block" id="s8">
+  <h2 class="bt"><span class="n">8</span> Formato FIEBDC-3 (.bc3) <span class="tag vent">Ventaja competitiva fuerte</span></h2>
+  <h3 class="es">Qué es</h3>
+  <p><strong>FIEBDC-3</strong> (Formato de Intercambio Estándar de Bases de Datos para la Construcción, versión 3) es el <strong>estándar español de facto</strong> para intercambiar presupuestos, mediciones y bases de precios entre programas. El fichero <strong>.bc3</strong> es texto plano donde cada línea empieza por <code>~</code> y una letra según el tipo de dato: <code>~V</code> versión, <code>~C</code> concepto (capítulo/partida/material), <code>~D</code> descomposición, <code>~T</code> texto, <code>~M</code> mediciones, <code>~K</code> coeficientes.</p>
+  <h3>Por qué importar/exportar BC3 es clave</h3>
+  <ul>
+    <li>Es el formato en el que circulan los presupuestos entre <strong>Presto, Arquímedes, bases de precios oficiales</strong> (CYPE, Centro de precios de la construcción, bases autonómicas) y los proyectos. Sin BC3, el usuario tendría que re-teclear todo.</li>
+    <li>Muchas <strong>licitaciones públicas exigen</strong> presentar/recibir el presupuesto en BC3.</li>
+    <li>Importar una base de precios oficial en BC3 y exportar presupuestos y certificaciones en BC3 hace nuestro producto <strong>interoperable desde el día uno</strong> — es exactamente donde la competencia pierde o encierra al cliente.</li>
+    <li>El formato soporta también <strong>mediciones y certificaciones</strong>, no solo precios: se puede cubrir todo el ciclo (bloque 6) con el mismo estándar.</li>
+  </ul>
+  <div class="warnbox">No es una obligación legal, pero <strong>sí una obligación de mercado</strong>: un software de presupuestos/obra sin BC3 no se considera serio en España. La especificación oficial la mantiene el comité <strong>FIEBDC</strong>.</div>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.fiebdc.es">FIEBDC — comité y especificación oficial del formato</a> ·
+    <a href="https://es.wikipedia.org/wiki/FIEBDC">FIEBDC (resumen)</a>
+    <br><span class="soft">Nota: FIEBDC no es BOE (es un estándar sectorial, no una norma legal). La especificación técnica se descarga de fiebdc.es; conviene confirmar la versión vigente del documento antes de implementar el parser.</span>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="block" id="s9">
+  <h2 class="bt"><span class="n">9</span> Registro de jornada (RD-ley 8/2019) y TPC <span class="tag obl">Obligatorio</span></h2>
+  <h3 class="es">Qué es — Registro de jornada</h3>
+  <p>El <strong>RD-ley 8/2019</strong> introdujo el <strong>art. 34.9 del Estatuto de los Trabajadores</strong>: toda empresa debe <strong>registrar diariamente la jornada</strong> de cada trabajador (hora de inicio y de fin), sea cual sea su tamaño o sector. En vigor desde el <strong>12 de mayo de 2019</strong>.</p>
+  <h3>Qué debe hacer el software</h3>
+  <ul>
+    <li><strong>Fichaje de entrada/salida</strong> por trabajador, idealmente desde móvil <strong>a pie de obra</strong> (y por obra/centro, porque un peón rota entre tajos).</li>
+    <li><strong>Conservar los registros 4 años</strong> y ponerlos a disposición del trabajador, sus representantes y la Inspección de Trabajo.</li>
+    <li>Reportes de horas por trabajador, por obra y por periodo (y base para nóminas y certificaciones).</li>
+  </ul>
+  <h3 class="es">Qué es — Tarjeta Profesional de la Construcción (TPC)</h3>
+  <p>Acredita la <strong>formación en prevención de riesgos</strong> y la experiencia del trabajador del sector. Nace de la <strong>Ley 32/2006</strong> y del <strong>Convenio General del Sector de la Construcción</strong>, la emite la <strong>Fundación Laboral de la Construcción</strong> y es <strong>obligatoria</strong> para trabajar en obra. Caduca a los 5 años.</p>
+  <ul>
+    <li>Registrar la <strong>TPC de cada trabajador</strong> y su vigencia, dentro del control CAE (bloque 7).</li>
+    <li><strong>Alertar de caducidades</strong> de TPC, formación PRL y reconocimientos médicos antes de que el trabajador pise la obra.</li>
+  </ul>
+  <div class="fuente">
+    <strong>Fuentes:</strong>
+    <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2019-3481">RD-ley 8/2019 (BOE)</a> ·
+    <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2015-11430">Estatuto de los Trabajadores, art. 34.9 (BOE)</a> ·
+    <a href="https://www.trabajoenconstruccion.com">Fundación Laboral de la Construcción — TPC</a>
+    <br><span class="soft">Nota: el BOE del RD-ley 8/2019 es BOE-A-2019-3481; conviene confirmar el enlace exacto de la TPC en la web de la Fundación Laboral, que cambia de ruta.</span>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section class="check" id="check">
+  <h2>Checklist de cumplimiento para el producto de obra</h2>
+  <p class="soft">Lo marcado <span style="color:var(--obl);font-weight:700">OBLIGATORIO</span> es lo que hay que cumplir sí o sí para ser legal/vendible. Lo marcado <span style="color:var(--vent);font-weight:700">VENTAJA</span> no es exigido por ley pero es lo que nos pone por encima de la competencia.</p>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Facturación VeriFactu (modo VERI*FACTU)</b><span>Huella encadenada, registro de alta/anulación, QR, envío XML a la AEAT. Plazos 2027.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Declaración responsable del fabricante</b><span>Documento formal de que el software cumple el RD 1007/2023 y la LGT.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>TicketBAI si hay clientes en el País Vasco</b><span>XML firmado por factura, TBAI+QR, envío a la Hacienda Foral, software homologado (Álava/Bizkaia-Batuz/Gipuzkoa).</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Facturae 3.2.x + firma XAdES + envío a FACe</b><span>Imprescindible para cobrar obra pública. Con códigos DIR3 y estados de factura.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Libro de Subcontratación + control REA</b><span>Cadena máx. 3 niveles, inscripción REA de cada empresa, orden cronológico por obra.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Registro de jornada diario (4 años)</b><span>Fichaje inicio/fin por trabajador y por obra; conservación y acceso a Inspección.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Control de TPC, formación PRL y reconocimientos médicos (CAE)</b><span>Acopio y vigencia de la documentación de seguridad y salud exigida en obra.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Documentación de seguridad y salud (RD 1627/1997)</b><span>Estudio/Plan de SyS, Libro de Incidencias, aviso previo, coordinador designado.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck o"><div class="bx"></div><div class="t"><b>Certificaciones de obra según LCSP en obra pública</b><span>Relación valorada, certificación mensual (art. 240), conformidad del contratista.</span></div><div class="lbl">OBLIGATORIO</div></div>
+
+  <div class="ck v"><div class="bx"></div><div class="t"><b>Importar y exportar FIEBDC-3 (.bc3)</b><span>Interoperar con Presto/Arquímedes y bases de precios; lo exigen muchas licitaciones. Nos hace serios.</span></div><div class="lbl">VENTAJA</div></div>
+
+  <div class="ck v"><div class="bx"></div><div class="t"><b>Composición automática del Libro del Edificio (LOE)</b><span>Proyecto final, agentes, plan de mantenimiento y garantías 1/3/10 años.</span></div><div class="lbl">VENTAJA</div></div>
+
+  <div class="ck v"><div class="bx"></div><div class="t"><b>Detección automática del régimen fiscal por territorio</b><span>Aplicar TicketBAI (3 forales) o VeriFactu según dónde esté el cliente, sin que el usuario lo piense.</span></div><div class="lbl">VENTAJA</div></div>
+
+  <div class="ck v"><div class="bx"></div><div class="t"><b>Ciclo completo presupuesto → medición → certificación → factura</b><span>Un solo hilo de datos del BC3 a la factura VeriFactu/Facturae. Es lo que encadena todo lo anterior.</span></div><div class="lbl">VENTAJA</div></div>
+
+  <p class="note"><strong>Resumen estratégico:</strong> lo OBLIGATORIO nos hace legales y recomendables por una gestoría. Lo que de verdad aplasta a la competencia es <em>unir</em> esas obligaciones en un solo flujo: BC3 → presupuesto → mediciones → certificación LCSP → factura VeriFactu/TicketBAI/Facturae, con el control laboral (jornada + TPC) y de seguridad (CAE) colgando de la misma obra. La mayoría de productos cubren un trozo; ganar es cubrir el hilo entero.</p>
+</section>
+
+<div class="footer">
+  <p>Documento de referencia normativa para desarrollo de producto · Solers / GestorOS · 2026-10-02. No sustituye asesoramiento jurídico: antes de implementar, se lee el texto oficial enlazado en cada bloque. Donde se indica "conviene confirmar" es porque la fuente oficial reorganiza sus URLs y la norma legal concreta debe re-verificarse en el BOE.</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cómo construir un ERP de obra mejor que Eureka</title>
+<style>
+  :root{
+    --bg:#0e1116;
+    --bg2:#141922;
+    --panel:#171d27;
+    --panel2:#1c2430;
+    --line:#2a3340;
+    --tx:#e6ebf2;
+    --tx2:#a7b2c2;
+    --tx3:#7c8799;
+    --acc:#4f9dff;
+    --acc2:#6ad0b2;
+    --warn:#f0b549;
+    --bajo:#6ad0b2;
+    --medio:#f0b549;
+    --alto:#f08b6a;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;
+    font-size:16px;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:16px;
+  }
+  header.hero{
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:
+      radial-gradient(900px 300px at 15% -10%, rgba(79,157,255,0.16), transparent 60%),
+      radial-gradient(700px 260px at 110% 10%, rgba(106,208,178,0.12), transparent 55%),
+      var(--bg2);
+    padding:34px 30px;
+    margin:14px 0 26px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--tx3);
+    margin:0 0 14px;
+    font-weight:600;
+  }
+  h1{
+    font-size:30px;
+    line-height:1.2;
+    margin:0 0 14px;
+    font-weight:700;
+    letter-spacing:-0.3px;
+  }
+  .sub{
+    color:var(--tx2);
+    font-size:16px;
+    margin:0;
+    max-width:70ch;
+  }
+  .meta{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 22px;
+    font-size:13px;
+    color:var(--tx3);
+  }
+  .meta b{color:var(--tx2);font-weight:600;}
+  section{margin:34px 0;}
+  .snum{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:28px;height:28px;
+    border-radius:8px;
+    background:var(--panel2);
+    border:1px solid var(--line);
+    color:var(--acc);
+    font-size:14px;
+    font-weight:700;
+    margin-right:12px;
+    flex:0 0 auto;
+  }
+  h2{
+    font-size:21px;
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    font-weight:700;
+    letter-spacing:-0.2px;
+  }
+  h2 span.t{line-height:1.3;}
+  p{margin:0 0 14px;color:var(--tx);}
+  p.lead{font-size:17px;color:var(--tx);}
+  .callout{
+    border:1px solid var(--line);
+    border-left:3px solid var(--acc);
+    background:var(--panel);
+    border-radius:10px;
+    padding:18px 20px;
+    margin:0;
+  }
+  .callout.one b{color:#fff;}
+  ul.clean{margin:0;padding:0;list-style:none;}
+  ul.clean li{
+    position:relative;
+    padding:10px 0 10px 26px;
+    border-bottom:1px solid var(--line);
+    color:var(--tx);
+  }
+  ul.clean li:last-child{border-bottom:none;}
+  ul.clean li:before{
+    content:"";
+    position:absolute;
+    left:4px;top:18px;
+    width:7px;height:7px;
+    border-radius:2px;
+    background:var(--acc2);
+  }
+  ul.clean li b{color:#fff;font-weight:600;}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:22px 24px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+    margin:0;
+  }
+  .tablewrap{
+    overflow-x:auto;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--panel);
+  }
+  th,td{
+    text-align:left;
+    padding:12px 14px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  th{
+    background:var(--panel2);
+    color:var(--tx2);
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    position:sticky;top:0;
+  }
+  td b{color:#fff;font-weight:600;}
+  tr:last-child td{border-bottom:none;}
+  .tag{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .tag.bajo{background:rgba(106,208,178,0.15);color:var(--bajo);border:1px solid rgba(106,208,178,0.35);}
+  .tag.medio{background:rgba(240,181,73,0.14);color:var(--medio);border:1px solid rgba(240,181,73,0.35);}
+  .tag.alto{background:rgba(240,139,106,0.14);color:var(--alto);border:1px solid rgba(240,139,106,0.35);}
+  .diff{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+  .diffcard{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+  }
+  .diffcard .lbl{
+    display:inline-block;
+    width:26px;height:26px;
+    line-height:26px;
+    text-align:center;
+    border-radius:7px;
+    background:var(--acc);
+    color:#07101d;
+    font-weight:800;
+    font-size:14px;
+    margin-bottom:10px;
+  }
+  .diffcard h3{
+    font-size:16px;
+    margin:0 0 8px;
+    color:#fff;
+    font-weight:700;
+  }
+  .diffcard p{margin:0;color:var(--tx2);font-size:14.5px;}
+  .diffcard .win{
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid var(--line);
+    font-size:14px;
+    color:var(--acc2);
+  }
+  .diffcard .win b{color:var(--acc2);}
+  .phases{display:grid;gap:14px;}
+  .phase{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    position:relative;
+  }
+  .phase .ph{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--tx3);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .phase h3{
+    font-size:17px;
+    margin:0 0 10px;
+    color:#fff;
+    font-weight:700;
+  }
+  .phase.done{border-left:3px solid var(--acc2);}
+  .phase.f1{border-left:3px solid var(--acc);}
+  .phase.f2{border-left:3px solid var(--medio);}
+  .phase.f3{border-left:3px solid var(--alto);}
+  .pill{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:6px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+  .pill.ya{background:rgba(106,208,178,0.15);color:var(--acc2);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .chip{
+    background:var(--panel2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:6px 11px;
+    font-size:13px;
+    color:var(--tx2);
+  }
+  .firststep{
+    border:1px solid rgba(79,157,255,0.4);
+    background:
+      radial-gradient(600px 200px at 0% 0%, rgba(79,157,255,0.12), transparent 60%),
+      var(--panel);
+    border-radius:12px;
+    padding:22px 24px;
+  }
+  .firststep h3{margin:0 0 10px;font-size:17px;color:#fff;}
+  .honest{
+    border:1px solid rgba(240,181,73,0.35);
+    border-left:3px solid var(--warn);
+    background:var(--panel);
+    border-radius:10px;
+    padding:20px 22px;
+  }
+  .reco{
+    margin-top:14px;
+    padding:14px 16px;
+    background:var(--panel2);
+    border-radius:9px;
+    font-size:14.5px;
+  }
+  .reco b{color:var(--warn);}
+  footer{
+    margin:40px 0 24px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    color:var(--tx3);
+    font-size:13px;
+  }
+  footer .flag{color:var(--warn);font-weight:600;}
+  @media(min-width:760px){
+    .diff{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Documento interno de estrategia · Solers</p>
+    <h1>Cómo construir un ERP de obra mejor que Eureka</h1>
+    <p class="sub">Hoja de ruta de producto para decidir si GestorOS entra en el mercado de construcción e instalaciones. Qué tenemos ya, qué habría que construir, y por qué podríamos ser mejores.</p>
+    <div class="meta">
+      <span><b>Para:</b> Stalin (dueño)</span>
+      <span><b>Decisión:</b> ¿entramos en construcción/instalaciones?</span>
+      <span><b>Base:</b> GestorOS</span>
+      <span><b>Fecha:</b> 1 de octubre de 2026</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="snum">1</span><span class="t">Resumen en una frase</span></h2>
+    <div class="callout one">
+      <p class="lead" style="margin:0;">La <b>mitad cara</b> de un ERP —facturación, VeriFactu, contabilidad, multiempresa, portal, IA— <b>ya está hecha en GestorOS</b>. Construir la capa de obra encima y ser mejores que Eureka <b>es viable</b>, pero es un <b>proyecto de varios meses</b> y una <b>decisión de producto</b>, no un apaño.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">2</span><span class="t">La base que ya tenemos (lo caro, ya hecho)</span></h2>
+    <p>Esto es la <b>plataforma reutilizable</b>. No es trabajo de obra, pero es exactamente lo que el 90 % de los ERP de obra hacen regular y nosotros ya tenemos resuelto y probado:</p>
+    <div class="panel">
+      <ul class="clean">
+        <li><b>Multiempresa con seguridad a nivel de fila</b> — cada empresa ve solo lo suyo, a nivel de base de datos.</li>
+        <li><b>Facturación con numeración inalterable + VeriFactu</b> — aceptado en el entorno de pruebas de la AEAT. <i>(Para igualar a Eureka habría que añadir <b>TicketBAI</b>.)</i></li>
+        <li><b>Contabilidad completa por partida doble</b> — 11-12 modelos fiscales y nóminas con convenios.</li>
+        <li><b>Portal del cliente</b> — subir papeles y firmar documentos con huella.</li>
+        <li><b>Stack moderno en la nube</b> — Next.js / React / Supabase, app para móvil y copiloto con IA ya integrado.</li>
+      </ul>
+    </div>
+    <p style="margin-top:16px;">En conjunto, esto es aproximadamente el <b>40-50 % de un ERP sectorial ya construido y probado</b>. No se empieza de cero: se empieza por la mitad.</p>
+  </section>
+
+  <section>
+    <h2><span class="snum">3</span><span class="t">La capa de obra a construir</span></h2>
+    <p>Módulo a módulo, sobre qué parte de nuestra base se apoya cada uno y cuánto esfuerzo supone:</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th>Qué hace</th>
+            <th>Sobre qué base nuestra se apoya</th>
+            <th>Esfuerzo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Obras / proyectos</b></td>
+            <td>Alta de obra, estado, equipo asignado.</td>
+            <td>Multiempresa</td>
+            <td><span class="tag medio">Medio</span></td>
+          </tr>
+          <tr>
+            <td><b>Presupuestos por capítulos y partidas</b></td>
+            <td>Con mediciones; la estructura clásica de un presupuesto de obra.</td>
+            <td>Nuevo, apoya en artículos/facturación</td>
+            <td><span class="tag alto">Alto</span></td>
+          </tr>
+          <tr>
+            <td><b>Certificaciones por avance → factura</b></td>
+            <td>Certificar lo ejecutado y convertirlo en factura con VeriFactu.</td>
+            <td>Facturación</td>
+            <td><span class="tag medio">Medio</span></td>
+          </tr>
+          <tr>
+            <td><b>Partes de trabajo del operario</b></td>
+            <td>Móvil, con fotos, firma, modo sin cobertura y por voz.</td>
+            <td>App móvil</td>
+            <td><span class="tag alto">Alto</span></td>
+          </tr>
+          <tr>
+            <td><b>Imputación de costes a cada obra</b></td>
+            <td>Mano de obra con coste/hora real + compras + gastos, y margen en vivo.</td>
+            <td>Contabilidad</td>
+            <td><span class="tag alto">Alto</span></td>
+          </tr>
+          <tr>
+            <td><b>Compras, pedidos, albaranes y subcontratas</b></td>
+            <td>Pedido a proveedor, recepción por albarán y gestión de subcontratas.</td>
+            <td>Proveedores / gastos</td>
+            <td><span class="tag medio">Medio</span></td>
+          </tr>
+          <tr>
+            <td><b>Almacén / materiales / maquinaria</b></td>
+            <td>Control de existencias y asignación de maquinaria.</td>
+            <td>Nuevo, acotado</td>
+            <td><span class="tag medio">Medio</span></td>
+          </tr>
+          <tr>
+            <td><b>SAT / GMAO</b></td>
+            <td>Contratos de mantenimiento y órdenes de trabajo recurrentes.</td>
+            <td>Nuevo</td>
+            <td><span class="tag alto">Alto</span></td>
+          </tr>
+          <tr>
+            <td><b>CRM comercial</b></td>
+            <td>Leads, oportunidades y seguimiento de ofertas.</td>
+            <td>Cartera</td>
+            <td><span class="tag medio">Medio</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">4</span><span class="t">Cómo ser mucho mejor que Eureka (no solo igual)</span></h2>
+    <p>Igualar a Eureka no basta para que alguien cambie de programa. Estos seis diferenciadores son razones concretas para elegirnos:</p>
+    <div class="diff">
+
+      <div class="diffcard">
+        <span class="lbl">a</span>
+        <h3>Un solo programa: obra + contabilidad/fiscal de verdad</h3>
+        <p>Eureka es fuerte en obra, pero su parte fiscal y contable profunda no está clara. Nosotros hacemos las dos cosas de verdad en un único sistema.</p>
+        <div class="win"><b>Por qué ganamos:</b> el constructor deja de pagar Eureka + asesoría + software contable por separado.</div>
+      </div>
+
+      <div class="diffcard">
+        <span class="lbl">b</span>
+        <h3>Presupuestos con bancos de precios reales</h3>
+        <p>BC3 / FIEBDC, importar de CYPE o Presto, con mediciones. Es lo que usan los que van en serio.</p>
+        <div class="win"><b>Por qué ganamos:</b> es precisamente lo que Eureka no publicita, y lo que exige una constructora profesional.</div>
+      </div>
+
+      <div class="diffcard">
+        <span class="lbl">c</span>
+        <h3>IA de verdad, más allá de un agente por WhatsApp</h3>
+        <p>Leer albaranes y facturas de proveedor con una foto (OCR) e imputarlas solas a la obra. Avisar de desviaciones de coste <b>antes</b> de que pasen. Redactar certificaciones y partes dictando por voz o WhatsApp.</p>
+        <div class="win"><b>Por qué ganamos:</b> su IA es un "agente SAT por WhatsApp"; la nuestra trabaja sobre los datos de la obra.</div>
+      </div>
+
+      <div class="diffcard">
+        <span class="lbl">d</span>
+        <h3>El margen real por obra</h3>
+        <p>Coste/hora de verdad (sueldo + Seguridad Social a cargo de empresa ÷ horas trabajadas reales), no estimado. Une partes + compras + certificaciones.</p>
+        <div class="win"><b>Por qué ganamos:</b> el constructor sabe si gana o pierde en cada obra, con números ciertos, no a ojo.</div>
+      </div>
+
+      <div class="diffcard">
+        <span class="lbl">e</span>
+        <h3>Portal del cliente / promotor de la obra</h3>
+        <p>El promotor ve avance, fotos, certificaciones y firma desde su móvil.</p>
+        <div class="win"><b>Por qué ganamos:</b> Eureka no destaca por tener portal del cliente final; nosotros ya tenemos la pieza.</div>
+      </div>
+
+      <div class="diffcard">
+        <span class="lbl">f</span>
+        <h3>Cumplimiento nativo VeriFactu + TicketBAI</h3>
+        <p>Desde el día uno, sin añadidos de terceros.</p>
+        <div class="win"><b>Por qué ganamos:</b> iguala su cumplimiento para no quedar por detrás; es la línea de salida, no la ventaja.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">5</span><span class="t">Hoja de ruta por fases (realista)</span></h2>
+    <div class="phases">
+
+      <div class="phase done">
+        <div class="ph">Fase 0 <span class="pill ya">Ya hecha</span></div>
+        <h3>La plataforma</h3>
+        <p style="margin:0;color:var(--tx2);">Todo lo del punto 2: multiempresa, facturación + VeriFactu, contabilidad, nóminas, portal, app móvil e IA. La mitad cara, terminada y probada.</p>
+      </div>
+
+      <div class="phase f1">
+        <div class="ph">Fase 1 · MVP de obra <span style="color:var(--tx3);font-weight:600;">(meses)</span></div>
+        <h3>Lo mínimo para enseñar y vender a una obra real</h3>
+        <div class="chips">
+          <span class="chip">Obras</span>
+          <span class="chip">Presupuesto por partidas</span>
+          <span class="chip">Certificación → factura</span>
+          <span class="chip">Parte del operario básico</span>
+          <span class="chip">Imputación de costes básica</span>
+        </div>
+        <p style="margin:12px 0 0;color:var(--tx2);">Con esto ya se puede enseñar y vender a una constructora pequeña.</p>
+      </div>
+
+      <div class="phase f2">
+        <div class="ph">Fase 2 <span style="color:var(--tx3);font-weight:600;">(meses)</span></div>
+        <h3>Costes y compras completos</h3>
+        <div class="chips">
+          <span class="chip">Compras / albaranes / subcontratas</span>
+          <span class="chip">Almacén</span>
+          <span class="chip">Margen en vivo</span>
+          <span class="chip">IA de albaranes</span>
+        </div>
+      </div>
+
+      <div class="phase f3">
+        <div class="ph">Fase 3 <span style="color:var(--tx3);font-weight:600;">(meses)</span></div>
+        <h3>Diferenciación plena</h3>
+        <div class="chips">
+          <span class="chip">SAT / GMAO</span>
+          <span class="chip">CRM</span>
+          <span class="chip">Portal de obra</span>
+          <span class="chip">BC3 / FIEBDC</span>
+          <span class="chip">TicketBAI</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">6</span><span class="t">Qué podemos concretar ya (el primer paso real)</span></h2>
+    <div class="firststep">
+      <h3>Un MVP de la Fase 1 montado sobre GestorOS</h3>
+      <p>Misma base de datos multiempresa, misma facturación con VeriFactu. Nada paralelo, nada que haya que volver a construir después.</p>
+      <p style="margin:0;">Se empieza por lo más pequeño que ya aporta: <b>"una obra, con su presupuesto por partidas, y su certificación que sale en factura"</b>. Eso es lo primero que convierte GestorOS en algo vendible a una constructora pequeña.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">7</span><span class="t">Lo honesto (sin humo)</span></h2>
+    <div class="honest">
+      <p>Es una <b>decisión de producto</b> y <b>varios meses de trabajo enfocado</b>. Eureka está <b>consolidada</b> en su sector y <b>ya cumple VeriFactu y TicketBAI</b>, así que <b>no les ganamos por cumplimiento</b>.</p>
+      <p style="margin:0;">Les ganamos por ser <b>más profundos</b> (obra + fiscal en uno) y <b>más IA-nativos</b>. Ese es el terreno donde tenemos ventaja real; el resto es igualar.</p>
+      <div class="reco">
+        <b>Recomendación:</b> si se decide entrar, hacerlo <b>por fases</b> y <b>validar el MVP con un constructor real</b> antes de construirlo todo.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="flag">Documento interno de estrategia. No subir a public/.</p>
+    <p>Solers · GestorOS · uso interno (Stalin / Alex).</p>
+  </footer>
+
+</div>
+</body>
+</html>
