@@ -8,6 +8,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <meta name="description" content="Prototipo funcional de Brigada: presupuestos, certificaciones, facturas, costes y margen en vivo. Calcula de verdad y guarda en el navegador. Sin base de datos.">
+<meta name="theme-color" content="#f26419">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brigada">
+<link rel="apple-touch-icon" href="icono-180.png">
+<link rel="icon" type="image/png" href="icono-192.png">
 <style>
   :root{
     --naranja:#f26419; --naranja2:#ff7a33;
@@ -2776,6 +2784,7 @@ function restaurarGrupos(){ var st=grpState(), hay=Object.keys(st).length; docum
 try{ restaurarGrupos(); }catch(e){}
 try{ var _h=(location.hash||'').match(/tab=([a-z]+)/); if(_h){ setTimeout(function(){ try{ irTab(_h[1]); }catch(e){} },220); } }catch(e){}
 try{ var _v=(location.hash||'').match(/ver=([A-Za-zñÑ]+)/); if(_v){ setTimeout(function(){ try{ verComo(decodeURIComponent(_v[1])); }catch(e){} },320); } }catch(e){}
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 </script>
 </body>
 </html>
