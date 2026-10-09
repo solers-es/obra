@@ -33,7 +33,7 @@ Next.js / React / Supabase (PostgreSQL con seguridad a nivel de fila), igual que
 
 ## Cumplimiento (lo obligatorio)
 
-VeriFactu (RD 1007/2023; sociedades 1-1-2027, resto 1-7-2027), TicketBAI si hay clientes vascos, Facturae en obra pública, Libro de Subcontratación + REA, registro de jornada, seguridad y salud (RD 1627/1997). Detalle en `docs/normativa.html`.
+VeriFactu (RD 1007/2023 tras el RD-ley 15/2025; sociedades 1-1-2027, resto 1-7-2027; Hacienda ha anunciado octubre de 2028, pendiente de norma), TicketBAI si hay clientes vascos, Facturae en obra pública, Libro de Subcontratación + REA, registro de jornada, seguridad y salud (RD 1627/1997). Detalle en `docs/normativa.html`.
 
 ---
 
