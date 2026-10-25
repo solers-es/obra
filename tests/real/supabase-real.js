@@ -57,7 +57,6 @@ const dniValido = () => { const n = String(10000000 + Math.floor(Math.random() *
 
   // limpieza: el cliente de prueba (RLS permite borrar los propios) y los documentos de esta prueba
   const del = await rest(`clientes?tenant_id=eq.${tenant}&razon_social=like.${encodeURIComponent('Cliente RLS *')}`, ta, { method: 'DELETE' }); ok('RLS: se puede borrar un cliente propio (' + del.status + ')');
- se marcan como borrados
   await rpc('subir_docs', { p_tenant: tenant, p_docs: [{ coleccion: 'obras', doc_id: id, datos: {}, mod_ms: Date.now(), borrado: true }, { coleccion: 'partes', doc_id: id, datos: {}, mod_ms: Date.now(), borrado: true }] }, ta);
   console.log('SERVIDOR REAL OK');
 })().catch(e => { console.error('FALLO:', e.message); process.exit(1); });
