@@ -2016,11 +2016,8 @@ function abrirPresu(pid){ presuActual=pid; var pr=presuPorId(pid); if(!pr) retur
 }
 function pintarPresuDetalle(){
   var pr=presuPorId(presuActual); if(!pr) return; var t=presuTotales(pr);
-  var html='<div class="card"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">'+
-    '<div><div class="et" style="font-size:10px;color:var(--tx3);font-weight:700">Kmat</div><div style="font-weight:800">'+fn(pr.kmat)+'</div></div>'+
-    '<div><div class="et" style="font-size:10px;color:var(--tx3);font-weight:700">Ksub</div><div style="font-weight:800">'+fn(pr.ksub)+'</div></div>'+
-    '<div><div class="et" style="font-size:10px;color:var(--tx3);font-weight:700">Kmo</div><div style="font-weight:800">'+fn(pr.kmo)+'</div></div></div>'+
-    '<p class="sub" style="text-align:center;margin:8px 0 0;font-size:11px">Venta = Material×Kmat + Subcontrata×Ksub + Mano de obra×Kmo</p></div>';
+  var html='';
+  if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirBanco()">＋ Añadir partidas</button></div>';
   pr.capitulos.forEach(function(c){
     html+='<div class="cap abierto"><div class="cap-h"><span class="cnom">'+esc(c.nombre)+'</span><span class="ctot">'+fe(capVenta(c,pr))+'</span></div><div class="cap-body">';
     if(c.partidas.length===0) html+='<div class="partida" style="color:var(--tx3)">Sin partidas.</div>';
@@ -2029,17 +2026,17 @@ function pintarPresuDetalle(){
       html+='<div class="partida"><div class="pn"><span><b>'+esc(p.codigo)+'</b> · '+esc(p.descripcion)+'</span>'+
         '<span><span class="pt">'+fe(cant*ventaUnit(p,pr))+'</span> <button class="borrar" onclick="dupPartida(\''+c.id+'\',\''+p.id+'\')">⧉</button> <button class="borrar" onclick="delPartidaPresu(\''+c.id+'\',\''+p.id+'\')">✕</button></span></div>'+
         '<div class="pgrid"><div class="fld"><label>Cantidad ('+esc(p.ud)+')</label><input class="inp" type="number" step="any" value="'+cant+'" onchange="editPartidaPresu(\''+c.id+'\',\''+p.id+'\',this.value)"></div>'+
-        '<div class="fld"><label>Coste unit. (mat+sub+mo)</label><input class="inp" value="'+fn(costeUnit(p))+' €" disabled></div></div>'+
-        '<div style="font-size:11px;color:var(--tx3);margin-top:3px">Material '+fe(p.mat)+' · Subc. '+fe(p.sub)+' · M.O. '+fe(p.mo)+' · coste línea '+fe(cant*costeUnit(p))+'</div></div>';
+        '<div class="fld"><label>Precio/ud al cliente</label><input class="inp" value="'+fn(ventaUnit(p,pr))+' €" disabled></div></div>'+
+        '</div>';
     });
     html+='</div></div>';
   });
   html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirBanco()">📥 Importar del banco de precios</button></div>';
-  html+='<div class="total-linea"><span class="l">Coste directo</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
-  html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Venta (PEM)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
-  html+='<div class="total-linea"><span class="l">Margen</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
+  html+='<div class="total-linea"><span class="l">Lo que te cuesta</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
+  html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Precio al cliente (sin IVA)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
+  html+='<div class="total-linea"><span class="l">Tu beneficio</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
   html+='<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="imprimirPresu(\''+pr.id+'\')">🖨️ Imprimir / PDF</button><button class="btn sec peque" onclick="abrirCorreo(\'presupuesto\',\''+pr.id+'\')">✉️ Enviar al cliente</button></div>';
-  if(pr.estado!=='contratado') html+='<div class="fila-btn" style="margin-top:8px"><button class="btn verde peque" onclick="contratarPresu()">✓ Marcar contratado → crear obra</button></div>';
+  html+='<div class="fila-btn" style="margin-top:8px"><button class="btn verde" onclick="contratarPresu()">'+(pr.obraId?'🏗️ Ir a la obra':'✓ Lo han aceptado → crear la obra')+'</button></div>';
   document.getElementById('presu-cont').innerHTML=html;
 }
 function capVenta(c,pr){ var v=0; c.partidas.forEach(function(p){ v+=(Number(p.cantidad)||0)*ventaUnit(p,pr); }); return redondear(v); }
@@ -2048,11 +2045,11 @@ function delPartidaPresu(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capi
 function dupPartida(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var n=JSON.parse(JSON.stringify(p)); n.id=id(); c.partidas.push(n); guardar(); pintarPresuDetalle(); toast('Partida duplicada'); }
 function abrirBanco(){
   var porCap={}; BANCO.forEach(function(b){ (porCap[b.cap]=porCap[b.cap]||[]).push(b); });
-  var html='<h3 style="text-align:left">Banco de precios</h3><p class="sub" style="margin:0 0 10px">Toca una partida para añadirla al presupuesto (estándar tipo FIEBDC/BC3).</p><div style="max-height:62vh;overflow:auto">';
+  var html='<h3 style="text-align:left">Banco de precios</h3><p class="sub" style="margin:0 0 10px">Toca ＋ en lo que vayas a hacer. Luego cambia las cantidades.</p><div style="max-height:62vh;overflow:auto">';
   for(var cap in porCap){ html+='<div style="font-weight:800;font-size:12px;margin:10px 0 4px;color:var(--naranja2)">'+esc(cap)+'</div>';
     porCap[cap].forEach(function(b){ html+='<div class="lin"><div class="d" style="cursor:pointer" onclick="fichaBanco(\''+b.codigo+'\')"><b>'+esc(b.codigo)+'</b> '+esc(b.desc)+'<small>'+esc(b.ud)+' · coste '+fe(b.mat+b.sub+b.mo)+' · <span style="color:var(--naranja2)">ⓘ descomposición</span></small></div><div class="m" style="cursor:pointer" onclick="addBanco(\''+b.codigo+'\')">＋</div></div>'; });
   }
-  html+='</div><button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>';
+  html+='</div><button class="btn verde" style="margin-top:12px" onclick="cerrarModal()">✓ Listo</button>';
   abrirModal(html);
 }
 function addBanco(codigo){ var b=BANCO.find(function(x){return x.codigo===codigo;}); if(!b) return; var pr=presuPorId(presuActual);
@@ -2092,27 +2089,47 @@ function fichaBanco(cod){
 function abrirNuevoPresupuesto(){
   var ops=db.clientes.map(function(c){ return '<option value="'+c.id+'">'+esc(c.comercial||c.razon)+'</option>'; }).join('');
   abrirModal('<h3 style="text-align:left">Nuevo presupuesto</h3>'+
-    '<div class="form-grp"><label>Nombre</label><input class="inp" id="pr-nom" placeholder="p. ej. Reforma baño C/ Sol"></div>'+
-    '<div class="form-grp"><label>Cliente</label><select class="inp" id="pr-cli">'+ops+'</select></div>'+
-    '<div class="form-grp"><label>Actividad</label><select class="inp" id="pr-act"><option>Reforma</option><option>Obra Nueva</option><option>Mantenimiento</option><option>Pintura</option><option>Yeso</option></select></div>'+
-    '<div class="pgrid" style="grid-template-columns:repeat(3,1fr)"><div class="form-grp"><label>Kmat</label><input class="inp" id="pr-km" type="number" step="any" value="1.25"></div>'+
-    '<div class="form-grp"><label>Ksub</label><input class="inp" id="pr-ks" type="number" step="any" value="1.3"></div>'+
-    '<div class="form-grp"><label>Kmo</label><input class="inp" id="pr-ko" type="number" step="any" value="1.35"></div></div>'+
-    '<p class="sub" style="font-size:11px;margin:2px 0 0">Los coeficientes K aplican tu margen sobre material, subcontrata y mano de obra.</p>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearPresupuesto()">Crear</button></div>');
+    '<div class="form-grp"><label>¿Qué obra es?</label><input class="inp" id="pr-nom" placeholder="p. ej. Reforma baño C/ Sol"></div>'+
+    '<div class="form-grp"><label>¿Para quién?</label><select class="inp" id="pr-cli" onchange="document.getElementById(\'pr-cnuevo\').style.display=this.value===\'__nuevo\'?\'block\':\'none\'">'+ops+'<option value="__nuevo">＋ Cliente nuevo…</option></select>'+
+    '<input class="inp" id="pr-cnuevo" placeholder="Nombre del cliente nuevo" style="display:'+(ops?'none':'block')+';margin-top:6px"></div>'+
+    '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">Ajustar mi beneficio (avanzado)</summary>'+
+    '<div class="pgrid" style="grid-template-columns:repeat(3,1fr);margin-top:8px"><div class="form-grp"><label>Material ×</label><input class="inp" id="pr-km" type="number" step="any" value="1.25"></div>'+
+    '<div class="form-grp"><label>Subcontrata ×</label><input class="inp" id="pr-ks" type="number" step="any" value="1.3"></div>'+
+    '<div class="form-grp"><label>Mano de obra ×</label><input class="inp" id="pr-ko" type="number" step="any" value="1.35"></div></div>'+
+    '<p class="sub" style="font-size:11px;margin:2px 0 0">Cuánto sumas al coste. 1,25 = ganas un 25% sobre el material.</p></details>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearPresupuesto()">Crear y añadir partidas</button></div>');
+  setTimeout(function(){var e=document.getElementById('pr-nom'); if(e) e.focus();},100);
 }
 function crearPresupuesto(){
-  var nom=document.getElementById('pr-nom').value.trim(); if(!nom){ toast('Pon un nombre'); return; }
+  var nom=document.getElementById('pr-nom').value.trim(); if(!nom){ toast('Pon el nombre de la obra'); return; }
+  var cid=document.getElementById('pr-cli').value;
+  if(cid==='__nuevo' || !cid){
+    var cn=document.getElementById('pr-cnuevo').value.trim(); if(!cn){ toast('Pon el nombre del cliente'); return; }
+    var c={id:id(), razon:cn, comercial:cn, nif:'', dir:'', email:''}; db.clientes.push(c); cid=c.id;
+  }
   db.contadorPresu=(db.contadorPresu||0)+1;
-  var num='2026-'+String(db.contadorPresu).padStart(5,'0');
-  var pr={id:id(), num:num, nombre:nom, clienteId:document.getElementById('pr-cli').value, actividad:document.getElementById('pr-act').value,
+  var num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0');
+  var pr={id:id(), num:num, nombre:nom, clienteId:cid, actividad:'Reforma',
     kmat:parseFloat(document.getElementById('pr-km').value.replace(',','.'))||1, ksub:parseFloat(document.getElementById('pr-ks').value.replace(',','.'))||1, kmo:parseFloat(document.getElementById('pr-ko').value.replace(',','.'))||1,
     iva:0.21, fecha:hoy(), estado:'borrador', capitulos:[]};
-  db.presupuestos.push(pr); guardar(); cerrarModal(); abrirPresu(pr.id); toast('Presupuesto '+num+' creado');
+  db.presupuestos.push(pr); guardar(); cerrarModal(); abrirPresu(pr.id); abrirBanco();
 }
-function contratarPresu(){ var pr=presuPorId(presuActual); pr.estado='contratado'; var t=presuTotales(pr);
-  var o={id:id(), nombre:pr.nombre, cliente:nombreCliente(pr.clienteId), contrato:t.venta, capitulos:[], certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
-  db.obras.push(o); guardar(); toast('Contratado · obra creada'); pintarPresuDetalle(); }
+function contratarPresu(){
+  var pr=presuPorId(presuActual); if(!pr) return;
+  if(pr.obraId && obraPorId(pr.obraId)){ abrirObra(pr.obraId); return; }
+  var n=0; pr.capitulos.forEach(function(c){ n+=c.partidas.length; });
+  if(n===0){ toast('Añade alguna partida antes de contratar'); return; }
+  var t=presuTotales(pr);
+  // las partidas del presupuesto pasan a la obra con su PRECIO DE VENTA (lo que se certifica al cliente)
+  var caps=pr.capitulos.filter(function(c){ return c.partidas.length; }).map(function(c){
+    return {id:id(), nombre:c.nombre, _abierto:true, partidas:c.partidas.map(function(p){
+      return {id:id(), descripcion:p.descripcion, unidad:p.ud||'ud', medicion:Number(p.cantidad)||0, precio:redondear(ventaUnit(p,pr))};
+    })};
+  });
+  var o={id:id(), nombre:pr.nombre, cliente:nombreCliente(pr.clienteId), contrato:t.venta, presuId:pr.id, capitulos:caps, certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
+  db.obras.push(o); pr.estado='contratado'; pr.obraId=o.id; guardar();
+  subActual='o-pre'; document.querySelectorAll('.obratabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.sub==='o-pre'); }); document.querySelectorAll('.obrasub').forEach(function(d){ d.classList.toggle('on', d.id==='o-pre'); });
+  abrirObra(o.id); toast('✅ Obra creada con '+n+' partidas'); }
 
 /* ---------- CLIENTES ---------- */
 function pintarClientes(){
