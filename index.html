@@ -1995,7 +1995,7 @@ var BANCO = [
 /* ---------- PRESUPUESTOS (cálculo coste → venta con K) ---------- */
 function presuPorId(pid){ for(var i=0;i<db.presupuestos.length;i++){ if(db.presupuestos[i].id===pid) return db.presupuestos[i]; } return null; }
 function costeUnit(p){ return (Number(p.mat)||0)+(Number(p.sub)||0)+(Number(p.mo)||0); }
-function ventaUnit(p,pr){ return (Number(p.mat)||0)*pr.kmat + (Number(p.sub)||0)*pr.ksub + (Number(p.mo)||0)*pr.kmo; }
+function ventaUnit(p,pr){ if(p.venta!=null) return Number(p.venta)||0; return (Number(p.mat)||0)*pr.kmat + (Number(p.sub)||0)*pr.ksub + (Number(p.mo)||0)*pr.kmo; }
 function presuTotales(pr){
   var coste=0, venta=0;
   pr.capitulos.forEach(function(c){ c.partidas.forEach(function(p){ var cant=Number(p.cantidad)||0; coste+=cant*costeUnit(p); venta+=cant*ventaUnit(p,pr); }); });
@@ -2025,13 +2025,13 @@ function abrirPresu(pid){ presuActual=pid; var pr=presuPorId(pid); if(!pr) retur
 function pintarPresuDetalle(){
   var pr=presuPorId(presuActual); if(!pr) return; var t=presuTotales(pr);
   var html='';
-  if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirBanco()">＋ Añadir partidas</button></div>';
+  if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirPartidaPropia()">＋ Mi propia partida</button> <button class="btn sec" style="margin-top:10px" onclick="abrirBanco()">📥 Del banco</button></div>';
   pr.capitulos.forEach(function(c){
     html+='<div class="cap abierto"><div class="cap-h"><span class="cnom">'+esc(c.nombre)+'</span><span class="ctot">'+fe(capVenta(c,pr))+'</span></div><div class="cap-body">';
     if(c.partidas.length===0) html+='<div class="partida" style="color:var(--tx3)">Sin partidas.</div>';
     c.partidas.forEach(function(p,i){
       var cant=Number(p.cantidad)||0;
-      html+='<div class="partida"><div class="pn"><span><b>'+esc(p.codigo)+'</b> · '+esc(p.descripcion)+'</span>'+
+      html+='<div class="partida"><div class="pn"><span>'+(p.codigo?'<b>'+esc(p.codigo)+'</b> · ':'')+esc(p.descripcion)+'</span>'+
         '<span><span class="pt">'+fe(cant*ventaUnit(p,pr))+'</span> <button class="borrar" onclick="dupPartida(\''+c.id+'\',\''+p.id+'\')">⧉</button> <button class="borrar" onclick="delPartidaPresu(\''+c.id+'\',\''+p.id+'\')">✕</button></span></div>'+
         '<div class="pgrid"><div class="fld"><label>Cantidad ('+esc(p.ud)+')</label><input class="inp" type="number" step="any" value="'+cant+'" onchange="editPartidaPresu(\''+c.id+'\',\''+p.id+'\',this.value)"></div>'+
         '<div class="fld"><label>Precio/ud al cliente</label><input class="inp" value="'+fn(ventaUnit(p,pr))+' €" disabled></div></div>'+
@@ -2039,7 +2039,7 @@ function pintarPresuDetalle(){
     });
     html+='</div></div>';
   });
-  html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirBanco()">📥 Importar del banco de precios</button></div>';
+  html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirPartidaPropia()">＋ Mi propia partida</button><button class="btn sec peque" onclick="abrirBanco()">📥 Del banco de precios</button></div>';
   html+='<div class="total-linea"><span class="l">Lo que te cuesta</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
   html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Precio al cliente (sin IVA)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
   html+='<div class="total-linea"><span class="l">Tu beneficio</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
@@ -2123,6 +2123,25 @@ function crearPresupuesto(){
     iva:0.21, fecha:hoy(), estado:'borrador', capitulos:[]};
   db.presupuestos.push(pr); guardar(); cerrarModal(); abrirPresu(pr.id); abrirBanco();
 }
+function abrirPartidaPropia(){
+  var pr=presuPorId(presuActual); if(!pr) return;
+  var caps=pr.capitulos.map(function(c){ return '<option>'+esc(c.nombre)+'</option>'; }).join('');
+  abrirModal('<h3 style="text-align:left">Mi partida</h3>'+
+    '<div class="form-grp"><label>¿Qué trabajo es?</label><input class="inp" id="pp-d" placeholder="p. ej. Alicatado de pared"></div>'+
+    '<div class="pgrid"><div class="form-grp"><label>Cantidad</label><input class="inp" id="pp-c" type="number" step="any" value="1" inputmode="decimal"></div>'+
+    '<div class="form-grp"><label>Unidad</label><select class="inp" id="pp-u"><option>ud</option><option>m²</option><option>m</option><option>h</option><option>global</option></select></div></div>'+
+    '<div class="form-grp"><label>Precio por unidad al cliente (€)</label><input class="inp" id="pp-p" type="number" step="any" inputmode="decimal" placeholder="0"></div>'+
+    '<div class="form-grp"><label>En el capítulo</label><input class="inp" id="pp-k" list="pp-kl" value="'+(pr.capitulos.length?esc(pr.capitulos[pr.capitulos.length-1].nombre):'Trabajos')+'"><datalist id="pp-kl">'+caps+'</datalist></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearPartidaPropia()">✓ Añadir</button></div>');
+  setTimeout(function(){ var e=document.getElementById('pp-d'); if(e) e.focus(); },100);
+}
+function crearPartidaPropia(){
+  var pr=presuPorId(presuActual); var d=document.getElementById('pp-d').value.trim(); if(!d){ toast('Pon qué trabajo es'); return; }
+  var kn=document.getElementById('pp-k').value.trim()||'Trabajos';
+  var c=pr.capitulos.find(function(x){return x.nombre===kn;}); if(!c){ c={id:id(), nombre:kn, partidas:[]}; pr.capitulos.push(c); }
+  var num=function(i){ return parseFloat(document.getElementById(i).value.replace(',','.'))||0; };
+  c.partidas.push({id:id(), codigo:'', descripcion:d, ud:document.getElementById('pp-u').value, cantidad:num('pp-c'), mat:0, sub:0, mo:0, venta:num('pp-p')});
+  guardar(); cerrarModal(); pintarPresuDetalle(); toast('Partida añadida'); }
 function duplicarPresu(){ var pr=presuPorId(presuActual); if(!pr) return; var n=JSON.parse(JSON.stringify(pr));
   n.id=id(); db.contadorPresu=(db.contadorPresu||0)+1; n.num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0'); n.nombre=pr.nombre+' (copia)'; n.estado='borrador'; n.obraId=null; n.fecha=hoy();
   n.capitulos.forEach(function(c){ c.id=id(); c.partidas.forEach(function(p){ p.id=id(); }); });
