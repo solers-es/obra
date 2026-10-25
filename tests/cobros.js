@@ -6,7 +6,7 @@ const { chromium } = require('playwright'); const path = require('path'), assert
   await p.goto('file://' + path.resolve(__dirname, '..', 'index.html')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(300);
   await p.fill('#em-n', 'Retenciones SL'); await p.fill('#em-ret', '5'); await p.check('#em-ok'); await p.click('text=✓ Empezar'); await p.evaluate(() => cerrarModal());
   // presupuesto de 1000 € (partida propia) -> obra con retención del 5 % heredada de la empresa
-  await p.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); }); await p.fill('#pr-nom', 'Obra ret'); await p.selectOption('#pr-cli', '__nuevo'); await p.fill('#pr-cnuevo', 'Cli');
+  await p.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); }); await p.fill('#pr-nom', 'Obra ret'); await p.fill('#pr-cli', 'Cli');
   await p.evaluate(() => { crearPresupuesto(); cerrarModal(); abrirPartidaPropia(); }); await p.fill('#pp-d', 'Trabajo'); await p.fill('#pp-c', '1'); await p.fill('#pp-p', '1000'); await p.click('text=✓ Añadir');
   await p.click('text=Lo han aceptado');
   assert.strictEqual(await p.evaluate(() => obraPorId(obraActual).retPct), 5, 'la obra hereda la retención de la empresa');

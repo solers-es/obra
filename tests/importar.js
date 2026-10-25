@@ -14,7 +14,7 @@ const { chromium } = require('playwright'); const path = require('path'), assert
   assert.strictEqual(await p.evaluate(() => db.clientes.length), nClientes + 2, 'el duplicado por NIF no se importa');
   assert.strictEqual(await p.evaluate(() => db.clientes.find(c => c.nif === '12345678Z' && c.razon === 'Ana López').dir), 'C/ Sol, 3');
   // Partidas con coma decimal y miles, desde un presupuesto nuevo
-  await p.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); }); await p.fill('#pr-nom', 'Desde Excel'); await p.evaluate(() => { crearPresupuesto(); cerrarModal(); });
+  await p.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); }); await p.fill('#pr-nom', 'Desde Excel'); await p.fill('#pr-cli', 'Ana López'); await p.evaluate(() => { crearPresupuesto(); cerrarModal(); });
   await p.click("button:visible:has-text('De Excel')");
   await p.fill('#im-txt', 'Capítulo;Descripción;Unidad;Cantidad;Precio\nDemolición;Picado de alicatado;m2;12;8,50\nAlbañilería;Tabique;m2;9;1.032,40\n;Sin capítulo;ud;2;10\n');
   await p.click('text=✓ Importar');

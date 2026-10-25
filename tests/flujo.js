@@ -26,7 +26,7 @@ const assert = require('assert');
     } else { await p.click('text=Ver con datos de ejemplo'); }
     if (!vacio) await p.click('text=Hacer un presupuesto'); // con empresa nueva, el alta ya abre el presupuesto
     await p.fill('#pr-nom', 'Reforma cocina Ana');
-    await p.selectOption('#pr-cli', '__nuevo'); await p.fill('#pr-cnuevo', 'Ana Lopez');
+    await p.fill('#pr-cli', 'Ana Lopez');
     await p.click('text=Crear y añadir partidas');
     await p.click('#modal-cont .lin >> nth=0 >> text=＋');
     await p.click('#modal-cont .lin >> nth=1 >> text=＋');

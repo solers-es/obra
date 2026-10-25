@@ -2362,11 +2362,9 @@ function fichaBanco(cod){
     '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="abrirBanco()">‹ Volver al banco</button><button class="btn peque" onclick="addBanco(\''+cod+'\')">+ Añadir al presupuesto</button></div>');
 }
 function abrirNuevoPresupuesto(){
-  var ops=db.clientes.map(function(c){ return '<option value="'+c.id+'">'+esc(c.comercial||c.razon)+'</option>'; }).join('');
   abrirModal('<h3 style="text-align:left">Nuevo presupuesto</h3>'+
     '<div class="form-grp"><label>¿Qué obra es?</label><input class="inp" id="pr-nom" placeholder="p. ej. Reforma baño C/ Sol"></div>'+
-    '<div class="form-grp"><label>¿Para quién?</label><select class="inp" id="pr-cli" onchange="document.getElementById(\'pr-cnuevo\').style.display=this.value===\'__nuevo\'?\'block\':\'none\'">'+ops+'<option value="__nuevo">＋ Cliente nuevo…</option></select>'+
-    '<input class="inp" id="pr-cnuevo" placeholder="Nombre del cliente nuevo" style="display:'+(ops?'none':'block')+';margin-top:6px"></div>'+
+    '<div class="form-grp"><label>¿Para quién?</label><input class="inp" id="pr-cli" list="pr-cli-l" autocomplete="off" placeholder="Escribe el nombre del cliente"><datalist id="pr-cli-l">'+db.clientes.map(function(c){ return '<option value="'+esc(c.comercial||c.razon)+'">'; }).join('')+'</datalist></div>'+
     '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">Ajustar mi beneficio (avanzado)</summary>'+
     '<div class="pgrid" style="grid-template-columns:repeat(3,1fr);margin-top:8px"><div class="form-grp"><label>Material ×</label><input class="inp" id="pr-km" type="number" step="any" value="1.25"></div>'+
     '<div class="form-grp"><label>Subcontrata ×</label><input class="inp" id="pr-ks" type="number" step="any" value="1.3"></div>'+
@@ -2377,11 +2375,9 @@ function abrirNuevoPresupuesto(){
 }
 function crearPresupuesto(){
   var nom=document.getElementById('pr-nom').value.trim(); if(!nom){ toast('Pon el nombre de la obra'); return; }
-  var cid=document.getElementById('pr-cli').value;
-  if(cid==='__nuevo' || !cid){
-    var cn=document.getElementById('pr-cnuevo').value.trim(); if(!cn){ toast('Pon el nombre del cliente'); return; }
-    var c={id:id(), razon:cn, comercial:cn, nif:'', dir:'', email:'', activo:true}; db.clientes.push(c); cid=c.id;
-  }
+  var cn=document.getElementById('pr-cli').value.trim(); if(!cn){ toast('Pon el nombre del cliente'); return; }
+  var ex=db.clientes.find(function(c){ var k=cn.toLowerCase(); return (c.comercial||'').toLowerCase()===k || (c.razon||'').toLowerCase()===k; });
+  var cid; if(ex){ cid=ex.id; } else { var c={id:id(), razon:cn, comercial:cn, nif:'', dir:'', email:'', activo:true}; db.clientes.push(c); cid=c.id; }
   db.contadorPresu=(db.contadorPresu||0)+1;
   var num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0');
   var pr={id:id(), num:num, nombre:nom, clienteId:cid, actividad:'Reforma',

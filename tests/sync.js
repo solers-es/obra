@@ -34,7 +34,7 @@ const sync = p => p.evaluate(() => Sync.sincronizar());
   assert.ok(await A.evaluate(() => Sync.activo()), 'A debe quedar conectado a su empresa');
   // --- A hace un presupuesto y lo contrata (obra) + un cliente con NIF
   await A.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); });
-  await A.fill('#pr-nom', 'Cocina Sync'); await A.selectOption('#pr-cli', '__nuevo'); await A.fill('#pr-cnuevo', 'Luis Cliente');
+  await A.fill('#pr-nom', 'Cocina Sync'); await A.fill('#pr-cli', 'Luis Cliente');
   await A.evaluate(() => crearPresupuesto()); await A.evaluate(() => { addBanco(BANCO[0].codigo); addBanco(BANCO[1].codigo); cerrarModal(); contratarPresu(); });
   await sync(A);
   const obraId = await A.evaluate(() => db.obras[0].id);
@@ -94,7 +94,7 @@ const sync = p => p.evaluate(() => Sync.sincronizar());
   await sync(A); await sleep(300); await sync(B);
   // B crea otra obra y factura: el servidor da el numero siguiente
   const obra2 = await B.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); return 1; });
-  await B.fill('#pr-nom', 'Segunda obra'); await B.evaluate(() => crearPresupuesto());
+  await B.fill('#pr-nom', 'Segunda obra'); await B.fill('#pr-cli', 'Luis Cliente'); await B.evaluate(() => crearPresupuesto());
   const id2 = await B.evaluate(() => { addBanco(BANCO[0].codigo); cerrarModal(); contratarPresu(); return obraActual; });
   await facturar(B, id2, '12345678Z');
   const numB = await B.evaluate(id => obraPorId(id).facturas.map(f => f.numeroCompleto), id2);
