@@ -2047,6 +2047,7 @@ function abrirPresu(pid){ presuActual=pid; var pr=presuPorId(pid); if(!pr) retur
 function pintarPresuDetalle(){
   var pr=presuPorId(presuActual); if(!pr) return; var t=presuTotales(pr);
   var html='';
+  if(pr.obraId||pr.estado==='contratado') html+='<div class="card" style="border-color:var(--ambar)"><p class="sub" style="margin:0">⚠️ Este presupuesto ya es una obra. Si lo cambias aquí, <b>la obra no se modifica</b>. Para cambiar partidas hazlo en la obra.</p><button class="btn verde peque" style="margin-top:8px" onclick="abrirObra(\''+pr.obraId+'\')"'+(pr.obraId?'':' style="display:none"')+'>🏗️ Ir a la obra</button></div>';
   if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirPartidaPropia()">＋ Mi propia partida</button> <button class="btn sec" style="margin-top:10px" onclick="abrirBanco()">📥 Del banco</button></div>';
   pr.capitulos.forEach(function(c){
     html+='<div class="cap abierto"><div class="cap-h"><span class="cnom">'+esc(c.nombre)+'</span><span class="ctot">'+fe(capVenta(c,pr))+'</span></div><div class="cap-body">';
