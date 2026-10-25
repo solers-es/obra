@@ -23,7 +23,7 @@ const assert = require('assert');
       assert.strictEqual(await p.evaluate(() => EMISOR.nombre), 'Reformas Garcia S.L.');
       assert.strictEqual(await p.evaluate(() => db.obras.length), 0, 'una empresa nueva empieza sin obras');
     } else { await p.click('text=Ver con datos de ejemplo'); }
-    await p.click('text=Hacer un presupuesto');
+    if (!vacio) await p.click('text=Hacer un presupuesto'); // con empresa nueva, el alta ya abre el presupuesto
     await p.fill('#pr-nom', 'Reforma cocina Ana');
     await p.selectOption('#pr-cli', '__nuevo'); await p.fill('#pr-cnuevo', 'Ana Lopez');
     await p.click('text=Crear y añadir partidas');

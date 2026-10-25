@@ -795,9 +795,10 @@ function pintarAsistente(){
   h+='<p class="tit">'+saludo+'</p>';
   h+='<div style="display:grid;gap:10px;margin:14px 0 18px">'+
      '<button class="btn" style="padding:18px;font-size:17px" onclick="irTab(\'presupuestos\');abrirNuevoPresupuesto()">🧮 Hacer un presupuesto</button>'+
-     '<button class="btn verde" style="padding:18px;font-size:17px" onclick="abrirNuevoParte()">📝 Parte de hoy</button>'+
-     '<button class="btn sec" style="padding:18px;font-size:17px" onclick="irTab(\'obras\')">🏗️ Mis obras ('+obras.length+')</button></div>';
-  h+='<p class="sub" style="margin:0 0 8px"><b>Lo que te toca</b></p><div class="asis">';
+     (obras.length?'<button class="btn verde" style="padding:18px;font-size:17px" onclick="abrirNuevoParte()">📝 Parte de hoy</button>'+
+     '<button class="btn sec" style="padding:18px;font-size:17px" onclick="irTab(\'obras\')">🏗️ Mis obras ('+obras.length+')</button>':'')+'</div>';
+  if(!obras.length&&!pres.length) h+='<p class="sub">Empieza haciendo tu primer presupuesto. Cuando el cliente lo acepte, se convierte en obra con un toque.</p>';
+  h+=(obras.length||pres.length)?'<p class="sub" style="margin:0 0 8px"><b>Lo que te toca</b></p><div class="asis">':'<div class="asis" style="display:none">';
   if(fc.n>0) h+=asisCard('rojo','💶','<b>'+fc.n+' factura'+(fc.n===1?'':'s')+' por cobrar</b> · '+fe(fc.total),'Ver',"irTab('obras')");
   if(presBorr>0) h+=asisCard('ambar','📄','<b>'+presBorr+' presupuesto'+(presBorr===1?'':'s')+' sin cerrar</b>','Ver',"irTab('presupuestos')");
   if(riesgo&&riesgoPct!=null&&riesgoPct<20) h+=asisCard(riesgoPct<10?'rojo':'ambar','🏗️','Ojo con <b>'+esc(riesgo.nombre)+'</b>: margen '+fn(riesgoPct)+'%','Revisar',"abrirObra('"+riesgo.id+"')");
@@ -1305,7 +1306,7 @@ function abrirEmpresa(primera){
 function guardarEmpresa(primera){
   var n=document.getElementById('em-n').value.trim(); if(!n){ toast('Pon el nombre de tu empresa'); return; }
   db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim()};
-  guardar(); aplicarEmpresa(); cerrarModal(); pintarAsistente(); toast(primera?'✅ Listo. Empieza con tu primer presupuesto':'Datos guardados');
+  guardar(); aplicarEmpresa(); cerrarModal(); pintarAsistente(); if(primera){ irTab('presupuestos'); abrirNuevoPresupuesto(); } else toast('Datos guardados');
 }
 function usarEjemplo(){ db=sembrar(); db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('asistente'); }
 function clientePorId(cid){ var a=db.clientes||[]; for(var i=0;i<a.length;i++){ if(a[i].id===cid) return a[i]; } return null; }
