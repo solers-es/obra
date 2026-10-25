@@ -1032,7 +1032,7 @@ function editarPartida(cid,pid,campo,val){
   var v=parseFloat(String(val).replace(',','.')); p[campo]= isNaN(v)?0:v;
   guardar(); pintarPresupuesto(o); pintarSub();
 }
-function borrarPartida(cid,pid){
+function borrarPartida(cid,pid){ if(!confirm('¿Borrar esta partida?')) return;
   var o=obraPorId(obraActual); var c=o.capitulos.find(function(x){return x.id===cid;});
   c.partidas = c.partidas.filter(function(x){return x.id!==pid;});
   // limpiar líneas de certificación que apuntaban a esa partida
@@ -1300,7 +1300,7 @@ function pintarCostes(o){
   html += '<div class="total-linea"><span class="l">Total gastado</span><span class="v">'+fe(costeTotal(o))+'</span></div>';
   document.getElementById('o-cos').innerHTML = html;
 }
-function borrarCoste(tipo,cid){
+function borrarCoste(tipo,cid){ if(!confirm('¿Borrar este gasto?')) return;
   var o=obraPorId(obraActual);
   if(tipo==='mat') o.costesMaterial=o.costesMaterial.filter(function(x){return x.id!==cid;});
   else o.costesManoObra=o.costesManoObra.filter(function(x){return x.id!==cid;});
@@ -2048,7 +2048,7 @@ function pintarPresuDetalle(){
 }
 function capVenta(c,pr){ var v=0; c.partidas.forEach(function(p){ v+=(Number(p.cantidad)||0)*ventaUnit(p,pr); }); return redondear(v); }
 function editPartidaPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); p.cantidad=parseFloat(String(val).replace(',','.'))||0; guardar(); pintarPresuDetalle(); }
-function delPartidaPresu(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); c.partidas=c.partidas.filter(function(x){return x.id!==pid;}); guardar(); pintarPresuDetalle(); toast('Partida borrada'); }
+function delPartidaPresu(cid,pid){ if(!confirm('¿Borrar esta partida?')) return; var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); c.partidas=c.partidas.filter(function(x){return x.id!==pid;}); guardar(); pintarPresuDetalle(); toast('Partida borrada'); }
 function editPrecioPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var v=parseFloat(String(val).replace(',','.'))||0;
   if(p.venta==null){ p.coste0=costeUnit(p); } p.venta=v; guardar(); pintarPresuDetalle(); }
 function dupPartida(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var n=JSON.parse(JSON.stringify(p)); n.id=id(); c.partidas.push(n); guardar(); pintarPresuDetalle(); toast('Partida duplicada'); }
@@ -2785,7 +2785,7 @@ function guardarCliente(cid){ var c=clientePorId(cid); if(!c) return;
   c.razon=document.getElementById('ce-raz').value.trim()||c.razon; c.comercial=document.getElementById('ce-com').value.trim(); c.nif=document.getElementById('ce-nif').value.trim();
   c.dir=document.getElementById('ce-dir').value.trim(); c.tel=document.getElementById('ce-tel').value.trim(); c.email=document.getElementById('ce-mail').value.trim(); c.activo=document.getElementById('ce-act').checked;
   guardar(); cerrarModal(); pintarClientes(); toast('Cliente actualizado'); }
-function borrarCliente(cid){ db.clientes=db.clientes.filter(function(x){return x.id!==cid;}); guardar(); cerrarModal(); pintarClientes(); toast('Cliente borrado'); }
+function borrarCliente(cid){ if(!confirm('¿Borrar este cliente?')) return; db.clientes=db.clientes.filter(function(x){return x.id!==cid;}); guardar(); cerrarModal(); pintarClientes(); toast('Cliente borrado'); }
 
 function editarOperario(i){ var op=db.equipo[i]; if(!op) return;
   abrirModal('<h3 style="text-align:left">👷 Editar ficha del trabajador</h3>'+
@@ -2822,7 +2822,7 @@ function editarObra(oid){ var o=obraPorId(oid); if(!o) return;
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="borrarObra(\''+oid+'\')" style="color:#f0714f">🗑 Borrar obra</button><button class="btn peque" onclick="guardarObra(\''+oid+'\')">Guardar</button></div>');
 }
 function guardarObra(oid){ var o=obraPorId(oid); if(!o) return; o.nombre=document.getElementById('obe-n').value.trim()||o.nombre; o.cliente=document.getElementById('obe-c').value.trim(); guardar(); cerrarModal(); pintarObras(); toast('Obra actualizada'); }
-function borrarObra(oid){ if(db.obras.length<=0) return; db.obras=db.obras.filter(function(x){return x.id!==oid;}); guardar(); cerrarModal(); irTab('obras'); toast('Obra borrada'); }
+function borrarObra(oid){ if(!confirm('¿Seguro que quieres borrar la obra entera? No se puede deshacer.')) return; if(db.obras.length<=0) return; db.obras=db.obras.filter(function(x){return x.id!==oid;}); guardar(); cerrarModal(); irTab('obras'); toast('Obra borrada'); }
 
 /* ============================================================
    SIDEBAR · grupos colapsables (recuerda estado)
