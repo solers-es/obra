@@ -1403,21 +1403,22 @@ function crearPartida(cid){
 }
 
 function abrirNuevoMaterial(){
-  abrirModal('<h3 style="text-align:left">Albarán de material</h3>'+
-    '<div class="form-grp"><label>Proveedor</label><input class="inp" id="f-prov" placeholder="p. ej. Material Eléctrico SL"></div>'+
-    '<div class="pgrid">'+
-      '<div class="form-grp"><label>Nº albarán</label><input class="inp" id="f-alb" placeholder="2241"></div>'+
-      '<div class="form-grp"><label>Importe (€)</label><input class="inp" id="f-imp" type="number" step="any" value="0"></div>'+
-    '</div>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearMaterial()">Imputar</button></div>');
-  setTimeout(function(){var e=document.getElementById('f-prov'); if(e) e.focus();},100);
+  var o=obraPorId(obraActual), provs={};
+  db.obras.forEach(function(x){ (x.costesMaterial||[]).forEach(function(m){ if(m.proveedor) provs[m.proveedor]=1; }); });
+  var dl=Object.keys(provs).map(function(p){ return '<option value="'+esc(p)+'">'; }).join('');
+  abrirModal('<h3 style="text-align:left">📦 Apuntar material</h3>'+
+    '<div class="form-grp"><label>¿Cuánto has gastado? (€)</label><input class="inp" id="f-imp" type="number" step="any" inputmode="decimal" placeholder="0"></div>'+
+    '<div class="form-grp"><label>¿En qué almacén o proveedor?</label><input class="inp" id="f-prov" list="f-provl" placeholder="p. ej. Bricolaje Palma"><datalist id="f-provl">'+dl+'</datalist></div>'+
+    '<div class="form-grp"><label>Nº de albarán (opcional)</label><input class="inp" id="f-alb"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearMaterial()">✓ Guardar</button></div>');
+  setTimeout(function(){var e=document.getElementById('f-imp'); if(e) e.focus();},100);
 }
 function crearMaterial(){
   var o=obraPorId(obraActual);
-  var prov=document.getElementById('f-prov').value.trim(); if(!prov){ toast('Pon el proveedor'); return; }
-  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(),
-    importe:parseFloat(document.getElementById('f-imp').value.replace(',','.'))||0, fecha:hoy()});
-  guardar(); cerrarModal(); pintarSub(); toast('Albarán imputado');
+  var imp=parseFloat(document.getElementById('f-imp').value.replace(',','.'))||0; if(imp<=0){ toast('Pon cuánto has gastado'); return; }
+  var prov=document.getElementById('f-prov').value.trim()||'Sin proveedor';
+  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(), importe:imp, fecha:hoy()});
+  guardar(); cerrarModal(); pintarSub(); toast('✅ Material apuntado: '+fe(imp));
 }
 
 /* ---------- ALBARÁN CON IA · el golpe que no tiene Eureka ---------- */
