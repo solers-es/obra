@@ -1033,7 +1033,7 @@ function pintarObras(){
   }
 
   if(db.obras.length===0){ cont.innerHTML = '<div class="vacio">No hay obras todavía.<br>Crea la primera con “+ Nueva obra”.</div>'; return; }
-  var html='';
+  var html='', terminadasHtml='';
   db.obras.forEach(function(o){
     var pre = presupuestoObra(o);
     var m = margenObra(o);
@@ -1041,11 +1041,11 @@ function pintarObras(){
     var pctAvance = pre>0 ? Math.min(100, Math.round(m.certificado*100/pre)) : 0;
     var color = m.pct==null?'var(--tx3)':(m.pct>=0?'var(--verde)':'var(--rojo)');
     var clase = m.pct==null?'':(m.pct>=0?'ok':'mal');
-    html +=
-      '<div class="card clic" onclick="abrirObra(\''+o.id+'\')">'+
+    var tarjeta =
+      '<div class="card clic" onclick="abrirObra(\''+o.id+'\')"'+(o.terminada?' style="opacity:.75"':'')+'>'+
         '<div class="obra-h">'+
           '<div><div class="nom">'+esc(o.nombre)+'</div><div class="cli">'+esc(o.cliente||'Sin promotor')+'</div></div>'+
-          '<span class="estado '+(certificada?'cert':'curso')+'">'+(certificada?'Certificando':'En curso')+'</span>'+
+          '<span class="estado '+(o.terminada?'cert':(certificada?'cert':'curso'))+'">'+(o.terminada?'Terminada':(certificada?'Certificando':'En curso'))+'</span>'+
         '</div>'+
         '<div class="margen">'+
           '<div><div class="et">Certificado</div><div class="nu">'+fe(m.certificado)+'</div></div>'+
@@ -1055,7 +1055,9 @@ function pintarObras(){
         '<div class="barra"><span style="width:'+pctAvance+'%;background:'+color+'"></span></div>'+
         '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="event.stopPropagation();editarObra(\''+o.id+'\')">✏️ Editar</button></div>'+
       '</div>';
+    if(o.terminada) terminadasHtml+=tarjeta; else html+=tarjeta;
   });
+  if(terminadasHtml) html+='<details style="margin-top:14px"><summary class="sub" style="cursor:pointer">✅ Obras terminadas</summary>'+terminadasHtml+'</details>';
   cont.innerHTML = html;
 }
 
@@ -1765,7 +1767,8 @@ function abrirNuevoParte(obraId){
   _fotoParte=null;
   var eq=db.equipo||[];
   var opsel=eq.map(function(o,i){return '<option value="'+i+'"'+(o.nombre===ult.operario?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
-  var obs=db.obras.map(function(o){return '<option value="'+o.id+'"'+(o.id===obSel?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
+  var abiertas=db.obras.filter(function(o){return !o.terminada||o.id===obSel;}); if(!abiertas.length) abiertas=db.obras;
+  var obs=abiertas.map(function(o){return '<option value="'+o.id+'"'+(o.id===obSel?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
   abrirModal(
     '<h3 style="text-align:left">📝 Parte de hoy</h3>'+
     '<div class="form-grp"><label>Obra</label><select class="inp" id="pa-ob">'+obs+'</select></div>'+
@@ -3000,8 +3003,10 @@ function editarObra(oid){ var o=obraPorId(oid); if(!o) return;
   abrirModal('<h3 style="text-align:left">Editar obra</h3>'+
     '<div class="form-grp"><label>Nombre</label><input class="inp" id="obe-n" value="'+esc(o.nombre||'')+'"></div>'+
     '<div class="form-grp"><label>Cliente</label><input class="inp" id="obe-c" value="'+esc(o.cliente||'')+'"></div>'+
+    '<button class="btn sec" style="width:100%;margin-top:10px" onclick="terminarObra(\''+oid+'\','+(o.terminada?'false':'true')+')">'+(o.terminada?'↩️ Volver a abrir la obra':'✅ Marcar obra terminada')+'</button>'+
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="borrarObra(\''+oid+'\')" style="color:#f0714f">🗑 Borrar obra</button><button class="btn peque" onclick="guardarObra(\''+oid+'\')">Guardar</button></div>');
 }
+function terminarObra(oid,t){ var o=obraPorId(oid); if(!o) return; o.terminada=!!t; guardar(); cerrarModal(); pintarObras(); toast(t?'✅ Obra terminada':'Obra abierta de nuevo'); }
 function guardarObra(oid){ var o=obraPorId(oid); if(!o) return; o.nombre=document.getElementById('obe-n').value.trim()||o.nombre; o.cliente=document.getElementById('obe-c').value.trim(); guardar(); cerrarModal(); pintarObras(); toast('Obra actualizada'); }
 function borrarObra(oid){ if(!confirm('¿Seguro que quieres borrar la obra entera? No se puede deshacer.')) return; if(db.obras.length<=0) return; db.obras=db.obras.filter(function(x){return x.id!==oid;}); guardar(); cerrarModal(); irTab('obras'); toast('Obra borrada'); }
 
