@@ -416,15 +416,13 @@
     <!-- ===== LISTA DE OBRAS ===== -->
     <section id="p-obras" class="pantalla">
       <p class="tit">Mis obras</p>
-      <p class="sub">Margen calculado en vivo a partir de certificaciones y costes reales.</p>
-      <div class="kpis" id="kpis"></div>
+            <div class="kpis" id="kpis"></div>
       <div id="dash-obras"></div>
       <div id="lista-obras"></div>
       <div class="fila-btn">
         <button class="btn" onclick="abrirNuevaObra()">+ Nueva obra</button>
       </div>
-      <button class="btn sec peque" onclick="reiniciar()">↺ Borrar todo y reiniciar con el ejemplo</button>
-      <p class="pie-demo" style="margin-top:14px">Prototipo · todo se guarda en localStorage de este navegador · sin servidor</p>
+      <p class="sub" style="margin-top:18px"><a style="cursor:pointer;color:var(--tx3)" onclick="reiniciar()">Borrar todo y empezar de nuevo</a></p>
     </section>
 
     <!-- ===== DETALLE DE OBRA ===== -->
@@ -523,8 +521,7 @@
     <!-- ===== PRESUPUESTOS ===== -->
     <section id="p-presupuestos" class="pantalla">
       <p class="seccion-tit">🧮 Presupuestos</p>
-      <p class="sub">Por capítulos y partidas, con <b>banco de precios</b> y coeficientes <b>Kmat/Ksub/Kmo</b>. Coste y venta calculados, como los que van en serio.</p>
-      <div class="fila-btn"><button class="btn" onclick="abrirNuevoPresupuesto()">+ Nuevo presupuesto</button></div>
+            <div class="fila-btn"><button class="btn" onclick="abrirNuevoPresupuesto()">＋ Nuevo presupuesto</button></div>
       <div id="lista-presu"></div>
     </section>
 
@@ -917,14 +914,14 @@ function pintarObras(){
     porCert += Math.max(0, presupuestoObra(o) - m.certificado);
   });
   var medio = cuentaPct? redondear(sumaPct/cuentaPct) : 0;
-  document.getElementById('kpis').innerHTML =
+  if(false) document.getElementById('kpis').innerHTML =
     '<div class="kpi"><div class="n">'+nCurso+'</div><div class="l">Obras</div></div>'+
     '<div class="kpi"><div class="n '+(medio>=0?'ok':'mal')+'">'+fn(medio)+'%</div><div class="l">Margen medio</div></div>'+
     '<div class="kpi"><div class="n">'+fe(porCert).replace(/\s?€/,'€')+'</div><div class="l">Por certificar</div></div>';
 
   var dash=document.getElementById('dash-obras');
   if(dash){
-    dash.innerHTML='<div class="dash-charts">'+
+    dash.innerHTML=''; if(false) dash.innerHTML='<div class="dash-charts">'+
       '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">🤖 Real: certificado − coste imputado</p><div class="chart-box"><canvas id="cObrMargen"></canvas></div></div>'+
       '<div class="chart-card"><h3>Embudo comercial</h3><p class="csub">Venta por estado de oportunidad</p><div class="chart-box"><canvas id="cObrPipe"></canvas></div></div>'+
     '</div>';
@@ -1244,8 +1241,9 @@ function docPresupuestoHTML(pr){
   h+='<p class="cond"><b>Validez:</b> 30 días. <b>Forma de pago:</b> 40% al inicio, 60% a la entrega. Presupuesto sujeto a mediciones reales en obra. Documento de ejemplo (prototipo Brigada).</p>';
   return h;
 }
-function imprimirPresu(pid){ var pr=presuPorId(pid); if(!pr) return; abrirDoc('Presupuesto '+pr.num, docPresupuestoHTML(pr)); }
+function imprimirPresu(pid){ var pr=presuPorId(pid); if(!pr) return; if(pr.estado==='borrador'){ pr.estado='enviado'; guardar(); } abrirDoc('Presupuesto '+pr.num, docPresupuestoHTML(pr)); }
 function abrirCorreo(tipo, a, b){
+  if(tipo==='presupuesto'){ var _p=presuPorId(a); if(_p&&_p.estado==='borrador'){ _p.estado='enviado'; guardar(); } }
   var para='', asunto='', cuerpo='';
   if(tipo==='presupuesto'){ var pr=presuPorId(a); var cl=clientePorId(pr.clienteId)||{}; var t=presuTotales(pr); var iva=redondear(t.venta*(pr.iva||0.21));
     para=cl.email||''; asunto='Presupuesto '+pr.num+' · '+pr.nombre;
@@ -2005,23 +2003,17 @@ function presuTotales(pr){
   coste=redondear(coste); venta=redondear(venta);
   return {coste:coste, venta:venta, margen:redondear(venta-coste), pct: venta? redondear((venta-coste)*100/venta):0};
 }
+function pillPresu(pr){ if(pr.estado==='contratado') return pillOport('contratado'); if(pr.estado==='enviado') return pill('Enviado','#4f9dff','rgba(79,157,255,.14)'); return pill('Borrador','#a9b4c0','rgba(169,180,192,.12)'); }
 function pintarPresupuestos(){
   var cont=document.getElementById('lista-presu');
-  var nP=db.presupuestos.length, vTot=0, contr=0;
-  db.presupuestos.forEach(function(pr){ var t=presuTotales(pr); vTot+=t.venta; if(pr.estado==='contratado') contr++; });
-  var html='<div class="kpis"><div class="kpi"><div class="n">'+nP+'</div><div class="l">Presupuestos</div></div>'+
-    '<div class="kpi"><div class="n">'+fe(vTot).replace(/\s?€/,'€')+'</div><div class="l">Venta total</div></div>'+
-    '<div class="kpi"><div class="n ok">'+contr+'</div><div class="l">Contratados</div></div></div>';
-  if(nP===0){ html+='<div class="vacio">Sin presupuestos. Crea el primero con "+ Nuevo presupuesto".</div>'; }
+  var html='';
+  if(db.presupuestos.length===0){ html+='<div class="vacio">Aún no has hecho ningún presupuesto.<br><button class="btn" style="margin-top:10px" onclick="abrirNuevoPresupuesto()">＋ Hacer el primero</button></div>'; }
   db.presupuestos.slice().reverse().forEach(function(pr){
     var t=presuTotales(pr);
     html+='<div class="card clic" onclick="abrirPresu(\''+pr.id+'\')">'+
-      '<div class="obra-h"><div><div class="nom">'+esc(pr.num)+' · '+esc(pr.nombre)+'</div>'+
-      '<div class="cli">'+esc(nombreCliente(pr.clienteId))+' · '+esc(pr.actividad)+'</div></div>'+
-      (pr.estado==='contratado'?pillOport('contratado'):pill('Borrador','#a9b4c0','rgba(169,180,192,.12)'))+'</div>'+
-      '<div class="margen"><div><div class="et">Coste</div><div class="nu">'+fe(t.coste)+'</div></div>'+
-      '<div><div class="et">Venta</div><div class="nu">'+fe(t.venta)+'</div></div>'+
-      '<div class="pct"><div class="big ok">'+fn(t.pct)+'%</div><div class="lb">Margen</div></div></div></div>';
+      '<div class="obra-h"><div><div class="nom">'+esc(pr.nombre)+'</div>'+
+      '<div class="cli">'+esc(nombreCliente(pr.clienteId))+' · '+esc(pr.fecha||'')+'</div></div>'+pillPresu(pr)+'</div>'+
+      '<div class="margen"><div><div class="et">Total sin IVA</div><div class="nu">'+fe(t.venta)+'</div></div></div></div>';
   });
   cont.innerHTML=html;
 }
@@ -2053,6 +2045,7 @@ function pintarPresuDetalle(){
   html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Precio al cliente (sin IVA)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
   html+='<div class="total-linea"><span class="l">Tu beneficio</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
   html+='<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="imprimirPresu(\''+pr.id+'\')">🖨️ Imprimir / PDF</button><button class="btn sec peque" onclick="abrirCorreo(\'presupuesto\',\''+pr.id+'\')">✉️ Enviar al cliente</button></div>';
+  html+='<div class="fila-btn" style="margin-top:8px"><button class="btn sec peque" onclick="duplicarPresu()">⧉ Copiar este presupuesto</button></div>';
   html+='<div class="fila-btn" style="margin-top:8px"><button class="btn verde" onclick="contratarPresu()">'+(pr.obraId?'🏗️ Ir a la obra':'✓ Lo han aceptado → crear la obra')+'</button></div>';
   document.getElementById('presu-cont').innerHTML=html;
 }
@@ -2131,6 +2124,10 @@ function crearPresupuesto(){
     iva:0.21, fecha:hoy(), estado:'borrador', capitulos:[]};
   db.presupuestos.push(pr); guardar(); cerrarModal(); abrirPresu(pr.id); abrirBanco();
 }
+function duplicarPresu(){ var pr=presuPorId(presuActual); if(!pr) return; var n=JSON.parse(JSON.stringify(pr));
+  n.id=id(); db.contadorPresu=(db.contadorPresu||0)+1; n.num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0'); n.nombre=pr.nombre+' (copia)'; n.estado='borrador'; n.obraId=null; n.fecha=hoy();
+  n.capitulos.forEach(function(c){ c.id=id(); c.partidas.forEach(function(p){ p.id=id(); }); });
+  db.presupuestos.push(n); guardar(); abrirPresu(n.id); toast('Copia lista: cambia lo que haga falta'); }
 function contratarPresu(){
   var pr=presuPorId(presuActual); if(!pr) return;
   if(pr.obraId && obraPorId(pr.obraId)){ abrirObra(pr.obraId); return; }
