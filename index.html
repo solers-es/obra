@@ -433,11 +433,11 @@
 
       <div class="fila-btn" style="margin:0 0 10px"><button class="btn verde peque" onclick="abrirNuevoParte(obraActual)">📝 Parte de hoy</button></div>
       <div class="obratabs">
-        <button class="on" data-sub="o-pre" onclick="obraTab(this)">Presupuesto</button>
-        <button data-sub="o-cer" onclick="obraTab(this)">Certificar</button>
-        <button data-sub="o-fac" onclick="obraTab(this)">Facturas</button>
-        <button data-sub="o-cos" onclick="obraTab(this)">Costes</button>
-        <button data-sub="o-mar" onclick="obraTab(this)">Margen</button>
+        <button class="on" data-sub="o-pre" onclick="obraTab(this)">Partidas</button>
+        <button data-sub="o-cer" onclick="obraTab(this)">Avance</button>
+        <button data-sub="o-fac" onclick="obraTab(this)">Cobros</button>
+        <button data-sub="o-cos" onclick="obraTab(this)">Gastos</button>
+        <button data-sub="o-mar" onclick="obraTab(this)">Beneficio</button>
         <button data-sub="o-pla" onclick="obraTab(this)">Planificación</button>
         <button data-sub="o-pro" onclick="obraTab(this)">Promotor</button>
       </div>
@@ -1061,7 +1061,7 @@ function pintarCertificar(o){
     html += '</div>';
   }
   if(o.capitulos.length===0 || presupuestoObra(o)===0){
-    html += '<div class="vacio">Primero crea el presupuesto (capítulos y partidas) para poder certificar.</div>';
+    html += '<div class="vacio">Primero añade las partidas de la obra.</div>';
     document.getElementById('o-cer').innerHTML = html; return;
   }
   html += '<div class="card"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 4px;font-weight:800">Nueva certificación · % ejecutado acumulado por partida</h3>'+
@@ -1278,8 +1278,8 @@ function pintarCorreo(){
 /* ---------- COSTES ---------- */
 function pintarCostes(o){
   var html='';
-  html += '<div class="card"><div class="coste-blk"><h3>📦 Material (albaranes)</h3>';
-  if(o.costesMaterial.length===0){ html+='<p class="sub" style="margin:0 0 8px">Sin albaranes imputados.</p>'; }
+  html += '<div class="card"><div class="coste-blk"><h3>📦 Material</h3>';
+  if(o.costesMaterial.length===0){ html+='<p class="sub" style="margin:0 0 8px">Aún no has apuntado material.</p>'; }
   o.costesMaterial.forEach(function(a){
     html += '<div class="lin"><div class="d">'+esc(a.proveedor)+'<small>Albarán '+esc(a.albaran||'—')+' · '+esc(a.fecha||'')+'</small></div>'+
             '<div class="m">'+fe(a.importe)+'</div>'+
@@ -1287,11 +1287,11 @@ function pintarCostes(o){
   });
   html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal material</div><div class="m">'+fe(costeMaterial(o))+'</div></div>';
   html += '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
-          '<button class="btn peque" onclick="abrirAlbaranIA()">📸 Albarán con IA</button>'+
-          '<button class="btn sec peque" onclick="abrirNuevoMaterial()">+ A mano</button></div></div>';
+          '<button class="btn peque" onclick="abrirAlbaranIA()">📸 Foto del albarán</button>'+
+          '<button class="btn sec peque" onclick="abrirNuevoMaterial()">＋ Apuntar a mano</button></div></div>';
 
-  html += '<div class="coste-blk"><h3>👷 Mano de obra (horas × coste/hora)</h3>';
-  if(o.costesManoObra.length===0){ html+='<p class="sub" style="margin:0 0 8px">Sin partes imputados.</p>'; }
+  html += '<div class="coste-blk"><h3>👷 Mano de obra</h3>';
+  if(o.costesManoObra.length===0){ html+='<p class="sub" style="margin:0 0 8px">Aún no hay partes. Los partes de hoy aparecen aquí solos.</p>'; }
   o.costesManoObra.forEach(function(m){
     var imp = redondear((Number(m.horas)||0)*(Number(m.costeHora)||0));
     html += '<div class="lin"><div class="d">'+esc(m.operario)+'<small>'+fn(m.horas)+' h × '+fe(m.costeHora)+'/h</small></div>'+
@@ -1299,9 +1299,9 @@ function pintarCostes(o){
             '<button class="borrar" onclick="borrarCoste(\'mo\',\''+m.id+'\')">✕</button></div>';
   });
   html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal mano de obra</div><div class="m">'+fe(costeManoObra(o))+'</div></div>';
-  html += '<button class="btn sec mini" style="margin-top:10px" onclick="abrirNuevaManoObra()">+ Añadir parte</button></div></div>';
+  html += '<button class="btn verde peque" style="margin-top:10px" onclick="abrirNuevoParte(obraActual)">📝 Parte de hoy</button></div></div>';
 
-  html += '<div class="total-linea"><span class="l">Coste real imputado</span><span class="v">'+fe(costeTotal(o))+'</span></div>';
+  html += '<div class="total-linea"><span class="l">Total gastado</span><span class="v">'+fe(costeTotal(o))+'</span></div>';
   document.getElementById('o-cos').innerHTML = html;
 }
 function borrarCoste(tipo,cid){
@@ -1318,15 +1318,15 @@ function pintarMargen(o){
   var pos = m.margen>=0;
   var html = '<div class="card">'+
     '<div class="resumen-margen '+(pos?'pos':'neg')+'">'+
-      '<div class="fila"><span>Presupuesto (venta)</span><span style="font-weight:800">'+fe(pre)+'</span></div>'+
-      '<div class="fila"><span>Producción certificada</span><span style="font-weight:800">'+fe(m.certificado)+'</span></div>'+
-      '<div class="fila"><span>— Coste material</span><span>'+fe(costeMaterial(o))+'</span></div>'+
-      '<div class="fila"><span>— Coste mano de obra</span><span>'+fe(costeManoObra(o))+'</span></div>'+
-      '<div class="fila"><span style="font-weight:700">Coste real total</span><span style="font-weight:800">'+fe(m.coste)+'</span></div>'+
-      '<div class="fila big"><span style="font-weight:800">Margen de la obra</span>'+
+      '<div class="fila"><span>Presupuesto</span><span style="font-weight:800">'+fe(pre)+'</span></div>'+
+      '<div class="fila"><span>Hecho hasta ahora</span><span style="font-weight:800">'+fe(m.certificado)+'</span></div>'+
+      '<div class="fila"><span>— Material</span><span>'+fe(costeMaterial(o))+'</span></div>'+
+      '<div class="fila"><span>— Mano de obra</span><span>'+fe(costeManoObra(o))+'</span></div>'+
+      '<div class="fila"><span style="font-weight:700">Total gastado</span><span style="font-weight:800">'+fe(m.coste)+'</span></div>'+
+      '<div class="fila big"><span style="font-weight:800">Te queda</span>'+
         '<span class="v '+(pos?'ok':'mal')+'">'+fe(m.margen)+' · '+(m.pct==null?'—':fn(m.pct)+'%')+'</span></div>'+
     '</div></div>';
-  html += '<p class="sub" style="text-align:center">Margen = producción certificada − coste real imputado. % sobre lo certificado. Se recalcula solo al meter datos en Presupuesto, Certificar o Costes.</p>';
+  
   // ── Aviso de desviación (IA): proyecta el coste final según el ritmo actual ──
   var avance = pre>0 ? m.certificado/pre : 0;
   if(avance>0.02 && pre>0){
@@ -1339,9 +1339,8 @@ function pintarMargen(o){
     else { clz='v'; emo='✅'; tit='En rumbo: el margen aguanta'; }
     txt = 'Avance '+fn(Math.round(avance*100))+'%. Al ritmo de coste actual, la obra acabaría costando <b style="color:var(--tx)">'+fe(costeFinal)+'</b> sobre un presupuesto de '+fe(pre)+' → margen proyectado <b style="color:var(--tx)">'+fe(margenProy)+' ('+fn(pctProy)+'%)</b>.';
     html += '<div class="aviso '+clz+'"><div class="em">'+emo+'</div><div class="tx"><b>'+tit+'</b><span>'+txt+'</span></div></div>';
-    html += '<p class="sub" style="text-align:center;font-size:11px;margin-top:8px">🤖 Lo calcula la IA cruzando presupuesto, certificación y coste real. Eureka enseña el coste pasado; esto avisa <b>antes</b> de perder dinero.</p>';
   }
-  if(m.certificado===0){ html += '<div class="vacio">Todavía no has certificado nada: el margen en % aparecerá en cuanto emitas la primera certificación.</div>'; }
+  if(m.certificado===0){ html += '<div class="vacio">Aún no has marcado avance. Cuando lo hagas verás aquí cuánto te queda.</div>'; }
   document.getElementById('o-mar').innerHTML = html;
 }
 
