@@ -353,7 +353,7 @@
 <nav class="sidebar" id="sidebar">
   <div class="smarca"><div class="logo">B</div><b>Brigada</b></div>
   <div class="semp">Reformas Vega S.L. · Mallorca</div>
-  <div id="badge-sync-d" class="syncbadge" onclick="sincronizar()"></div>
+  <div id="badge-sync-d" class="syncbadge" onclick="sincronizar()" style="display:none"></div>
   <a data-nav="asistente" onclick="irTab('asistente')"><span class="ic">🤖</span>Asistente</a>
   <a data-nav="obras" onclick="irTab('obras')"><span class="ic">🏗️</span>Obras</a>
   <div class="sgrp" data-grp="crm"><div class="grp" onclick="togGrp('crm')"><span class="gtx">CRM y ventas</span><span class="chev">▸</span></div><div class="grp-body">
@@ -2012,7 +2012,8 @@ function pintarPresupuestos(){
     html+='<div class="card clic" onclick="abrirPresu(\''+pr.id+'\')">'+
       '<div class="obra-h"><div><div class="nom">'+esc(pr.nombre)+'</div>'+
       '<div class="cli">'+esc(nombreCliente(pr.clienteId))+' · '+esc(pr.fecha||'')+'</div></div>'+pillPresu(pr)+'</div>'+
-      '<div class="margen"><div><div class="et">Total sin IVA</div><div class="nu">'+fe(t.venta)+'</div></div></div></div>';
+      '<div class="margen"><div><div class="et">Total sin IVA</div><div class="nu">'+fe(t.venta)+'</div></div></div>'+
+      (pr.obraId?'<div class="fila-btn" style="margin-top:10px"><button class="btn verde peque" onclick="event.stopPropagation();abrirObra(\''+pr.obraId+'\')">🏗️ Ir a la obra</button></div>':'')+'</div>';
   });
   cont.innerHTML=html;
 }
