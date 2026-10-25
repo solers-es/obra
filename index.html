@@ -651,6 +651,7 @@ function pipelineDatos(){
 }
 
 /* ---------- persistencia ---------- */
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(db)); }catch(e){ console.error('No se pudo guardar',e); } }
 function cargar(){
   try{ var raw = localStorage.getItem(CLAVE); if(raw){ db = JSON.parse(raw); return true; } }
@@ -791,11 +792,32 @@ function pintarAsistente(){
 }
 
 /* menú "Más" */
+function abrirCopia(){
+  abrirModal('<h3 style="text-align:left">💾 Copia de seguridad</h3>'+
+    '<p class="sub">Tus datos están en este móvil. Guarda una copia de vez en cuando por si lo pierdes o cambias de móvil.</p>'+
+    '<div style="display:grid;gap:8px;margin:10px 0"><button class="btn verde" style="padding:14px" onclick="bajarCopia()">⬇️ Guardar copia</button>'+
+    '<button class="btn sec" style="padding:14px" onclick="document.getElementById(\'cp-file\').click()">⬆️ Recuperar una copia</button>'+
+    '<input type="file" id="cp-file" accept=".json,application/json" style="display:none" onchange="leerCopia(this)"></div>'+
+    '<button class="btn sec peque" onclick="cerrarModal()">Cerrar</button>');
+}
+function bajarCopia(){
+  var b=new Blob([JSON.stringify(db)],{type:'application/json'}), a=document.createElement('a'), d=new Date();
+  a.href=URL.createObjectURL(b); a.download='brigada-copia-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.json';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); toast('Copia guardada');
+}
+function leerCopia(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ try{ var n=JSON.parse(r.result); if(!n||!Array.isArray(n.obras)||!Array.isArray(n.presupuestos)) throw 0;
+      if(!confirm('Esto sustituye lo que tienes ahora por la copia ('+n.obras.length+' obras, '+n.presupuestos.length+' presupuestos). ¿Seguir?')) return;
+      db=n; guardar(); cerrarModal(); obraActual=null; irTab('asistente'); toast('✅ Copia recuperada'); }
+    catch(e){ toast('Ese archivo no es una copia de Brigada'); } };
+  r.readAsText(f);
+}
 function menuMas(){
   var it = function(ic,t,cl){ return '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="irTab(\''+cl+'\')"><span style="margin-right:10px">'+ic+'</span>'+t+'</button>'; };
   abrirModal(
     '<h3 style="text-align:left">Más</h3>'+
-    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') +'</div>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>' +'</div>'+
     '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
       it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas','nominas') + it('🔑','Permisos y usuarios','permisos') +
       '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar mis datos de Eureka</button></div></details>'+
