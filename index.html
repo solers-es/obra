@@ -369,7 +369,7 @@
 
 <nav class="sidebar" id="sidebar">
   <div class="smarca"><div class="logo">B</div><b>Brigada</b></div>
-  <div class="semp">Reformas Vega S.L. · Mallorca</div>
+  <div class="semp" id="semp"></div>
   <div id="badge-sync-d" class="syncbadge" onclick="sincronizar()" style="display:none"></div>
   <a data-nav="asistente" onclick="irTab('asistente')"><span class="ic">🤖</span>Asistente</a>
   <a data-nav="obras" onclick="irTab('obras')"><span class="ic">🏗️</span>Obras</a>
@@ -397,7 +397,7 @@
   </div></div>
   <a onclick="abrirVerComo()"><span class="ic">👁️</span>Ver como…</a>
   <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar de Eureka</a>
-  <div class="sfoot">🤖 Con IA · VeriFactu · margen real · <b style="color:#2ecc71">funciona sin internet</b></div>
+  <div class="sfoot">Funciona sin internet · margen real de cada obra</div>
 </nav>
 
 <div class="telefono">
@@ -409,7 +409,7 @@
         <h1>Brigada</h1>
         <span class="prov">tu obra, sin líos</span>
       </div>
-      <div class="emp"><b>Reformas Vega S.L.</b><br>Mallorca</div>
+      <div class="emp" id="emp-hd"></div>
     </div>
     <div class="top-right">
       <div class="fichaje-bar topfich" id="fichaje-top"></div>
@@ -775,7 +775,7 @@ function asisCard(clr,ic,txt,btn,act){
 }
 function pintarAsistente(){
   var c=document.getElementById('asis-cont'); if(!c) return;
-  var emp='Reformas Vega S.L.';
+  var emp=EMISOR.nombre||'tu empresa';
   var hora=new Date().getHours();
   var saludo=hora<12?'Buenos días':(hora<20?'Buenas tardes':'Buenas noches');
   var pres=db.presupuestos||[];
@@ -833,7 +833,7 @@ function menuMas(){
   var it = function(ic,t,cl){ return '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="irTab(\''+cl+'\')"><span style="margin-right:10px">'+ic+'</span>'+t+'</button>'; };
   abrirModal(
     '<h3 style="text-align:left">Más</h3>'+
-    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>' +'</div>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>' +'</div>'+
     '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
       it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas','nominas') + it('🔑','Permisos y usuarios','permisos') +
       '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar mis datos de Eureka</button></div></details>'+
@@ -1210,8 +1210,7 @@ function mostrarModalFactura(o, fac, ce){
       lineasFiscalFactura(fac)+
     '</div>'+
     (fac.isp?'<p class="sub" style="font-size:11px;text-align:center;margin:8px 0 0">Operación con <b>inversión del sujeto pasivo</b> (art. 84.Uno.2º.f LIVA): la declara el destinatario.</p>':'')+
-    '<div class="sellos"><span class="sello">✓ VeriFactu</span><span class="sello">✓ Emitida</span></div>'+
-    '<p class="sub" style="font-size:11px;text-align:center;margin:10px 0 12px">Sello VeriFactu de ejemplo (prototipo): no se envía nada a la AEAT.</p>'+
+    '<div class="sellos"><span class="sello">✓ Emitida</span></div>'+
     '<div class="fila-btn"><button class="btn peque" onclick="imprimirFactura(\''+o.id+'\',\''+fac.id+'\')">🖨️ Imprimir / PDF</button><button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+fac.id+'\')">✉️ Enviar</button></div>'+
     '<button class="btn sec peque" style="margin-top:8px" onclick="cerrarModal()">Hecho</button>';
   document.getElementById('modal').classList.add('on');
@@ -1230,7 +1229,7 @@ function pintarFacturas(o){
       '<div class="factura-doc" style="margin:0">'+
         lineasFiscalFactura(f)+
       '</div>'+
-      '<div class="sellos"><span class="sello">✓ VeriFactu</span>'+(f.isp?'<span class="sello">ISP</span>':'')+'</div>'+
+      '<div class="sellos"><span class="sello">Nº '+esc(f.numeroCompleto)+'</span>'+(f.isp?'<span class="sello">ISP</span>':'')+'</div>'+
       '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
         '<button class="btn sec peque" onclick="imprimirFactura(\''+o.id+'\',\''+f.id+'\')">🖨️ PDF</button>'+
         '<button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+f.id+'\')">✉️ Correo</button>'+
@@ -1248,7 +1247,33 @@ function cobrarFactura(oid,fid){ var o=obraPorId(oid); var f=o.facturas.find(fun
 /* ============================================================
    DOCUMENTOS IMPRIMIBLES (factura/presupuesto PDF) + CORREO (Gmail)
    ============================================================ */
-var EMISOR = {nombre:'Reformas Vega S.L.', nif:'B57 894 213', dir:'C/ Indústria 14 · 07011 Palma de Mallorca', tel:'971 00 11 22', email:'reformasvega@gmail.com'};
+var EMISOR_DEMO = {nombre:'Reformas Vega S.L.', nif:'B57 894 213', dir:'C/ Indústria 14 · 07011 Palma de Mallorca', tel:'971 00 11 22', email:'reformasvega@gmail.com'};
+var EMISOR = {nombre:'', nif:'', dir:'', tel:'', email:''};
+function aplicarEmpresa(){
+  var e=db.empresa||{}; EMISOR={nombre:e.nombre||'', nif:e.nif||'', dir:e.dir||'', tel:e.tel||'', email:e.email||''};
+  var ciudad=(e.dir||'').split(',').pop().trim();
+  var h=document.getElementById('emp-hd'); if(h) h.innerHTML='<b>'+esc(EMISOR.nombre||'Mi empresa')+'</b>';
+  var sm=document.getElementById('semp'); if(sm) sm.textContent=EMISOR.nombre;
+}
+function abrirEmpresa(primera){
+  var e=db.empresa||{};
+  abrirModal('<h3 style="text-align:left">'+(primera?'👋 Bienvenido a Brigada':'🏢 Mi empresa')+'</h3>'+
+    (primera?'<p class="sub">Dinos quién eres. Saldrá en tus presupuestos y facturas.</p>':'')+
+    '<div class="form-grp"><label>Nombre de la empresa</label><input class="inp" id="em-n" value="'+esc(e.nombre||'')+'" placeholder="p. ej. Reformas García S.L."></div>'+
+    '<div class="form-grp"><label>NIF / CIF</label><input class="inp" id="em-nif" value="'+esc(e.nif||'')+'"></div>'+
+    '<div class="form-grp"><label>Dirección</label><input class="inp" id="em-dir" value="'+esc(e.dir||'')+'" placeholder="Calle, nº, CP, ciudad"></div>'+
+    '<div class="pgrid"><div class="form-grp"><label>Teléfono</label><input class="inp" id="em-tel" type="tel" value="'+esc(e.tel||'')+'"></div>'+
+    '<div class="form-grp"><label>Email</label><input class="inp" id="em-mail" type="email" value="'+esc(e.email||'')+'"></div></div>'+
+    '<div class="form-grp"><label>Condiciones en tus presupuestos</label><input class="inp" id="em-cond" value="'+esc(e.cond||'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.')+'"></div>'+
+    '<div class="fila-btn" style="margin-top:14px">'+(primera?'<button class="btn sec peque" onclick="usarEjemplo()">Ver con datos de ejemplo</button>':'<button class="btn sec peque" onclick="cerrarModal()">Cancelar</button>')+
+    '<button class="btn verde" onclick="guardarEmpresa('+(primera?'true':'false')+')">✓ '+(primera?'Empezar':'Guardar')+'</button></div>');
+}
+function guardarEmpresa(primera){
+  var n=document.getElementById('em-n').value.trim(); if(!n){ toast('Pon el nombre de tu empresa'); return; }
+  db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim()};
+  guardar(); aplicarEmpresa(); cerrarModal(); pintarAsistente(); toast(primera?'✅ Listo. Empieza con tu primer presupuesto':'Datos guardados');
+}
+function usarEjemplo(){ db=sembrar(); db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('asistente'); }
 function clientePorId(cid){ var a=db.clientes||[]; for(var i=0;i<a.length;i++){ if(a[i].id===cid) return a[i]; } return null; }
 function clienteDeObra(o){ var n=(o.cliente||'').toLowerCase(); var m=(db.clientes||[]).filter(function(c){ var r=(c.razon||'').toLowerCase(),k=(c.comercial||'').toLowerCase(); return n&&((r&&n.indexOf(r)>=0)||(k&&n.indexOf(k)>=0)||(r&&n.split(' ')[0]&&r.indexOf(n.split(' ')[0])>=0)); })[0]; return m||{razon:(o.cliente||'Cliente'),nif:'',dir:'',email:''}; }
 function qrSVG(){ var s=''; for(var y=0;y<13;y++){for(var x=0;x<13;x++){ if(((x*7+y*5+(x*y))%3)===0) s+='<rect x="'+(x*7)+'" y="'+(y*7)+'" width="7" height="7"/>'; }} return '<svg width="86" height="86" viewBox="0 0 91 91" xmlns="http://www.w3.org/2000/svg"><rect width="91" height="91" fill="#fff"/><g fill="#111">'+s+'</g><rect x="1.5" y="1.5" width="20" height="20" fill="none" stroke="#111" stroke-width="7"/></svg>'; }
@@ -1261,8 +1286,7 @@ function docFacturaHTML(o,f){
   var h=cabeceraDoc('FACTURA', f.numeroCompleto, f.fecha, cl);
   h+='<table><tr><th>Concepto</th><th class="n">Importe</th></tr><tr><td>Ejecución de obra — <b>'+esc(o.nombre)+'</b>'+(ce?'<br><span style="color:#777">Certificación nº '+ce.numero+'</span>':'')+'</td><td class="n">'+fe(f.base)+'</td></tr></table>';
   h+='<div class="tot"><div class="r"><span>Base imponible</span><b>'+fe(f.base)+'</b></div>'+(f.isp?'<div class="r"><span>IVA · Inversión del sujeto pasivo</span><b>0,00 €</b></div>':'<div class="r"><span>IVA '+fn(tv)+'%</span><b>'+fe(f.iva)+'</b></div>')+'<div class="r big"><span>TOTAL</span><span>'+fe(f.total)+'</span></div>'+(f.retencion>0?'<div class="r"><span>− Retención garantía '+fn(f.retPct)+'%</span><b>−'+fe(f.retencion)+'</b></div><div class="r big"><span>A COBRAR</span><span>'+fe(f.aCobrar)+'</span></div>':'')+'</div>';
-  h+='<div class="foot"><div class="sello">'+qrSVG()+'<br><b>✓ VeriFactu</b> · Factura verificable (RD 1007/2023). Huella encadenada y registro en la AEAT.</div><div style="text-align:right;font-size:11px;color:#777">'+(f.isp?'Operación con <b>inversión del sujeto pasivo</b><br>(art. 84.Uno.2º.f LIVA): la declara el destinatario.<br>':'')+'Forma de pago: transferencia · 30 días</div></div>';
-  h+='<p class="cond">Documento de ejemplo (prototipo Brigada). El sello VeriFactu y el QR son ilustrativos; la remisión real a la AEAT se activa con el motor de GestorOS.</p>';
+  h+='<div class="foot"><div class="sello"></div><div style="text-align:right;font-size:11px;color:#777">'+(f.isp?'Operación con <b>inversión del sujeto pasivo</b><br>(art. 84.Uno.2º.f LIVA): la declara el destinatario.<br>':'')+'Forma de pago: transferencia · 30 días</div></div>';
   return h;
 }
 function imprimirFactura(oid,fid){ var o=obraPorId(oid); if(!o) return; var f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return; abrirDoc('Factura '+f.numeroCompleto, docFacturaHTML(o,f)); }
@@ -1273,7 +1297,7 @@ function docPresupuestoHTML(pr){
   h+='<table><tr><th>Código</th><th>Descripción</th><th class="n">Cant.</th><th class="n">Precio</th><th class="n">Importe</th></tr>';
   pr.capitulos.forEach(function(c){ h+='<tr class="cap"><td colspan="4">'+esc(c.nombre)+'</td><td class="n">'+fe(capVenta(c,pr))+'</td></tr>'; c.partidas.forEach(function(p){ var cant=Number(p.cantidad)||0; var pu=ventaUnit(p,pr); h+='<tr><td>'+esc(p.codigo)+'</td><td>'+esc(p.descripcion)+'</td><td class="n">'+fn(cant)+' '+esc(p.ud)+'</td><td class="n">'+fe(pu)+'</td><td class="n">'+fe(cant*pu)+'</td></tr>'; }); });
   h+='</table><div class="tot"><div class="r"><span>Base (PEM)</span><b>'+fe(t.venta)+'</b></div><div class="r"><span>IVA '+Math.round((pr.iva||0.21)*100)+'%</span><b>'+fe(iva)+'</b></div><div class="r big"><span>TOTAL</span><span>'+fe(total)+'</span></div></div>';
-  h+='<p class="cond"><b>Validez:</b> 30 días. <b>Forma de pago:</b> 40% al inicio, 60% a la entrega. Presupuesto sujeto a mediciones reales en obra. Documento de ejemplo (prototipo Brigada).</p>';
+  h+='<p class="cond">'+esc((db.empresa&&db.empresa.cond)||'Validez 30 días.')+' Presupuesto sujeto a mediciones reales en obra.</p>';
   return h;
 }
 function imprimirPresu(pid){ var pr=presuPorId(pid); if(!pr) return; if(pr.estado==='borrador'){ pr.estado='enviado'; guardar(); } abrirDoc('Presupuesto '+pr.num, docPresupuestoHTML(pr)); }
@@ -1282,7 +1306,7 @@ function abrirCorreo(tipo, a, b){
   var para='', asunto='', cuerpo='';
   if(tipo==='presupuesto'){ var pr=presuPorId(a); var cl=clientePorId(pr.clienteId)||{}; var t=presuTotales(pr); var iva=redondear(t.venta*(pr.iva||0.21));
     para=cl.email||''; asunto='Presupuesto '+pr.num+' · '+pr.nombre;
-    cuerpo='Hola'+(cl.comercial?' '+cl.comercial:'')+',\n\nLe adjuntamos el presupuesto '+pr.num+' para «'+pr.nombre+'».\nImporte total: '+fe(redondear(t.venta+iva))+' (IVA incluido). Validez: 30 días.\n\nQuedamos a su disposición.\n\nUn saludo,\n'+EMISOR.nombre+'\n'+EMISOR.tel; }
+    cuerpo='Hola'+(cl.comercial?' '+cl.comercial:'')+',\n\nLe adjuntamos el presupuesto '+pr.num+' para «'+pr.nombre+'».\nImporte total: '+fe(redondear(t.venta+iva))+' (IVA incluido). '+((db.empresa&&db.empresa.cond)?db.empresa.cond:'Validez: 30 días.')+'\n\nQuedamos a su disposición.\n\nUn saludo,\n'+EMISOR.nombre+'\n'+EMISOR.tel; }
   else { var o=obraPorId(a); var f=o.facturas.find(function(x){return x.id===b;}); var cl2=clienteDeObra(o);
     para=cl2.email||''; asunto='Factura '+f.numeroCompleto+' · '+o.nombre;
     cuerpo='Hola,\n\nLe adjuntamos la factura '+f.numeroCompleto+' de «'+o.nombre+'».\nImporte: '+fe(f.total)+(f.retencion>0?' (a cobrar '+fe(f.aCobrar)+' tras retención de garantía)':'')+'.\n\nGracias por su confianza.\n\nUn saludo,\n'+EMISOR.nombre; }
@@ -1991,8 +2015,8 @@ function reiniciar(){
     '<p class="sub" style="text-align:center">Se borran todas las obras que tengas y se vuelve a cargar el ejemplo de fábrica. No se puede deshacer.</p>'+
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" style="background:linear-gradient(135deg,#ff6b6b,#ef4b55);color:#fff" onclick="hacerReset()">Sí, reiniciar</button></div>');
 }
-function hacerReset(){ db=sembrar(); guardar(); cerrarModal(); obraActual=null; irTab('obras'); toast('Reiniciado con el ejemplo'); }
-function empezarVacio(){ db={obras:[], contadorFactura:0}; guardar(); cerrarModal(); irTab('obras'); toast('Empezando de cero'); }
+function hacerReset(){ var emp=db.empresa; db=sembrar(); db.empresa=emp||undefined; guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('obras'); toast('Reiniciado con el ejemplo'); }
+function empezarVacio(){ var emp=db.empresa; db={obras:[], contadorFactura:0, empresa:emp}; guardar(); cerrarModal(); irTab('obras'); toast('Empezando de cero'); }
 
 /* ============================================================
    SEMILLA (ejemplo del primer arranque)
@@ -2679,7 +2703,8 @@ function sembrar(){
    ARRANQUE
    ============================================================ */
 (function init(){
-  if(!cargar()){ db = sembrar(); guardar(); }
+  var primeraVez=!cargar();
+  if(primeraVez){ db={obras:[], contadorFactura:0}; }
   // saneado por si faltan campos
   if(!db.obras) db.obras=[];
   if(db.contadorFactura==null) db.contadorFactura=0;
@@ -2702,12 +2727,16 @@ function sembrar(){
   if(!db.impuestosPresentados) db.impuestosPresentados={};
   if(!db.nominas) db.nominas=[];
   if(!db.gestoriaEmail) db.gestoriaEmail='gestoria@asesoria.es';
+  if(!db.empresa){ db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); }
+  if(primeraVez){ delete db.empresa; }
+  aplicarEmpresa();
   window._verComo=null;
   pintarFichajeTop();
   pintarBadgeSync();
   pintarObras();
   pintarAsistente();
   var h=(location.hash||'').replace('#',''); if(h && MAP[h] && h!=='obra') irTab(h);
+  if(primeraVez) abrirEmpresa(true);
   document.addEventListener('click',function(e){ var w=(e.target.closest)?e.target.closest('.buscar-wrap'):null; if(!w){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
   document.addEventListener('keydown',function(e){ var ae=document.activeElement, tag=ae?ae.tagName:''; if(e.key==='/' && tag!=='INPUT' && tag!=='TEXTAREA'){ var i=document.getElementById('buscador'); if(i){ e.preventDefault(); i.focus(); } } else if(e.key==='Escape'){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
 })();

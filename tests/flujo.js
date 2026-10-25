@@ -14,8 +14,15 @@ const assert = require('assert');
   const url = 'file://' + path.resolve(__dirname, '..', 'index.html');
 
   for (const vacio of [false, true]) {
-    await p.goto(url); await p.waitForTimeout(400);
-    if (vacio) { await p.evaluate(() => empezarVacio()); await p.reload(); await p.waitForTimeout(400); }
+    await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+    // primera vez: aparece el alta de empresa
+    assert.ok(await p.evaluate(() => document.getElementById('modal').classList.contains('on')), 'debe salir el alta de empresa');
+    if (vacio) {
+      await p.fill('#em-n', 'Reformas Garcia S.L.'); await p.fill('#em-nif', 'B12345678'); await p.fill('#em-dir', 'C/ Mayor 1, 07001 Palma');
+      await p.click('text=✓ Empezar');
+      assert.strictEqual(await p.evaluate(() => EMISOR.nombre), 'Reformas Garcia S.L.');
+      assert.strictEqual(await p.evaluate(() => db.obras.length), 0, 'una empresa nueva empieza sin obras');
+    } else { await p.click('text=Ver con datos de ejemplo'); }
     await p.click('text=Hacer un presupuesto');
     await p.fill('#pr-nom', 'Reforma cocina Ana');
     await p.selectOption('#pr-cli', '__nuevo'); await p.fill('#pr-cnuevo', 'Ana Lopez');
