@@ -307,7 +307,7 @@
   .top-right{display:flex;align-items:center;gap:10px;margin-left:auto}
   @media(min-width:980px){
     .top{align-items:flex-start}
-    .fichaje-bar.topfich{margin:0;max-width:420px}
+    .fichaje-bar.topfich{margin:0;max-width:420px;padding:6px 10px}
     .gantt-row{grid-template-columns:200px 1fr}
   }
   /* asistente inteligente */
@@ -2034,7 +2034,7 @@ function pintarPresuDetalle(){
       html+='<div class="partida"><div class="pn"><span>'+(p.codigo?'<b>'+esc(p.codigo)+'</b> · ':'')+esc(p.descripcion)+'</span>'+
         '<span><span class="pt">'+fe(cant*ventaUnit(p,pr))+'</span> <button class="borrar" onclick="dupPartida(\''+c.id+'\',\''+p.id+'\')">⧉</button> <button class="borrar" onclick="delPartidaPresu(\''+c.id+'\',\''+p.id+'\')">✕</button></span></div>'+
         '<div class="pgrid"><div class="fld"><label>Cantidad ('+esc(p.ud)+')</label><input class="inp" type="number" step="any" value="'+cant+'" onchange="editPartidaPresu(\''+c.id+'\',\''+p.id+'\',this.value)"></div>'+
-        '<div class="fld"><label>Precio/ud al cliente</label><input class="inp" value="'+fn(ventaUnit(p,pr))+' €" disabled></div></div>'+
+        '<div class="fld"><label>Precio/ud al cliente (€)</label><input class="inp" type="number" step="any" inputmode="decimal" value="'+redondear(ventaUnit(p,pr))+'" onchange="editPrecioPresu(\''+c.id+'\',\''+p.id+'\',this.value)"></div></div>'+
         '</div>';
     });
     html+='</div></div>';
@@ -2051,6 +2051,8 @@ function pintarPresuDetalle(){
 function capVenta(c,pr){ var v=0; c.partidas.forEach(function(p){ v+=(Number(p.cantidad)||0)*ventaUnit(p,pr); }); return redondear(v); }
 function editPartidaPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); p.cantidad=parseFloat(String(val).replace(',','.'))||0; guardar(); pintarPresuDetalle(); }
 function delPartidaPresu(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); c.partidas=c.partidas.filter(function(x){return x.id!==pid;}); guardar(); pintarPresuDetalle(); toast('Partida borrada'); }
+function editPrecioPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var v=parseFloat(String(val).replace(',','.'))||0;
+  if(p.venta==null){ p.coste0=costeUnit(p); } p.venta=v; guardar(); pintarPresuDetalle(); }
 function dupPartida(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var n=JSON.parse(JSON.stringify(p)); n.id=id(); c.partidas.push(n); guardar(); pintarPresuDetalle(); toast('Partida duplicada'); }
 function abrirBanco(){
   var porCap={}; BANCO.forEach(function(b){ (porCap[b.cap]=porCap[b.cap]||[]).push(b); });
@@ -2279,7 +2281,7 @@ function pintarFichajeTop(){
       (fa.dentro?'<span class="fich-geo ok">● en obra</span>':'<span class="fich-geo out">● fuera</span>');
   } else {
     html='<button class="fich-btn play" onclick="fichar()" title="Fichar entrada">▶</button>'+
-      '<div class="fich-info"><div class="st">Fichar entrada</div><div class="sub2">Dueño y trabajadores · con GPS</div></div>';
+      '<div class="fich-info"><div class="st">Fichar entrada</div><div class="sub2">Empezar la jornada</div></div>';
   }
   var e=document.getElementById('fichaje-top'); if(e) e.innerHTML=html;
   var s=document.getElementById('fichaje-sec'); if(s) s.innerHTML=html;
