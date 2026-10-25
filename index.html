@@ -395,6 +395,7 @@
     <a data-nav="nominas" onclick="irTab('nominas')"><span class="ic">💶</span>Nóminas</a>
     <a data-nav="permisos" onclick="irTab('permisos')"><span class="ic">🔑</span>Permisos y usuarios</a>
   </div></div>
+  <a id="a-solers" onclick="irTab('solers')" style="display:none"><span class="ic">🛰️</span>Solers · panel maestro</a>
   <a onclick="abrirVerComo()" id="a-vercomo"><span class="ic">👁️</span>Ver como…</a>
   <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar clientes (Excel)</a>
   <div class="sfoot">Funciona sin internet · margen real de cada obra</div>
@@ -572,6 +573,12 @@
       <div id="cont-permisos"></div>
     </section>
 
+    <!-- ===== SOLERS · panel del superadmin (oculto: solo lo ve admin@solers.es) ===== -->
+    <section id="p-solers" class="pantalla">
+      <p class="seccion-tit">🛰️ Solers · panel maestro</p>
+      <div id="cont-solers"></div>
+    </section>
+
     <!-- ===== FICHAJE ===== -->
     <section id="p-fichaje" class="pantalla">
       <p class="seccion-tit">⏱️ Fichaje y localización</p>
@@ -629,7 +636,8 @@
    · margen %             = round(margen*100/certificado, 2)
    ============================================================ */
 
-var CLAVE = "brigada_proto_v6";
+// Dentro de un cliente (superadmin de Solers) los datos van en una copia local APARTE: nunca se mezclan con los del propio dispositivo.
+var CLAVE = (function(){ try{ var s=JSON.parse(localStorage.getItem('brigada_sync')||'{}'); if(s&&s.sol&&s.imp&&s.imp.tenant&&s.ses) return 'brigada_solers_imp_'+s.imp.tenant; }catch(e){} return "brigada_proto_v6"; })();
 var IVA = 0.21;
 var db = null;           // estado en memoria
 var obraActual = null;   // id de la obra abierta
@@ -732,7 +740,7 @@ function margenObra(o){
    ============================================================ */
 var MAP = {asistente:'p-asistente', obras:'p-obras', obra:'p-obra', partes:'p-partes', equipo:'p-equipo', sat:'p-sat', cumplimiento:'p-cumplimiento',
            clientes:'p-clientes', oportunidades:'p-oportunidades', presupuestos:'p-presupuestos', presu:'p-presu', ots:'p-ots', estadisticas:'p-estadisticas', permisos:'p-permisos',
-           fichaje:'p-fichaje', compras:'p-compras', fiscal:'p-fiscal', correo:'p-correo', impuestos:'p-impuestos', nominas:'p-nominas'};
+           fichaje:'p-fichaje', solers:'p-solers', compras:'p-compras', fiscal:'p-fiscal', correo:'p-correo', impuestos:'p-impuestos', nominas:'p-nominas'};
 var NAVBTN = {obras:'t-obras', presupuestos:'t-presupuestos', partes:'t-partes', clientes:'t-clientes'};
 function refrescarPantalla(){
   if(document.getElementById('modal').classList.contains('on')) return;   // no molestar si está escribiendo
@@ -776,6 +784,7 @@ function irTab(clave){
   else if(clave==='impuestos') pintarImpuestos();
   else if(clave==='correo') pintarCorreo();
   else if(clave==='nominas') pintarNominas();
+  else if(clave==='solers') pintarSolers();
   marcarDemo(clave);
   window.scrollTo(0,0);
 }
@@ -860,6 +869,14 @@ function pintarCuenta(){
       '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
       '<p class="sub" style="margin:0 0 6px"><a href="#" style="color:var(--naranja2)" onclick="event.preventDefault();cuentaAccion(\'rec\')">¿Has olvidado la contraseña?</a></p>'+
       '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="cuentaAccion(\'reg\')">Crear cuenta</button><button class="btn verde" onclick="cuentaAccion(\'in\')">Entrar</button></div>'+cerrar;
+  } else if(st.solers && !st.tenant){
+    h+='<p class="sub"><b>'+esc(st.email)+'</b><br>Superadmin de Solers</p>'+
+      '<button class="btn verde" style="width:100%;margin:6px 0" onclick="cerrarModal();irTab(\'solers\')">🛰️ Abrir el panel maestro</button>'+
+      '<button class="btn sec peque" style="margin-top:8px" onclick="Sync.salir();pintarCuenta();pintarSolersAviso();irTab(\'asistente\')">Salir</button>'+cerrar;
+  } else if(st.solers && st.imp){
+    h+='<p class="sub"><b>'+esc(st.email)+'</b><br>Dentro de <b>'+esc(st.imp.nombre)+'</b> como Solers</p>'+
+      '<button class="btn verde" style="width:100%;margin:6px 0" onclick="sincronizar()">🔄 Sincronizar ahora</button>'+
+      '<button class="btn sec" style="width:100%;margin:6px 0" onclick="solersSalir()">↩︎ Volver al panel de Solers</button>'+cerrar;
   } else if(!st.tenant){
     var e=db.empresa||{};
     h+='<p class="sub">Has entrado como <b>'+esc(st.email)+'</b>. Falta crear tu empresa en el servidor con los datos de «Mi empresa».</p>'+
@@ -919,6 +936,102 @@ function cuentaAccion(que){
     Sync.invitar(m2,document.getElementById('iv-rol').value).then(function(){ msg('✅ Invitado. Que entre con su correo.',true); }).catch(fallo);
   }
 }
+
+/* ============================================================
+   SOLERS · panel maestro del superadmin (admin@solers.es)
+   Solo aparece si la base confirma que eres el superadmin (la puerta /solers del Centro);
+   el que manda es el servidor (RLS + api/superadmin.js), esto es solo la pantalla.
+   Funciones: 1) alta de cliente · 2) lista y datos · 3) entrar dentro · 4) contraseñas.
+   ============================================================ */
+function pintarSolersAviso(){
+  var st=(window.Sync&&Sync.estado)?Sync.estado():null, a=document.getElementById('a-solers'), b=document.getElementById('solers-aviso');
+  if(a) a.style.display=(st&&st.solers)?'':'none';
+  if(!(st&&st.solers&&st.imp)){ if(b) b.style.display='none'; return; }
+  if(!b){ b=document.createElement('div'); b.id='solers-aviso'; b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:310;background:#7c3aed;color:#fff;font-weight:800;font-size:13px;text-align:center;padding:8px 12px'; document.body.appendChild(b); }
+  b.style.display='block';
+  b.innerHTML='🛰️ Dentro de <b>'+esc(st.imp.nombre)+'</b> como Solers · lo que cambies, lo cambias en su empresa &nbsp;<button onclick="solersSalir()" style="background:#fff;color:#4c1d95;border:none;padding:4px 12px;border-radius:7px;font-weight:800;cursor:pointer;margin-left:6px">Volver al panel</button>';
+}
+function solersSalir(){ Sync.solersSalirDeCliente().catch(function(e){ toast('⚠️ '+e.message); }); }
+var _solCli=[];
+function fSol(t){ if(!t) return '—'; try{ return new Date(t).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){ return '—'; } }
+function pintarSolers(){
+  var c=document.getElementById('cont-solers'); if(!c) return;
+  var st=Sync.estado();
+  if(!st.solers){ c.innerHTML='<div class="vacio">Esta pantalla no está disponible.</div>'; return; }
+  if(st.imp){ c.innerHTML='<div class="card"><p class="sub" style="margin:0">Estás dentro de <b>'+esc(st.imp.nombre)+'</b>.</p><button class="btn verde" style="margin-top:10px" onclick="solersSalir()">↩︎ Volver al panel de Solers</button></div>'; return; }
+  c.innerHTML='<div class="fila-btn" style="margin:0 0 10px"><button class="btn verde" onclick="abrirAltaCliente()">➕ Alta de cliente</button><button class="btn sec peque" onclick="abrirClaveSolers(\'\')">🔑 Contraseña</button><button class="btn sec peque" onclick="abrirRegistroSolers()">🧾 Bitácora</button></div>'+
+    '<p class="sub" id="sol-estado">Cargando clientes…</p><div id="sol-lista"></div>';
+  Sync.solersClientes().then(function(l){ _solCli=l||[]; pintarListaSolers(); }).catch(function(e){ var m=document.getElementById('sol-estado'); if(m) m.textContent='⚠️ '+e.message; });
+}
+function pintarListaSolers(){
+  var m=document.getElementById('sol-estado'), c=document.getElementById('sol-lista'); if(!c) return;
+  if(m) m.textContent=_solCli.length?(_solCli.length+' cliente'+(_solCli.length===1?'':'s')):'Todavía no hay ningún cliente. Da de alta el primero.';
+  c.innerHTML=_solCli.map(function(t){
+    var est={prueba:'En prueba',activo:'Activo',suspendido:'Suspendido',cancelado:'Cancelado'}[t.estado]||t.estado;
+    return '<div class="card" style="margin:0 0 10px"><div class="lin" style="border:0;padding:0"><div class="d"><b>'+esc(t.razon_social)+'</b><small>NIF '+esc(t.nif)+' · '+esc(est)+(t.prueba_hasta&&t.estado==='prueba'?' hasta '+fSol(t.prueba_hasta):'')+'</small></div></div>'+
+      '<p class="sub" style="margin:6px 0">Admin: <b>'+esc(t.admin_email||'—')+'</b> · '+t.usuarios+' usuario'+(t.usuarios==1?'':'s')+'<br>'+t.obras+' obras · '+t.presupuestos+' presupuestos · '+t.partes+' partes · último movimiento '+fSol(t.ultimo_movimiento)+'<br>'+esc([t.email_contacto,t.telefono].filter(Boolean).join(' · '))+'</p>'+
+      '<div class="fila-btn"><button class="btn verde peque" onclick="solersEntrarEn(\''+t.tenant_id+'\')">Entrar</button><button class="btn sec peque" onclick="abrirUsuariosSolers(\''+t.tenant_id+'\')">👥 Usuarios y contraseñas</button></div></div>';
+  }).join('');
+}
+function solersEntrarEn(tid){
+  var t=_solCli.find(function(x){ return x.tenant_id===tid; })||{};
+  if(!confirm('¿Entrar dentro de «'+(t.razon_social||'este cliente')+'»? Verás y podrás cambiar sus datos, y queda anotado en la bitácora.')) return;
+  toast('Entrando…'); Sync.solersEntrar(tid).catch(function(e){ toast('⚠️ '+e.message); });
+}
+// 1) Alta de cliente
+function abrirAltaCliente(){
+  var f=function(idv,lab,ph,tipo){ return '<div class="form-grp"><label>'+lab+'</label><input class="inp" id="'+idv+'" type="'+(tipo||'text')+'" placeholder="'+(ph||'')+'"></div>'; };
+  abrirModal('<h3 style="text-align:left">➕ Alta de cliente</h3><p class="sub">Crea la constructora y a su primer administrador (30 días de prueba).</p>'+
+    f('al-r','Empresa (razón social)','Reformas Vega SL')+f('al-n','NIF / CIF','B12345674')+f('al-e','Correo del administrador','jefe@empresa.es','email')+f('al-nom','Nombre del administrador (opcional)','')+f('al-t','Teléfono (opcional)','','tel')+
+    f('al-c','Contraseña inicial (vacío = se genera una)','mín. 8')+
+    '<div id="al-msg" class="sub" style="color:var(--rojo)"></div>'+
+    '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" id="al-ok" onclick="altaClienteGuardar()">Crear cliente</button></div>');
+}
+function altaClienteGuardar(){
+  var v=function(i){ return document.getElementById(i).value.trim(); }, m=document.getElementById('al-msg'), b=document.getElementById('al-ok');
+  m.textContent=''; b.disabled=true; b.textContent='Creando…';
+  Sync.solersApi({accion:'alta_cliente',razon_social:v('al-r'),nif:v('al-n'),email_admin:v('al-e'),nombre:v('al-nom'),telefono:v('al-t'),clave:v('al-c')}).then(function(r){
+    abrirModal('<h3 style="text-align:left">✅ Cliente creado</h3><p class="sub"><b>'+esc(r.email)+'</b> es el administrador.</p>'+
+      (r.clave?'<p class="sub">Contraseña (solo se enseña ahora; pásasela por un canal seguro):</p>'+datoCopiar(r.clave):'<p class="sub">Esa persona ya tenía cuenta: <b>no se le ha tocado la contraseña</b>.</p>')+
+      '<button class="btn verde" style="width:100%;margin-top:12px" onclick="cerrarModal();pintarSolers()">Hecho</button>');
+  }).catch(function(e){ b.disabled=false; b.textContent='Crear cliente'; m.textContent=e.message==='Failed to fetch'?'No hay conexión con el servidor':e.message; });
+}
+function datoCopiar(txt){ return '<div class="lin"><div class="d" style="font-family:monospace;word-break:break-all;user-select:all">'+esc(txt)+'</div><button class="btn sec peque" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent).then(function(){toast(\'Copiado\')})">Copiar</button></div>'; }
+// Usuarios de un cliente (para elegir a quién cambiar la contraseña)
+function abrirUsuariosSolers(tid){
+  var t=_solCli.find(function(x){ return x.tenant_id===tid; })||{};
+  abrirModal('<h3 style="text-align:left">👥 '+esc(t.razon_social||'')+'</h3><div id="us-sol" class="sub">Cargando…</div><button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>');
+  Sync.solersUsuarios(tid).then(function(l){
+    var rolTxt={admin:'Administrador',jefe_obra:'Jefe de obra',administrativo:'Administrativo',operario:'Operario',solo_lectura:'Solo lectura'};
+    document.getElementById('us-sol').innerHTML=l.map(function(u){
+      return '<div class="lin"><div class="d">'+esc(u.email)+'<small>'+esc(rolTxt[u.rol]||u.rol)+(u.estado!=='activa'?' · '+esc(u.estado):'')+' · último acceso '+fSol(u.ultimo_acceso)+'</small></div><button class="btn sec peque" onclick="abrirClaveSolers(\''+esc(u.email)+'\')">🔑</button></div>';
+    }).join('')||'Nadie.';
+  }).catch(function(e){ var x=document.getElementById('us-sol'); if(x) x.textContent='⚠️ '+e.message; });
+}
+// 4) Cambiar/resetear la contraseña de cualquiera
+function abrirClaveSolers(correo){
+  abrirModal('<h3 style="text-align:left">🔑 Contraseña de alguien</h3>'+
+    '<div class="form-grp"><label>Correo de la persona</label><input class="inp" id="ck-e" type="email" value="'+esc(correo)+'"></div>'+
+    '<div class="form-grp"><label>Contraseña nueva (vacío = se genera una)</label><input class="inp" id="ck-c" type="text" autocomplete="off" placeholder="mín. 8"></div>'+
+    '<div id="ck-msg" class="sub" style="color:var(--rojo)"></div><div id="ck-res"></div>'+
+    '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="claveSolers(\'enlace\')">Mejor un enlace</button><button class="btn verde" id="ck-ok" onclick="claveSolers(\'poner\')">Cambiar</button></div>'+
+    '<button class="btn sec peque" style="margin-top:10px" onclick="cerrarModal()">Cerrar</button>');
+}
+function claveSolers(modo){
+  var m=document.getElementById('ck-msg'), res=document.getElementById('ck-res'); m.textContent=''; res.innerHTML='';
+  var correo=document.getElementById('ck-e').value.trim(), clave=document.getElementById('ck-c').value.trim();
+  if(!correo){ m.textContent='Pon el correo'; return; }
+  if(modo==='poner'&&!confirm('¿Cambiar ahora la contraseña de '+correo+'? La anterior dejará de valer.')) return;
+  Sync.solersApi({accion:'clave',email:correo,clave:modo==='poner'?clave:'',modo:modo}).then(function(r){
+    res.innerHTML=r.enlace?'<p class="sub">Enlace para que ponga la suya (sirve una vez):</p>'+datoCopiar(r.enlace):'<p class="sub" style="color:var(--verde)">✅ Hecho. Contraseña nueva (solo se enseña ahora):</p>'+datoCopiar(r.clave);
+  }).catch(function(e){ m.textContent=e.message==='Failed to fetch'?'No hay conexión con el servidor':e.message; });
+}
+function abrirRegistroSolers(){
+  abrirModal('<h3 style="text-align:left">🧾 Bitácora de Solers</h3><div id="reg-sol" class="sub">Cargando…</div><button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>');
+  Sync.solersApi({accion:'registro'}).then(function(r){
+    document.getElementById('reg-sol').innerHTML=(r.registros||[]).map(function(x){ return '<div class="lin"><div class="d">'+esc(x.accion)+' · '+esc(x.objetivo||'')+'<small>'+esc(x.quien)+' · '+new Date(x.cuando).toLocaleString('es-ES')+'</small></div></div>'; }).join('')||'Nada todavía.';
+  }).catch(function(e){ var x=document.getElementById('reg-sol'); if(x) x.textContent='⚠️ '+e.message; });
+}
 function abrirCopia(){
   abrirModal('<h3 style="text-align:left">💾 Copia de seguridad</h3>'+
     '<p class="sub">Tus datos están en este móvil. Guarda una copia de vez en cuando por si lo pierdes o cambias de móvil.</p>'+
@@ -953,6 +1066,7 @@ function menuMas(){
 }
 /* ---------- MODO OFFLINE / SINCRONIZACIÓN (golpe vs Eureka cloud) ---------- */
 function pintarBadgeSync(){
+  try{ pintarSolersAviso(); }catch(e){}
   var st=(window.Sync&&Sync.activo())?Sync.estado():null;
   ['badge-sync-d','badge-sync-m'].forEach(function(idv){
     var e=document.getElementById(idv); if(!e) return;
@@ -3007,7 +3121,8 @@ function sembrar(){
   pintarObras();
   pintarAsistente();
   var h=(location.hash||'').replace('#',''); if(h && MAP[h] && h!=='obra') irTab(h);
-  if(primeraVez) abrirEmpresa(true);
+  if(primeraVez && !(window.Sync&&Sync.esSolers())) abrirEmpresa(true);
+  pintarSolersAviso();
   if(window.Sync) Sync.iniciar();
   document.addEventListener('click',function(e){ var w=(e.target.closest)?e.target.closest('.buscar-wrap'):null; if(!w){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
   document.addEventListener('keydown',function(e){ var ae=document.activeElement, tag=ae?ae.tagName:''; if(e.key==='/' && tag!=='INPUT' && tag!=='TEXTAREA'){ var i=document.getElementById('buscador'); if(i){ e.preventDefault(); i.focus(); } } else if(e.key==='Escape'){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });

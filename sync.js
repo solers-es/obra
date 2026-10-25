@@ -9,7 +9,7 @@ var Sync = (function () {
   var URL = (cfg.supabaseUrl || '').replace(/\/$/, ''), KEY = cfg.supabaseAnonKey || '';
   var configurado = !!(URL && KEY);
   var LS = 'brigada_sync';
-  var S = { ses: null, tenant: null, tenantNombre: '', rol: null, cursor: 0, snap: {}, cola: {}, ult: 0, err: '' };
+  var S = { ses: null, tenant: null, tenantNombre: '', rol: null, cursor: 0, snap: {}, cola: {}, ult: 0, err: '', sol: false, imp: null };
   try { var raw = localStorage.getItem(LS); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
   var ocupado = false, timerPush = null, timerLoop = null;
 
@@ -57,11 +57,15 @@ var Sync = (function () {
       guardarSesion(r); return conectar();
     });
   }
-  function salir() { S.ses = null; S.tenant = null; S.rol = null; S.cursor = 0; S.snap = {}; S.cola = {}; S.err = ''; persistir(); pararBucle(); if (window._rolReal) { window._rolReal = false; window._verComo = null; if (window.aplicarVerComo) aplicarVerComo(); } }
+  function salir() { if (S.imp) borrarDatosDeCliente(S.imp.tenant); S.ses = null; S.tenant = null; S.rol = null; S.cursor = 0; S.snap = {}; S.cola = {}; S.err = ''; S.sol = false; S.imp = null; persistir(); pararBucle(); if (window._rolReal) { window._rolReal = false; window._verComo = null; if (window.aplicarVerComo) aplicarVerComo(); } }
 
   function conectar() { // tras entrar: ¿a qué empresa pertenezco?
+    return comprobarSolers().then(function () { return conectarEmpresa(); });
+  }
+  function conectarEmpresa() {
     return http('GET', '/rest/v1/membresias?select=tenant_id,rol,tenants(razon_social)&usuario_id=eq.' + S.ses.uid + '&estado=eq.activa&order=creado_en.asc').then(function (m) {
-      if (!m || !m.length) { S.tenant = null; persistir(); return { sinEmpresa: true }; }
+      if (S.sol && S.imp) { S.tenant = S.imp.tenant; S.rol = 'admin'; persistir(); return sincronizar().then(function () { arrancarBucle(); aplicarRol(); return { ok: true }; }); }
+      if (!m || !m.length) { S.tenant = null; persistir(); return S.sol ? { solers: true } : { sinEmpresa: true }; }
       var x = m[0]; S.tenant = x.tenant_id; S.rol = x.rol; S.tenantNombre = (x.tenants && x.tenants.razon_social) || ''; persistir();
       return sincronizar().then(function () { arrancarBucle(); aplicarRol(); return { ok: true }; });
     });
@@ -93,6 +97,7 @@ var Sync = (function () {
     if (window.toast) toast('⚠️ Ya no tienes acceso a esa empresa'); pintarEstado();
   }
   function comprobarAcceso() {
+    if (S.sol && S.imp) return Promise.resolve(true); // el superadmin no es miembro: entra por la política del superadmin
     return http('GET', '/rest/v1/membresias?select=tenant_id,rol&usuario_id=eq.' + S.ses.uid + '&tenant_id=eq.' + S.tenant + '&estado=eq.activa').then(function (m) {
       if (!m || !m.length) { sinAcceso(); return false; }
       if (m[0].rol !== S.rol) { S.rol = m[0].rol; persistir(); aplicarRol(); }
@@ -110,6 +115,50 @@ var Sync = (function () {
   }
   function esOperario() { return S.rol === 'operario'; }
   function soloLectura() { return S.rol === 'solo_lectura'; }
+
+  /* ---------- superadmin de Solers (admin@solers.es) ----------
+     Solo es comodidad de pantalla: quien manda es el servidor (RLS + api/superadmin.js).
+     La puerta /solers deja la sesión y S.sol = true; aquí se vuelve a preguntar a la base. */
+  var CORREO_SOLERS = 'admin@solers.es';
+  function comprobarSolers() {
+    if (!S.ses || String(S.ses.email || '').toLowerCase() !== CORREO_SOLERS) { S.sol = false; S.imp = null; persistir(); return Promise.resolve(false); }
+    return http('POST', '/rest/v1/rpc/soy_solers', {}).then(function (ok) {
+      S.sol = ok === true; if (!S.sol) S.imp = null; persistir(); return S.sol;
+    }).catch(function () { return S.sol; }); // sin red: se queda como estaba
+  }
+  function esSolers() { return !!(S.sol && S.ses); }
+  function impersonando() { return esSolers() && S.imp ? S.imp : null; }
+  function claveDatosCliente(t) { return 'brigada_solers_imp_' + t; }
+  function borrarDatosDeCliente(t) { try { localStorage.removeItem(claveDatosCliente(t)); } catch (e) {} }
+  function solersApi(cuerpo) {
+    return token().then(function (t) {
+      return fetch('/api/superadmin', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t }, body: JSON.stringify(cuerpo) });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || ('Error ' + r.status)); return j; });
+    });
+  }
+  function solersClientes() { return http('POST', '/rest/v1/rpc/solers_clientes', {}); }
+  function solersUsuarios(tenant) { return http('POST', '/rest/v1/rpc/solers_usuarios', { p_tenant: tenant }); }
+  // Entrar dentro de un cliente: otra copia local de datos (no mezcla con la del propio dispositivo) y sincronización normal.
+  function solersEntrar(tenant) {
+    if (!esSolers()) return Promise.reject(new Error('Sin permiso'));
+    return http('POST', '/rest/v1/rpc/solers_entrar', { p_tenant: tenant }).then(function (r) {
+      var x = (r && r[0]) || r || {};
+      if (S.imp) borrarDatosDeCliente(S.imp.tenant);
+      borrarDatosDeCliente(tenant);
+      S.imp = { tenant: tenant, nombre: x.razon_social || '' }; S.tenant = tenant; S.tenantNombre = S.imp.nombre; S.rol = 'admin';
+      S.cursor = 0; S.snap = {}; S.cola = {}; S.err = ''; persistir();
+      location.hash = ''; location.reload();
+    });
+  }
+  function solersSalirDeCliente() {
+    // Se envía lo pendiente y se borran del dispositivo los datos del cliente.
+    return (S.cola && Object.keys(S.cola).length ? empujar() : Promise.resolve()).then(function () {
+      if (S.imp) borrarDatosDeCliente(S.imp.tenant);
+      S.imp = null; S.tenant = null; S.tenantNombre = ''; S.rol = null; S.cursor = 0; S.snap = {}; S.cola = {}; S.err = ''; persistir();
+      location.hash = 'solers'; location.reload();
+    });
+  }
 
   /* ---------- documentos locales ---------- */
   function docsLocales() {
@@ -222,15 +271,19 @@ var Sync = (function () {
 
   /* ---------- estado para la pantalla ---------- */
   function estado() {
-    return { configurado: configurado, sesion: !!(S.ses), email: S.ses ? S.ses.email : '', tenant: S.tenant, empresa: S.tenantNombre, rol: S.rol, pendientes: Object.keys(S.cola).length, ult: S.ult, err: S.err, online: navigator.onLine !== false };
+    return { configurado: configurado, sesion: !!(S.ses), email: S.ses ? S.ses.email : '', tenant: S.tenant, empresa: S.tenantNombre, rol: S.rol, pendientes: Object.keys(S.cola).length, ult: S.ult, err: S.err, online: navigator.onLine !== false, solers: esSolers(), imp: impersonando() };
   }
   function pintarEstado() { try { if (window.pintarBadgeSync) pintarBadgeSync(); if (window.pintarCuenta) pintarCuenta(); } catch (e) {} }
   function activo() { return configurado && !!S.tenant && !!S.ses; }
   function guardarLocal() { try { localStorage.setItem(window.CLAVE || 'brigada_proto_v6', JSON.stringify(db)); } catch (e) {} }
 
   /* ---------- arranque ---------- */
-  function iniciar() { if (activo()) { aplicarRol(); arrancarBucle(); sincronizar(); } }
+  function iniciar() {
+    if (S.sol && S.ses) comprobarSolers().then(function (ok) { if (!ok) { S.tenant = null; S.rol = null; persistir(); location.reload(); } }); // ya no es superadmin: se cierra todo
+    if (activo()) { aplicarRol(); arrancarBucle(); sincronizar(); }
+  }
 
   return { configurado: configurado, recuperar: recuperar, equipo: equipo, cambiarRol: cambiarRol, quitar: quitar, miUid: miUid, conectar: conectar, entrar: entrar, registrar: registrar, salir: salir, crearEmpresa: crearEmpresa, invitar: invitar, nifValido: nifValido,
-           cambio: cambio, sincronizar: sincronizar, estado: estado, activo: activo, reservarNumero: reservarNumero, iniciar: iniciar, esOperario: esOperario, soloLectura: soloLectura };
+           cambio: cambio, esSolers: esSolers, impersonando: impersonando, solersApi: solersApi, solersClientes: solersClientes, solersUsuarios: solersUsuarios, solersEntrar: solersEntrar, solersSalirDeCliente: solersSalirDeCliente,
+           sincronizar: sincronizar, estado: estado, activo: activo, reservarNumero: reservarNumero, iniciar: iniciar, esOperario: esOperario, soloLectura: soloLectura };
 })();

@@ -18,6 +18,9 @@ self.addEventListener('activate', function (e) {
 });
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
+  var u = new URL(e.request.url);
+  // La puerta /solers y la API llevan sesiones: jamás pasan por la caché.
+  if (u.origin === self.location.origin && (u.pathname === '/solers' || u.pathname.indexOf('/api/') === 0)) return;
   e.respondWith(
     fetch(e.request).then(function (r) {
       var cp = r.clone();
