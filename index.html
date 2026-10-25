@@ -1148,8 +1148,26 @@ function previewLinea(pid, ant, totalPart){
   }); });
   document.getElementById('cert-total').textContent = fe(tot);
 }
+function datosClienteFactura(){
+  var o=obraPorId(obraActual); var c=clienteDeObra(o); var real=clientePorId(c.id);
+  abrirModal('<h3 style="text-align:left">🧾 Datos para la factura</h3>'+
+    '<p class="sub">Una factura necesita el NIF y la dirección de <b>'+esc(c.razon||o.cliente||'tu cliente')+'</b>.</p>'+
+    '<div class="form-grp"><label>NIF / CIF</label><input class="inp" id="df-nif" value="'+esc(c.nif||'')+'"></div>'+
+    '<div class="form-grp"><label>Dirección</label><input class="inp" id="df-dir" value="'+esc(c.dir||'')+'"></div>'+
+    '<div class="form-grp"><label>Email (para enviársela)</label><input class="inp" id="df-mail" type="email" value="'+esc(c.email||'')+'"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="window._sinNif=true;cerrarModal();guardarYFacturar(true)">Facturar sin NIF</button><button class="btn verde" onclick="guardarDatosClienteFactura()">✓ Guardar y facturar</button></div>');
+}
+function guardarDatosClienteFactura(){
+  var o=obraPorId(obraActual); var c=clienteDeObra(o); var real=clientePorId(c.id);
+  var nif=document.getElementById('df-nif').value.trim(); if(!nif){ toast('Pon el NIF o pulsa «Facturar sin NIF»'); return; }
+  if(!real){ real={id:id(), razon:o.cliente||'Cliente', comercial:o.cliente||'', activo:true}; db.clientes.push(real); }
+  real.nif=nif; real.dir=document.getElementById('df-dir').value.trim(); real.email=document.getElementById('df-mail').value.trim();
+  guardar(); cerrarModal(); guardarYFacturar(true);
+}
 function guardarYFacturar(facturar){
   var o = obraPorId(obraActual);
+  if(facturar && !window._sinNif){ var cl=clienteDeObra(o); if(!cl.nif){ datosClienteFactura(); return; } }
+  window._sinNif=false;
   var numero = o.certificaciones.reduce(function(mx,c){return Math.max(mx,c.numero);},0) + 1;
   var lineas={}; var algo=false;
   o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){

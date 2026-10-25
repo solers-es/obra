@@ -38,6 +38,10 @@ const assert = require('assert');
     assert.strictEqual(o.partidas, 3, 'la obra debe nacer con las 3 partidas');
     await p.click('text=Avance'); await p.click('text=Todo al 100 %');
     await p.click('text=Certificar y facturar');
+    if (await p.locator('#df-nif').isVisible()) { console.log('  (pidió NIF del cliente)'); // cliente nuevo sin NIF: la app lo pide al facturar
+      await p.fill('#df-nif', '12345678Z'); await p.fill('#df-dir', 'C/ Sol 3, Palma'); await p.click('text=Guardar y facturar');
+    }
+    assert.strictEqual(await p.evaluate(() => db.obras[db.obras.length - 1].facturas.length), 1, 'debe haberse emitido la factura');
     await p.evaluate(() => cerrarModal());
     await p.click('text=Cobros'); await p.click('text=Ya me han pagado');
     assert.deepStrictEqual(await p.evaluate(() => db.obras[db.obras.length - 1].facturas.map(f => f.estado)), ['cobrada']);
