@@ -1091,6 +1091,7 @@ function pintarCertificar(o){
         '<div class="d">Certificación nº '+ce.numero+'<small>'+esc(ce.fecha)+'</small></div>'+
         '<span class="m">'+fe(baseCertificacion(o,ce))+'</span>'+
         (fact? '<span class="pill fact">Facturada</span>' : '<span class="pill">Sin facturar</span>')+
+        '<button class="btn sec mini" onclick="imprimirCert(\''+o.id+'\','+ce.numero+')">🖨️</button>'+
         '</div>';
     });
     html += '</div>';
@@ -1130,6 +1131,21 @@ function pintarCertificar(o){
 }
 function pctPartida(pid,q,ant){ var i=document.getElementById('pct-'+pid); if(i){ i.value=q; previewLinea(pid,ant,0); } }
 function pctTodo(q){ var o=obraPorId(obraActual); o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){ var i=document.getElementById('pct-'+p.id); if(i){ i.value=q; previewLinea(p.id,pctAnterior(o,p.id,999999),0); } }); }); }
+function docCertHTML(o,ce){
+  var cl=clienteDeObra(o);
+  var h=cabeceraDoc('CERTIFICACIÓN','Nº '+ce.numero,ce.fecha,cl);
+  h+='<p style="margin:10px 0"><b>Obra:</b> '+esc(o.nombre)+'</p>';
+  h+='<table><tr><th>Partida</th><th class="n">Importe total</th><th class="n">% anterior</th><th class="n">% acumulado</th><th class="n">Este periodo</th></tr>';
+  o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){
+    var acum=Number(ce.lineas[p.id])||0, ant=pctAnterior(o,p.id,ce.numero); if(acum<=0 && ant<=0) return;
+    h+='<tr><td>'+esc(p.descripcion)+'</td><td class="n">'+fe(totalPartida(p))+'</td><td class="n">'+fn(ant)+'%</td><td class="n">'+fn(acum)+'%</td><td class="n">'+fe(importeLineaCert(o,ce,p.id))+'</td></tr>';
+  }); });
+  var base=baseCertificacion(o,ce), acumImp=0; o.certificaciones.forEach(function(c2){ if(c2.numero<=ce.numero) acumImp+=baseCertificacion(o,c2); });
+  h+='</table><div class="tot"><div class="r"><span>Certificado este periodo</span><span>'+fe(base)+'</span></div><div class="r"><span>Certificado a origen</span><span>'+fe(redondear(acumImp))+'</span></div><div class="r big"><span>Pendiente de ejecutar</span><span>'+fe(redondear(presupuestoObra(o)-acumImp))+'</span></div></div>';
+  h+='<p class="cond">Importes sin IVA.</p>';
+  return h;
+}
+function imprimirCert(oid,num){ var o=obraPorId(oid); if(!o) return; var ce=o.certificaciones.find(function(c){return c.numero===num;}); if(!ce) return; abrirDoc('Certificación '+num+' · '+o.nombre, docCertHTML(o,ce)); }
 function previewLinea(pid, ant, totalPart){
   var inp = document.getElementById('pct-'+pid);
   var acum = parseFloat(String(inp.value).replace(',','.')); if(isNaN(acum)) acum=ant;
@@ -2123,6 +2139,7 @@ function pintarPresuDetalle(){
   html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirPartidaPropia()">＋ Mi propia partida</button><button class="btn sec peque" onclick="abrirBanco()">📥 Del banco de precios</button></div>';
   html+='<div class="total-linea"><span class="l">Lo que te cuesta</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
   html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Precio al cliente (sin IVA)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
+  html+='<div class="total-linea"><span class="l">+ IVA '+Math.round((pr.iva||0.21)*100)+'% → Total con IVA</span><span class="v">'+fe(redondear(t.venta*(1+(pr.iva||0.21))))+'</span></div>';
   html+='<div class="total-linea"><span class="l">Tu beneficio</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
   html+='<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="imprimirPresu(\''+pr.id+'\')">🖨️ Imprimir / PDF</button><button class="btn sec peque" onclick="abrirCorreo(\'presupuesto\',\''+pr.id+'\')">✉️ Enviar al cliente</button></div>';
   html+='<div class="fila-btn" style="margin-top:8px"><button class="btn sec peque" onclick="duplicarPresu()">⧉ Copiar este presupuesto</button></div>';
