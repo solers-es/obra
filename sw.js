@@ -1,5 +1,5 @@
 // Brigada · service worker (red primero, caché de respaldo para abrir sin conexión)
-var CACHE = 'brigada-v7';
+var CACHE = 'brigada-v8';
 var ASSETS = [
   './', './index.html', './manifest.json', './icono-192.png', './icono-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
