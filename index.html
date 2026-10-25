@@ -1644,6 +1644,7 @@ function guardarParte(){
   var obId=document.getElementById('pa-ob').value; var o=obraPorId(obId); if(!o){ toast('Elige la obra'); return; }
   var h=parseFloat(document.getElementById('pa-h').value.replace(',','.'))||0;
   if(h<=0){ toast('Pon las horas'); return; }
+  if(h>24){ toast('Un parte no puede pasar de 24 horas'); return; }
   var d=document.getElementById('pa-d').value.trim();
   var ch=op._libre?20:costeHoraOperario(op); var coste=redondear(h*ch);
   if(!db.partes) db.partes=[];
@@ -2163,7 +2164,7 @@ function crearPartidaPropia(){
   var kn=document.getElementById('pp-k').value.trim()||'Trabajos';
   var c=pr.capitulos.find(function(x){return x.nombre===kn;}); if(!c){ c={id:id(), nombre:kn, partidas:[]}; pr.capitulos.push(c); }
   var num=function(i){ return parseFloat(document.getElementById(i).value.replace(',','.'))||0; };
-  c.partidas.push({id:id(), codigo:'', descripcion:d, ud:document.getElementById('pp-u').value, cantidad:num('pp-c'), mat:0, sub:0, mo:0, venta:num('pp-p')});
+  c.partidas.push({id:id(), codigo:'', descripcion:d, ud:document.getElementById('pp-u').value, cantidad:Math.max(0,num('pp-c')), mat:0, sub:0, mo:0, venta:Math.max(0,num('pp-p'))});
   guardar(); cerrarModal(); pintarPresuDetalle(); toast('Partida añadida'); }
 function duplicarPresu(){ var pr=presuPorId(presuActual); if(!pr) return; var n=JSON.parse(JSON.stringify(pr));
   n.id=id(); db.contadorPresu=(db.contadorPresu||0)+1; n.num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0'); n.nombre=pr.nombre+' (copia)'; n.estado='borrador'; n.obraId=null; n.fecha=hoy();
