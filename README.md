@@ -31,6 +31,10 @@ Next.js / React / Supabase (PostgreSQL con seguridad a nivel de fila), igual que
 - [ ] MVP conectado a la base (obra → presupuesto → certificación → factura)
 - [ ] VeriFactu real (contra la especificación oficial de la AEAT)
 
+## Probar el flujo
+
+`node tests/flujo.js` (necesita `playwright`): recorre solo con clics, en móvil, presupuesto → obra → avance → factura → cobro → parte, con datos de ejemplo y con la base vacía.
+
 ## Cumplimiento (lo obligatorio)
 
 VeriFactu (RD 1007/2023 tras el RD-ley 15/2025; sociedades 1-1-2027, resto 1-7-2027; Hacienda ha anunciado octubre de 2028, pendiente de norma), TicketBAI si hay clientes vascos, Facturae en obra pública, Libro de Subcontratación + REA, registro de jornada, seguridad y salud (RD 1627/1997). Detalle en `docs/normativa.html`.
