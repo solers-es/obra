@@ -45,7 +45,7 @@ La app funciona sola en el móvil (modo local). Para cuentas, varios usuarios y 
 2. En el SQL Editor, ejecutar en orden: `supabase/esquema.sql` y `supabase/02_sync.sql`.
 3. Authentication → Providers → Email activo (para pruebas se puede desactivar «Confirm email»).
 4. Variables de entorno en el hosting: `SUPABASE_URL` y `SUPABASE_ANON_KEY` (la clave **anon public**; el script rechaza la `service_role`).
-5. Comando de build: `node scripts/gen-config.js` (genera `config.js`). Sin variables, la app queda en modo local.
+5. El build (`vercel.json`) ejecuta `node scripts/gen-config.js`, que genera `config.js` con esas variables (y, opcional, `LEGAL_RAZON`, `LEGAL_NIF`, `LEGAL_DIRECCION`, `LEGAL_EMAIL` para los Términos). Sin variables, la app queda en modo local.
 6. Primer uso: «Más → Mi cuenta» → crear cuenta → «Crear empresa y subir mis datos». Después el administrador invita a su gente (jefe de obra, administrativo, operario, solo lectura).
 
 Cómo funciona: cada obra, parte, presupuesto, cliente… es un documento por empresa con RLS. Trabaja sin conexión y sincroniza al volver la red; si dos personas editan lo mismo gana el último. El operario solo ve y escribe sus partes (y el nombre de las obras). Los números de factura los da el servidor (no se repiten entre móviles; facturar exige conexión cuando está conectado).
@@ -53,6 +53,8 @@ Cómo funciona: cada obra, parte, presupuesto, cliente… es un documento por em
 ## Pruebas
 
 - `node tests/flujo.js` — flujo completo en móvil, modo local (necesita `playwright`).
+- `node tests/cobros.js` — cobros parciales y retención de garantía.
+- `node tests/importar.js` — importar clientes y partidas desde Excel/CSV.
 - `sh supabase/tests/run.sh` — esquema + RLS + roles contra un Postgres local (`PGHOST/PGPORT/PGUSER`).
 - `sh tests/run-sync.sh` — 2 móviles de oficina + 1 operario contra un servidor de pruebas sobre ese Postgres real.
 

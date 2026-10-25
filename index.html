@@ -396,7 +396,7 @@
     <a data-nav="permisos" onclick="irTab('permisos')"><span class="ic">🔑</span>Permisos y usuarios</a>
   </div></div>
   <a onclick="abrirVerComo()" id="a-vercomo"><span class="ic">👁️</span>Ver como…</a>
-  <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar de Eureka</a>
+  <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar clientes (Excel)</a>
   <div class="sfoot">Funciona sin internet · margen real de cada obra</div>
 </nav>
 
@@ -530,7 +530,7 @@
     <!-- ===== OPORTUNIDADES ===== -->
     <section id="p-oportunidades" class="pantalla">
       <p class="seccion-tit">🎯 Oportunidades</p>
-      <p class="sub">El embudo comercial con <b>coste, venta y margen a la vista</b>. Oportunidad → Presupuesto → Obra. <span style="color:var(--naranja2)">🤖 margen real, no estimado.</span></p>
+      <p class="sub">El embudo comercial con <b>coste, venta y margen a la vista</b>. Oportunidad → Presupuesto → Obra. </p>
       <div class="fila-btn"><button class="btn" onclick="abrirNuevaOportunidad()">+ Nueva oportunidad</button></div>
       <div id="lista-oport"></div>
     </section>
@@ -553,7 +553,7 @@
     <!-- ===== OTS ===== -->
     <section id="p-ots" class="pantalla">
       <p class="seccion-tit">🗂️ Órdenes de trabajo (OTS)</p>
-      <p class="sub">Órdenes por obra con <b>estado, brigada y anomalías</b>. Como Eureka, pero ligadas al margen real de la obra.</p>
+      <p class="sub">Órdenes por obra con <b>estado, brigada y anomalías</b>.</p>
       <div class="fila-btn"><button class="btn" onclick="abrirNuevoOts()">+ Nueva OT</button></div>
       <div id="lista-ots"></div>
     </section>
@@ -575,7 +575,7 @@
     <!-- ===== FICHAJE ===== -->
     <section id="p-fichaje" class="pantalla">
       <p class="seccion-tit">⏱️ Fichaje y localización</p>
-      <p class="sub">Fichan <b>todos</b> (dueño y trabajadores) con el botón de arriba. Al fichar se guarda la <b>ubicación GPS</b> y se valida que estás <b>en la obra</b> (geovalla). Mapa de dónde fichó cada uno. <span style="color:var(--naranja2)">Eureka no lo tiene a este nivel.</span></p>
+      <p class="sub">Fichan <b>todos</b> (dueño y trabajadores) con el botón de arriba. Al fichar se guarda la <b>ubicación GPS</b> y se valida que estás <b>en la obra</b> (geovalla). Mapa de dónde fichó cada uno.</p>
       <div id="cont-fichaje"></div>
     </section>
 
@@ -741,6 +741,15 @@ function refrescarPantalla(){
   if(cur==='obra') pintarSub(); else if(cur==='presu') pintarPresuDetalle(); else if(cur) irTab(cur);
   window.scrollTo(0,y);
 }
+var DEMO_PANTALLAS={nominas:'Las nóminas son un <b>ejemplo orientativo</b>: no las uses para pagar ni presentar nada. Pasa los datos a tu gestoría.',
+  fiscal:'Esta pantalla es <b>informativa y de ejemplo</b>: no presenta impuestos. Tu gestoría es quien declara.',
+  impuestos:'Estos modelos son un <b>ejemplo</b> calculado con tus datos: no presentan nada ante Hacienda.',
+  cumplimiento:'Lista orientativa de obligaciones. Confírmalas con tu asesor.'};
+function marcarDemo(clave){
+  var sec=document.getElementById(MAP[clave]); if(!sec) return; var b=sec.querySelector('.demo-banner'); if(b) b.remove();
+  if(!DEMO_PANTALLAS[clave]) return;
+  sec.insertAdjacentHTML('afterbegin','<div class="demo-banner" style="background:#3a2d00;border:1px solid #7a5a00;color:#ffe29a;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.4">🧪 <b>DEMO.</b> '+DEMO_PANTALLAS[clave]+'</div>');
+}
 function irTab(clave){
   cerrarModal();
   document.querySelectorAll('.pantalla').forEach(function(s){ s.classList.remove('activa'); });
@@ -767,6 +776,7 @@ function irTab(clave){
   else if(clave==='impuestos') pintarImpuestos();
   else if(clave==='correo') pintarCorreo();
   else if(clave==='nominas') pintarNominas();
+  marcarDemo(clave);
   window.scrollTo(0,0);
 }
 /* ---------- ASISTENTE INTELIGENTE (como "Lo que te toca" de GestorOS) ---------- */
@@ -915,10 +925,10 @@ function menuMas(){
   var admin=!window._verComo;
   abrirModal(
     '<h3 style="text-align:left">Más</h3>'+
-    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + (admin?'<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>':'') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCuenta()"><span style="margin-right:10px">👤</span>Mi cuenta</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirTerminos()"><span style="margin-right:10px">📄</span>Términos y privacidad</button>' +'</div>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles (demo)','fiscal') + (admin?'<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>':'') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCuenta()"><span style="margin-right:10px">👤</span>Mi cuenta</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirTerminos()"><span style="margin-right:10px">📄</span>Términos y privacidad</button>' +'</div>'+
     '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
-      it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas','nominas') + it('🔑','Permisos y usuarios','permisos') +
-      '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar mis datos de Eureka</button></div></details>'+
+      it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas (demo)','nominas') + it('🔑','Permisos y usuarios','permisos') +
+      '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar clientes (Excel)</button></div></details>'+
     '<button class="btn sec peque" style="margin-top:10px" onclick="cerrarModal()">Cerrar</button>');
 }
 /* ---------- MODO OFFLINE / SINCRONIZACIÓN (golpe vs Eureka cloud) ---------- */
@@ -937,7 +947,7 @@ function sincronizar(){
 }
 function abrirOffline(){
   abrirModal('<h3>✅ Funciona sin internet</h3>'+
-    '<p class="sub" style="text-align:center;margin:0 0 12px">La gran pega de Eureka es que es <b>cloud</b>: sin internet, no funciona. Brigada guarda en el dispositivo y <b>sigue trabajando en la obra sin cobertura</b>; cuando vuelve la conexión, sube los datos solos.</p>'+
+    '<p class="sub" style="text-align:center;margin:0 0 12px">Brigada guarda en el dispositivo y <b>sigue trabajando en la obra sin cobertura</b>; cuando vuelve la conexión, sube los datos solos.</p>'+
     '<div class="card" style="margin:0"><div class="lin"><div class="d">Estado</div><div class="m ok">En línea</div></div>'+
     '<div class="lin"><div class="d">Cambios locales sin subir</div><div class="m">'+(db.pendientesSync||0)+'</div></div>'+
     '<div class="lin"><div class="d">Última sincronización</div><div class="m">'+hoy()+'</div></div></div>'+
@@ -945,26 +955,58 @@ function abrirOffline(){
 }
 
 /* ---------- MIGRACIÓN AUTOMÁTICA DESDE EUREKA ---------- */
-function abrirMigracion(){
-  cerrarModal();
-  abrirModal('<h3>📥 Importar mis datos de Eureka</h3>'+
-    '<p class="sub" style="text-align:center;margin:0 0 12px">Traemos tus clientes, obras, presupuestos y OTS de Eureka a Brigada <b>automáticamente</b>. La migración la hace la app — tú no tecleas nada.</p>'+
-    '<div id="mig-pasos" class="card" style="margin:0"></div>'+
-    '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" id="mig-go" onclick="correrMigracion()">Empezar migración</button></div>');
-  var pasos=['Conectando con Eureka…','Clientes','Obras','Presupuestos','Órdenes de trabajo (OTS)'];
-  document.getElementById('mig-pasos').innerHTML=pasos.map(function(p){return '<div class="lin"><div class="d">'+esc(p)+'</div><div class="m" style="color:var(--tx3)">—</div></div>';}).join('');
+/* ---------- IMPORTAR DESDE EXCEL / CSV (real) ---------- */
+function normH(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+function numES(v){ var t=String(v==null?'':v).replace(/[€\s]/g,''); if(!t) return 0;
+  if(t.indexOf(',')>=0 && t.indexOf('.')>=0){ t=t.lastIndexOf(',')>t.lastIndexOf('.')?t.replace(/\./g,'').replace(',','.'):t.replace(/,/g,''); }
+  else if(t.indexOf(',')>=0){ t=t.replace(',','.'); }
+  var n=parseFloat(t); return isNaN(n)?0:n; }
+function parseTabla(texto){
+  var t=String(texto||'').replace(/^﻿/,'').replace(/\r\n?/g,'\n').trim(); if(!t) return [];
+  var primera=t.split('\n')[0], sep=[';','\t',','].map(function(c){ return [c,(primera.split(c).length-1)]; }).sort(function(a,b){return b[1]-a[1];})[0][0];
+  var filas=[], f=[], c='', q=false;
+  for(var i=0;i<t.length;i++){ var ch=t[i];
+    if(q){ if(ch==='"'){ if(t[i+1]==='"'){ c+='"'; i++; } else q=false; } else c+=ch; }
+    else if(ch==='"'){ q=true; } else if(ch===sep){ f.push(c); c=''; } else if(ch==='\n'){ f.push(c); filas.push(f); f=[]; c=''; } else c+=ch; }
+  f.push(c); filas.push(f);
+  var cab=filas.shift().map(normH);
+  return filas.filter(function(r){ return r.some(function(x){ return String(x).trim(); }); }).map(function(r){ var o={}; cab.forEach(function(h,i){ if(h) o[h]=String(r[i]==null?'':r[i]).trim(); }); return o; });
 }
-function correrMigracion(){
-  var go=document.getElementById('mig-go'); if(go){ go.disabled=true; go.textContent='Migrando…'; }
-  var rows=document.querySelectorAll('#mig-pasos .lin'); var i=0;
-  var vals=['conectado ✓','107 clientes','185 obras','265 presupuestos','567 OTS'];
-  var t=setInterval(function(){
-    if(i<rows.length){ var m=rows[i].querySelector('.m'); m.textContent=vals[i]; m.style.color='var(--verde)'; i++; }
-    else{ clearInterval(t); db.migrado=true; guardar();
-      document.getElementById('mig-pasos').insertAdjacentHTML('afterend','<div class="total-linea" style="border-color:var(--verde);margin-top:10px"><span class="l">Migración completada</span><span class="v" style="color:var(--verde)">compatible ✓</span></div><p class="sub" style="text-align:center;margin:8px 0 0">107 clientes y 185 obras importados de Eureka.</p>');
-      if(go){ go.style.display='none'; } toast('✓ Datos de Eureka importados');
-    }
-  },650);
+function colDe(o,alias){ for(var i=0;i<alias.length;i++){ if(o[alias[i]]!=null&&o[alias[i]]!=='') return o[alias[i]]; } return ''; }
+var IMPORT_TIPOS={
+  clientes:{tit:'👥 Importar clientes', ayuda:'Primera fila = títulos. Columnas que entiendo: nombre, nif, telefono, email, direccion.', ejemplo:'nombre;nif;telefono;email;direccion\nAna López;12345678Z;600111222;ana@correo.es;C/ Sol 3, Palma\n'},
+  partidas:{tit:'🧮 Importar partidas', ayuda:'Primera fila = títulos. Columnas que entiendo: capitulo, descripcion, unidad, cantidad, precio (precio por unidad al cliente).', ejemplo:'capitulo;descripcion;unidad;cantidad;precio\nDemolición;Picado de alicatado;m2;12;8,50\nAlbañilería;Tabique de ladrillo;m2;9;32\n'}
+};
+function abrirMigracion(){ abrirImportar('clientes'); }
+function abrirImportar(tipo){
+  var T=IMPORT_TIPOS[tipo];
+  abrirModal('<h3 style="text-align:left">'+T.tit+'</h3>'+
+    '<p class="sub">Desde Excel: copia las filas (con la primera fila de títulos) y pégalas aquí, o sube el archivo guardado como <b>CSV</b>. '+T.ayuda+'</p>'+
+    '<textarea class="inp" id="im-txt" rows="6" placeholder="Pega aquí desde Excel…" style="min-height:120px" oninput="vistaImportar(\''+tipo+'\')"></textarea>'+
+    '<div class="fila-btn" style="margin:8px 0"><button class="btn sec peque" onclick="document.getElementById(\'im-file\').click()">📂 Subir archivo CSV</button><button class="btn sec peque" onclick="bajarPlantilla(\''+tipo+'\')">⬇️ Plantilla de ejemplo</button></div>'+
+    '<input type="file" id="im-file" accept=".csv,.txt,text/csv,text/plain" style="display:none" onchange="leerArchivoImportar(this,\''+tipo+'\')">'+
+    '<div id="im-vista" class="sub" style="min-height:22px"></div>'+
+    '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="hacerImportar(\''+tipo+'\')">✓ Importar</button></div>');
+}
+function leerArchivoImportar(inp,tipo){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ document.getElementById('im-txt').value=r.result; vistaImportar(tipo); }; r.readAsText(f,'utf-8'); }
+function bajarPlantilla(tipo){ var b=new Blob(['﻿'+IMPORT_TIPOS[tipo].ejemplo],{type:'text/csv'}), a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='plantilla-'+tipo+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+function filasImportar(tipo){
+  var f=parseTabla(document.getElementById('im-txt').value);
+  if(tipo==='clientes') return f.map(function(o){ return {razon:colDe(o,['nombre','razonsocial','cliente','razon']), nif:colDe(o,['nif','cif','nifcif','dni']), tel:colDe(o,['telefono','tel','movil']), email:colDe(o,['email','correo','mail']), dir:colDe(o,['direccion','dir','domicilio'])}; }).filter(function(x){ return x.razon; });
+  return f.map(function(o){ return {cap:colDe(o,['capitulo','cap','seccion'])||'Trabajos', desc:colDe(o,['descripcion','concepto','partida','resumen','trabajo']), ud:colDe(o,['unidad','ud','u']), cant:numES(colDe(o,['cantidad','medicion','cant','uds'])), precio:numES(colDe(o,['precio','pvp','importe','preciounitario','pu']))}; }).filter(function(x){ return x.desc; });
+}
+function vistaImportar(tipo){ var n=filasImportar(tipo).length, e=document.getElementById('im-vista'); if(e) e.textContent=n?('✅ He entendido '+n+(tipo==='clientes'?' clientes':' partidas')+'.'):(document.getElementById('im-txt').value.trim()?'⚠️ No encuentro filas. Revisa que la primera fila tenga los títulos.':''); }
+function hacerImportar(tipo){
+  var f=filasImportar(tipo); if(!f.length){ toast('No hay nada que importar'); return; }
+  if(tipo==='clientes'){
+    var ya={}; db.clientes.forEach(function(c){ ya[(c.nif||'').toUpperCase()||('n:'+(c.razon||'').toLowerCase())]=1; }); var nuevos=0, dup=0;
+    f.forEach(function(x){ var k=(x.nif||'').toUpperCase()||('n:'+x.razon.toLowerCase()); if(ya[k]){ dup++; return; } ya[k]=1; db.clientes.push({id:id(), razon:x.razon, comercial:x.razon, nif:x.nif, tel:x.tel, email:x.email, dir:x.dir, activo:true}); nuevos++; });
+    guardar(); cerrarModal(); pintarClientes(); toast('✅ '+nuevos+' clientes importados'+(dup?(' · '+dup+' ya existían'):'')); return;
+  }
+  var pr=presuPorId(presuActual); if(!pr){ toast('Abre un presupuesto primero'); return; }
+  f.forEach(function(x){ var c=pr.capitulos.find(function(k){return k.nombre===x.cap;}); if(!c){ c={id:id(), nombre:x.cap, partidas:[]}; pr.capitulos.push(c); }
+    c.partidas.push({id:id(), codigo:'', descripcion:x.desc, ud:x.ud||'ud', cantidad:Math.max(0,x.cant||0), mat:0, sub:0, mo:0, venta:Math.max(0,x.precio||0)}); });
+  guardar(); cerrarModal(); pintarPresuDetalle(); toast('✅ '+f.length+' partidas importadas');
 }
 
 /* ---------- PERMISOS / ROLES (vista profesional) ---------- */
@@ -979,7 +1021,7 @@ function rolColor(r){ return r==='Dueño'?'#f26419':r==='Oficina'?'#4f9dff':r===
 function rolBg(r){ return r==='Dueño'?'rgba(242,100,25,.14)':r==='Oficina'?'rgba(79,157,255,.14)':r==='Operario'?'rgba(46,204,113,.14)':r==='Gestor'?'rgba(43,179,163,.14)':'rgba(160,123,255,.14)'; }
 function pintarPermisos(){
   var cont=document.getElementById('cont-permisos'); if(!cont) return;
-  var html='<div class="fila-btn"><button class="btn peque" onclick="abrirNuevoUsuario()">+ Añadir usuario</button><button class="btn sec peque" onclick="abrirMigracion()">📥 Importar de Eureka</button></div>';
+  var html='<div class="fila-btn"><button class="btn peque" onclick="abrirNuevoUsuario()">+ Añadir usuario</button><button class="btn sec peque" onclick="abrirMigracion()">📥 Importar clientes (Excel)</button></div>';
   db.usuarios.forEach(function(u){
     html+='<div class="card"><div class="obra-h"><div><div class="nom">'+esc(u.nombre)+'</div><div class="cli">'+esc(u.email||'')+'</div></div>'+
       pill(u.rol, rolColor(u.rol), rolBg(u.rol))+'</div>'+
@@ -993,7 +1035,7 @@ function pintarPermisos(){
     html+='<tr><td style="padding:6px;border-top:1px solid var(--linea)">'+m+'</td>'+
       Object.keys(ROLES).map(function(r){ var ok=ROLES[r].mods[m]; return '<td style="padding:6px;text-align:center;border-top:1px solid var(--linea)">'+(ok?'<span style="color:var(--verde);font-weight:800">✓</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'; }).join('')+'</tr>';
   });
-  html+='</table></div></div><p class="sub" style="text-align:center">🤖 Tú das acceso a cada trabajador a lo que quieras — la vista profesional que pidió Vianney.</p>';
+  html+='</table></div></div><p class="sub" style="text-align:center">Vista orientativa de qué ve cada rol. Los accesos reales se dan desde «Más → Mi cuenta → Invitar».</p>';
   cont.innerHTML=html;
 }
 function abrirNuevoUsuario(){
@@ -1038,7 +1080,7 @@ function pintarObras(){
   var dash=document.getElementById('dash-obras');
   if(dash){
     dash.innerHTML=''; if(false) dash.innerHTML='<div class="dash-charts">'+
-      '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">🤖 Real: certificado − coste imputado</p><div class="chart-box"><canvas id="cObrMargen"></canvas></div></div>'+
+      '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">Real: certificado − coste imputado</p><div class="chart-box"><canvas id="cObrMargen"></canvas></div></div>'+
       '<div class="chart-card"><h3>Embudo comercial</h3><p class="csub">Venta por estado de oportunidad</p><div class="chart-box"><canvas id="cObrPipe"></canvas></div></div>'+
     '</div>';
     setTimeout(function(){
@@ -1491,12 +1533,12 @@ function pintarCostes(o){
   o.costesMaterial.forEach(function(a){
     html += '<div class="lin"><div class="d">'+esc(a.proveedor)+'<small>Albarán '+esc(a.albaran||'—')+' · '+esc(a.fecha||'')+'</small></div>'+
             '<div class="m">'+fe(a.importe)+'</div>'+
-            '<button class="borrar" onclick="borrarCoste(\'mat\',\''+a.id+'\')">✕</button></div>';
+            '<button class="borrar" onclick="borrarCoste(\'mat\',\''+a.id+'\')">✕</button></div>'+(a.foto?'<img src="'+a.foto+'" alt="albarán" style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;margin:2px 0 8px">':'');
   });
   html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal material</div><div class="m">'+fe(costeMaterial(o))+'</div></div>';
   html += '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
-          '<button class="btn peque" onclick="abrirAlbaranIA()">📸 Foto del albarán</button>'+
-          '<button class="btn sec peque" onclick="abrirNuevoMaterial()">＋ Apuntar a mano</button></div></div>';
+          '<button class="btn sec peque" onclick="abrirAlbaranIA()">📸 Albarán con IA (demo)</button>'+
+          '<button class="btn verde peque" onclick="abrirNuevoMaterial()">＋ Apuntar material</button></div></div>';
 
   html += '<div class="coste-blk"><h3>👷 Mano de obra</h3>';
   if(o.costesManoObra.length===0){ html+='<p class="sub" style="margin:0 0 8px">Aún no hay partes. Los partes de hoy aparecen aquí solos.</p>'; }
@@ -1611,6 +1653,7 @@ function crearPartida(cid){
 }
 
 function abrirNuevoMaterial(){
+  _fotoMat=null;
   var o=obraPorId(obraActual), provs={};
   db.obras.forEach(function(x){ (x.costesMaterial||[]).forEach(function(m){ if(m.proveedor) provs[m.proveedor]=1; }); });
   var dl=Object.keys(provs).map(function(p){ return '<option value="'+esc(p)+'">'; }).join('');
@@ -1618,15 +1661,19 @@ function abrirNuevoMaterial(){
     '<div class="form-grp"><label>¿Cuánto has gastado? (€)</label><input class="inp" id="f-imp" type="number" step="any" inputmode="decimal" placeholder="0"></div>'+
     '<div class="form-grp"><label>¿En qué almacén o proveedor?</label><input class="inp" id="f-prov" list="f-provl" placeholder="p. ej. Bricolaje Palma"><datalist id="f-provl">'+dl+'</datalist></div>'+
     '<div class="form-grp"><label>Nº de albarán (opcional)</label><input class="inp" id="f-alb"></div>'+
+    '<div class="form-grp"><div class="foto-box" id="mt-fotobox" onclick="document.getElementById(\'mt-foto\').click()">📷 Foto del albarán (opcional)</div><input type="file" id="mt-foto" accept="image/*" capture="environment" style="display:none" onchange="fotoMaterial(this)"></div>'+
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearMaterial()">✓ Guardar</button></div>');
   setTimeout(function(){var e=document.getElementById('f-imp'); if(e) e.focus();},100);
 }
+var _fotoMat=null;
+function reducirFoto(file,cb){ var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var m=Math.min(1,640/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=Math.round(im.width*m); c.height=Math.round(im.height*m); c.getContext('2d').drawImage(im,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.6)); }; im.onerror=function(){ cb(null); }; im.src=r.result; }; r.readAsDataURL(file); }
+function fotoMaterial(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var box=document.getElementById('mt-fotobox'); box.textContent='Procesando foto…'; reducirFoto(f,function(d){ _fotoMat=d; box.innerHTML=d?'<img src="'+d+'" alt="" style="width:100%;max-height:170px;object-fit:cover;border-radius:10px">':'No se pudo leer la foto'; }); }
 function crearMaterial(){
   var o=obraPorId(obraActual);
   var imp=parseFloat(document.getElementById('f-imp').value.replace(',','.'))||0; if(imp<=0){ toast('Pon cuánto has gastado'); return; }
   var prov=document.getElementById('f-prov').value.trim()||'Sin proveedor';
-  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(), importe:imp, fecha:hoy()});
-  guardar(); cerrarModal(); pintarSub(); toast('✅ Material apuntado: '+fe(imp));
+  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(), importe:imp, fecha:hoy(), foto:_fotoMat||undefined});
+  _fotoMat=null; guardar(); cerrarModal(); pintarSub(); toast('✅ Material apuntado: '+fe(imp));
 }
 
 /* ---------- ALBARÁN CON IA · el golpe que no tiene Eureka ---------- */
@@ -1638,11 +1685,11 @@ var MUESTRAS_IA = [
 ];
 function abrirAlbaranIA(){
   abrirModal(
-    '<h3>📸 Albarán con IA</h3>'+
-    '<p class="sub" style="text-align:center;margin:0 0 14px">Haz la foto del albarán. La IA lee proveedor, base e IVA y lo imputa solo a esta obra.</p>'+
+    '<h3>📸 Albarán con IA <span style="font-size:11px;background:#7a5a00;color:#ffe29a;border-radius:8px;padding:2px 8px;vertical-align:middle">DEMO</span></h3>'+
+    '<p class="sub" style="text-align:center;margin:0 0 14px">🧪 <b>Demostración:</b> simula la lectura con un albarán de ejemplo. Todavía no lee tus albaranes de verdad. Para apuntar material real usa «Apuntar material».</p>'+
     '<div id="ia-zona">'+
       '<button class="btn" onclick="escanearAlbaran()">📷 Hacer foto del albarán</button>'+
-      '<p class="sub" style="text-align:center;margin:12px 0 0;font-size:11px">Eureka te obliga a teclearlo a mano. Aquí lo lee la IA.</p>'+
+      ''+
     '</div>');
 }
 function escanearAlbaran(){
@@ -1673,8 +1720,8 @@ function mostrarAlbaranIA(){
 function confirmarAlbaranIA(){
   var m=window._iaSel; if(!m) return;
   var o=obraPorId(obraActual);
-  o.costesMaterial.push({id:id(), proveedor:m.proveedor+' · 🤖IA', albaran:m.albaran, importe:redondear(m.base), fecha:hoy()});
-  guardar(); cerrarModal(); pintarSub(); toast('Albarán leído e imputado por IA');
+  o.costesMaterial.push({id:id(), proveedor:m.proveedor+' · demo', albaran:m.albaran, importe:redondear(m.base), fecha:hoy()});
+  guardar(); cerrarModal(); pintarSub(); toast('Albarán de EJEMPLO imputado (demo)');
 }
 
 function abrirNuevaManoObra(){
@@ -2241,7 +2288,7 @@ function pintarPresuDetalle(){
   var pr=presuPorId(presuActual); if(!pr) return; var t=presuTotales(pr);
   var html='';
   if(pr.obraId||pr.estado==='contratado') html+='<div class="card" style="border-color:var(--ambar)"><p class="sub" style="margin:0">⚠️ Este presupuesto ya es una obra. Si lo cambias aquí, <b>la obra no se modifica</b>. Para cambiar partidas hazlo en la obra.</p><button class="btn verde peque" style="margin-top:8px" onclick="abrirObra(\''+pr.obraId+'\')"'+(pr.obraId?'':' style="display:none"')+'>🏗️ Ir a la obra</button></div>';
-  if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirPartidaPropia()">＋ Mi propia partida</button> <button class="btn sec" style="margin-top:10px" onclick="abrirBanco()">📥 Del banco</button></div>';
+  if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirPartidaPropia()">＋ Mi propia partida</button> <button class="btn sec" style="margin-top:10px" onclick="abrirBanco()">📥 Del banco</button> <button class="btn sec" style="margin-top:10px" onclick="abrirImportar(\'partidas\')">📊 De Excel</button></div>';
   pr.capitulos.forEach(function(c){
     html+='<div class="cap abierto"><div class="cap-h"><span class="cnom">'+esc(c.nombre)+'</span><span class="ctot">'+fe(capVenta(c,pr))+'</span></div><div class="cap-body">';
     if(c.partidas.length===0) html+='<div class="partida" style="color:var(--tx3)">Sin partidas.</div>';
@@ -2255,7 +2302,7 @@ function pintarPresuDetalle(){
     });
     html+='</div></div>';
   });
-  html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirPartidaPropia()">＋ Mi propia partida</button><button class="btn sec peque" onclick="abrirBanco()">📥 Del banco de precios</button></div>';
+  html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirPartidaPropia()">＋ Mi propia partida</button><button class="btn sec peque" onclick="abrirBanco()">📥 Del banco de precios</button><button class="btn sec peque" onclick="abrirImportar(\'partidas\')">📊 De Excel</button></div>';
   html+='<div class="total-linea"><span class="l">Lo que te cuesta</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
   html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Precio al cliente (sin IVA)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
   html+='<div class="total-linea"><span class="l">+ IVA '+Math.round((pr.iva||0.21)*100)+'% → Total con IVA</span><span class="v">'+fe(redondear(t.venta*(1+(pr.iva||0.21))))+'</span></div>';
@@ -2311,7 +2358,7 @@ function fichaBanco(cod){
       '<div class="lin"><div class="d" style="font-weight:800">Coste directo</div><div class="m" style="font-weight:800">'+fe(coste)+'</div></div>'+
       '<div class="lin"><div class="d" style="font-weight:800;color:var(--verde)">Venta (×K 1,25 / 1,3 / 1,35)</div><div class="m" style="font-weight:800;color:var(--verde)">'+fe(venta)+'</div></div>'+
     '</div>'+
-    '<p class="sub" style="text-align:center;margin:8px 0 0;font-size:11px">Como el generador de precios de Eureka: rendimientos (h oficial/peón) + medios auxiliares + coeficientes K.</p>'+
+    '<p class="sub" style="text-align:center;margin:8px 0 0;font-size:11px">Rendimientos (h oficial/peón) + medios auxiliares + coeficientes K.</p>'+
     '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="abrirBanco()">‹ Volver al banco</button><button class="btn peque" onclick="addBanco(\''+cod+'\')">+ Añadir al presupuesto</button></div>');
 }
 function abrirNuevoPresupuesto(){
@@ -2674,14 +2721,14 @@ function pintarEstadisticas(){
       '<div class="chart-card"><h3>Ingresos · Gastos · Balance</h3><p class="csub">Base imponible, de tus facturas y costes reales</p><div class="chart-box"><canvas id="cEstIngGas"></canvas></div></div>'+
       '<div class="chart-card"><h3>Embudo comercial</h3><p class="csub">Venta por estado de oportunidad</p><div class="chart-box"><canvas id="cEstPipe"></canvas></div></div>'+
     '</div>'+
-    '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">🤖 Margen real = certificado − coste imputado (lo que Eureka no da)</p><div class="chart-box"><canvas id="cEstMargen"></canvas></div></div>'+
+    '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">Margen real = certificado − coste imputado</p><div class="chart-box"><canvas id="cEstMargen"></canvas></div></div>'+
     '<div class="estad-grid">'+
       '<div class="card"><h3 style="font-size:12px;text-transform:'+hh+'">Ingresos (facturado)</h3>'+fila('Base imponible', baseIng)+fila('IVA repercutido', ivaIng)+fila('Total ingresos', redondear(baseIng+ivaIng))+'</div>'+
       '<div class="card"><h3 style="font-size:12px;text-transform:'+hh+'">Gastos (coste de obras)</h3>'+fila('Base imponible', baseGas)+fila('IVA soportado', ivaGas)+fila('Total gastos', redondear(baseGas+ivaGas))+'</div>'+
     '</div>'+
     '<div class="total-linea" style="border-color:'+(balance>=0?'var(--verde)':'var(--rojo)')+'"><span class="l">Balance (sin IVA)</span><span class="v" style="color:'+(balance>=0?'var(--verde)':'var(--rojo)')+'">'+fe(balance)+'</span></div>'+
     '<div class="total-linea"><span class="l">IVA a liquidar</span><span class="v">'+fe(ivaPagar)+'</span></div>'+
-    '<p class="sub" style="text-align:center;margin-top:10px">🤖 Calculado solo de tus obras. En Eureka esto vive en otra contabilidad; aquí está dentro, con VeriFactu.</p>';
+    '<p class="sub" style="text-align:center;margin-top:10px">Calculado solo con los datos de tus obras.</p>';
   document.getElementById('cont-estad').innerHTML=html;
   setTimeout(function(){
     hazChart('cEstIngGas',{type:'bar',data:{labels:['Ingresos','Gastos','Balance'],datasets:[{data:[baseIng,baseGas,balance],backgroundColor:[COL.verde,COL.rojo,(balance>=0?COL.verde:COL.rojo)],borderRadius:6,maxBarThickness:70}]},options:{plugins:{legend:{display:false}},scales:ejesOscuros()}});
