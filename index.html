@@ -791,18 +791,14 @@ function pintarAsistente(){
 
 /* menú "Más" */
 function menuMas(){
-  var it = function(ic,t,cl){ return '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="irTab(\''+cl+'\')"><span style="margin-right:8px">'+ic+'</span>'+t+'</button>'; };
+  var it = function(ic,t,cl){ return '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="irTab(\''+cl+'\')"><span style="margin-right:10px">'+ic+'</span>'+t+'</button>'; };
   abrirModal(
-    '<h3 style="text-align:left">Todas las secciones</h3>'+
-    '<div style="display:grid;gap:7px;margin:8px 0 4px">'+ it('🤖','Asistente (inicio)','asistente') +'</div>'+
-    '<div style="font-size:11px;font-weight:800;color:var(--naranja2);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">CRM y ventas</div>'+
-    '<div style="display:grid;gap:7px">'+ it('🎯','Oportunidades','oportunidades') + it('🧮','Presupuestos','presupuestos') + it('💼','Clientes','clientes') +'</div>'+
-    '<div style="font-size:11px;font-weight:800;color:var(--naranja2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">Operaciones</div>'+
-    '<div style="display:grid;gap:7px">'+ it('🏗️','Obras','obras') + it('🗂️','Órdenes de trabajo (OTS)','ots') + it('📝','Partes de trabajo','partes') + it('⏱️','Fichaje y GPS','fichaje') + it('👷','Equipo','equipo') + it('🛒','Compras y almacén','compras') + it('🔧','SAT / Mantenimientos','sat') +'</div>'+
-    '<div style="font-size:11px;font-weight:800;color:var(--naranja2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">Gestión</div>'+
-    '<div style="display:grid;gap:7px">'+ it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('🧾','Fiscal y Normativa','fiscal') + it('✉️','Correo','correo') + it('🔑','Permisos y usuarios','permisos') +'</div>'+
-    '<button class="btn sec peque" style="margin-top:10px;text-align:left;justify-content:flex-start" onclick="abrirMigracion()"><span style="margin-right:8px">📥</span>Importar mis datos de Eureka</button>'+
-    '<button class="btn sec peque" style="margin-top:14px" onclick="cerrarModal()">Cerrar</button>');
+    '<h3 style="text-align:left">Más</h3>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') +'</div>'+
+    '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
+      it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas','nominas') + it('🔑','Permisos y usuarios','permisos') +
+      '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar mis datos de Eureka</button></div></details>'+
+    '<button class="btn sec peque" style="margin-top:10px" onclick="cerrarModal()">Cerrar</button>');
 }
 /* ---------- MODO OFFLINE / SINCRONIZACIÓN (golpe vs Eureka cloud) ---------- */
 function pintarBadgeSync(){
