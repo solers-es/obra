@@ -395,7 +395,7 @@
     <a data-nav="nominas" onclick="irTab('nominas')"><span class="ic">💶</span>Nóminas</a>
     <a data-nav="permisos" onclick="irTab('permisos')"><span class="ic">🔑</span>Permisos y usuarios</a>
   </div></div>
-  <a onclick="abrirVerComo()"><span class="ic">👁️</span>Ver como…</a>
+  <a onclick="abrirVerComo()" id="a-vercomo"><span class="ic">👁️</span>Ver como…</a>
   <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar de Eureka</a>
   <div class="sfoot">Funciona sin internet · margen real de cada obra</div>
 </nav>
@@ -609,6 +609,8 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="config.js"></script>
+<script src="sync.js"></script>
 <script>
 "use strict";
 
@@ -668,7 +670,7 @@ function pipelineDatos(){
 
 /* ---------- persistencia ---------- */
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(db)); }catch(e){ console.error('No se pudo guardar',e); } }
+function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(db)); }catch(e){ console.error('No se pudo guardar',e); } try{ if(window.Sync) Sync.cambio(); }catch(e){ console.error(e); } }
 function cargar(){
   try{ var raw = localStorage.getItem(CLAVE); if(raw){ db = JSON.parse(raw); return true; } }
   catch(e){ console.error('No se pudo leer',e); }
@@ -732,6 +734,13 @@ var MAP = {asistente:'p-asistente', obras:'p-obras', obra:'p-obra', partes:'p-pa
            clientes:'p-clientes', oportunidades:'p-oportunidades', presupuestos:'p-presupuestos', presu:'p-presu', ots:'p-ots', estadisticas:'p-estadisticas', permisos:'p-permisos',
            fichaje:'p-fichaje', compras:'p-compras', fiscal:'p-fiscal', correo:'p-correo', impuestos:'p-impuestos', nominas:'p-nominas'};
 var NAVBTN = {obras:'t-obras', presupuestos:'t-presupuestos', partes:'t-partes', clientes:'t-clientes'};
+function refrescarPantalla(){
+  if(document.getElementById('modal').classList.contains('on')) return;   // no molestar si está escribiendo
+  var cur=null; document.querySelectorAll('.pantalla.activa').forEach(function(x){ for(var k in MAP){ if(MAP[k]===x.id) cur=k; } });
+  var y=window.scrollY;
+  if(cur==='obra') pintarSub(); else if(cur==='presu') pintarPresuDetalle(); else if(cur) irTab(cur);
+  window.scrollTo(0,y);
+}
 function irTab(clave){
   cerrarModal();
   document.querySelectorAll('.pantalla').forEach(function(s){ s.classList.remove('activa'); });
@@ -809,6 +818,58 @@ function pintarAsistente(){
 }
 
 /* menú "Más" */
+function abrirCuenta(){ abrirModal('<div id="cuenta-cont"></div>'); pintarCuenta(); }
+function pintarCuenta(){
+  var c=document.getElementById('cuenta-cont'); if(!c) return;
+  var st=Sync.estado(), h='<h3 style="text-align:left">👤 Mi cuenta</h3>';
+  var cerrar='<button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>';
+  if(!st.configurado){
+    h+='<p class="sub">Ahora Brigada guarda todo <b>solo en este móvil</b>. Para trabajar en equipo (oficina + operarios) y no perder nada, hay que conectar el servidor. Todavía no está conectado.</p>'+cerrar;
+  } else if(!st.sesion){
+    h+='<p class="sub">Entra con tu correo para ver tus obras en cualquier móvil.</p>'+
+      '<div class="form-grp"><label>Correo</label><input class="inp" id="ac-mail" type="email" autocomplete="username"></div>'+
+      '<div class="form-grp"><label>Contraseña (mín. 6)</label><input class="inp" id="ac-pass" type="password" autocomplete="current-password"></div>'+
+      '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
+      '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="cuentaAccion(\'reg\')">Crear cuenta</button><button class="btn verde" onclick="cuentaAccion(\'in\')">Entrar</button></div>'+cerrar;
+  } else if(!st.tenant){
+    var e=db.empresa||{};
+    h+='<p class="sub">Has entrado como <b>'+esc(st.email)+'</b>. Falta crear tu empresa en el servidor con los datos de «Mi empresa».</p>'+
+      '<p class="sub"><b>'+esc(e.nombre||'(sin nombre)')+'</b> · NIF '+esc(e.nif||'—')+'</p>'+
+      '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
+      '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="abrirEmpresa(false)">Cambiar datos</button><button class="btn verde" onclick="cuentaAccion(\'emp\')">Crear empresa y subir mis datos</button></div>'+
+      '<button class="btn sec" style="width:100%;margin-top:10px" onclick="cuentaAccion(\'inv2\')">🔄 Ya me han invitado a una empresa</button>'+
+      '<button class="btn sec peque" style="margin-top:10px" onclick="Sync.salir();pintarCuenta()">Salir</button>';
+  } else {
+    var rolTxt={admin:'Administrador',jefe_obra:'Jefe de obra',administrativo:'Administrativo',operario:'Operario',solo_lectura:'Solo lectura'}[st.rol]||st.rol;
+    h+='<p class="sub"><b>'+esc(st.email)+'</b><br>'+esc(st.empresa)+' · '+esc(rolTxt)+'</p>'+
+      '<p class="sub">'+(!st.online?'📴 Sin conexión · '+st.pendientes+' cambios por enviar':(st.err?'⚠️ '+esc(st.err):(st.pendientes?'⏳ Enviando '+st.pendientes+'…':'✅ Todo sincronizado'+(st.ult?' · '+new Date(st.ult).toTimeString().slice(0,5):''))))+'</p>'+
+      '<button class="btn verde" style="width:100%;margin:6px 0" onclick="sincronizar()">🔄 Sincronizar ahora</button>'+
+      (st.rol==='admin'?'<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">➕ Invitar a alguien a mi empresa</summary><p class="sub">Primero tiene que crearse su cuenta con su correo.</p>'+
+        '<div class="form-grp"><label>Su correo</label><input class="inp" id="iv-mail" type="email"></div>'+
+        '<div class="form-grp"><label>Qué puede hacer</label><select class="inp" id="iv-rol"><option value="operario">Operario (solo partes)</option><option value="jefe_obra">Jefe de obra</option><option value="administrativo">Administrativo</option><option value="solo_lectura">Solo lectura</option></select></div>'+
+        '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div><button class="btn peque" onclick="cuentaAccion(\'inv\')">Invitar</button></details>':'')+
+      '<button class="btn sec peque" style="margin-top:8px" onclick="if(confirm(\'¿Salir de esta cuenta? Los datos quedan en este móvil.\')){Sync.salir();pintarCuenta();pintarBadgeSync();}">Salir</button>'+cerrar;
+  }
+  c.innerHTML=h;
+}
+function cuentaAccion(que){
+  var msg=function(t,ok){ var m=document.getElementById('ac-msg'); if(m){ m.style.color=ok?'var(--verde)':'var(--rojo)'; m.textContent=t; } };
+  var fin=function(r){ if(r&&r.confirmar){ msg('Te hemos mandado un correo: confírmalo y luego pulsa Entrar.',true); return; } pintarCuenta(); pintarBadgeSync(); if(r&&r.ok) toast('✅ Conectado'); };
+  var fallo=function(e){ msg(e.message==='Failed to fetch'?'No hay conexión con el servidor':(e.message||'Error')); };
+  if(que==='in'||que==='reg'){
+    var mail=document.getElementById('ac-mail').value.trim(), pass=document.getElementById('ac-pass').value;
+    if(!mail||pass.length<6){ msg('Pon tu correo y una contraseña de al menos 6 caracteres'); return; }
+    msg('Un momento…',true); (que==='in'?Sync.entrar(mail,pass):Sync.registrar(mail,pass)).then(fin).catch(fallo);
+  } else if(que==='emp'){
+    var e=db.empresa||{}; if(!e.nombre){ msg('Rellena antes «Mi empresa»'); return; } if(!Sync.nifValido(e.nif)){ msg('El NIF/CIF de «Mi empresa» no es válido'); return; }
+    msg('Creando…',true); Sync.crearEmpresa(e).then(fin).catch(fallo);
+  } else if(que==='inv2'){
+    msg('Comprobando…',true); Sync.conectar().then(function(r){ if(r&&r.sinEmpresa) msg('Todavía no te han invitado. Pídele a tu jefe que te invite con este correo.'); else fin(r); }).catch(fallo);
+  } else if(que==='inv'){
+    var m2=document.getElementById('iv-mail').value.trim(); if(!m2){ msg('Pon su correo'); return; }
+    Sync.invitar(m2,document.getElementById('iv-rol').value).then(function(){ msg('✅ Invitado. Que entre con su correo.',true); }).catch(fallo);
+  }
+}
 function abrirCopia(){
   abrirModal('<h3 style="text-align:left">💾 Copia de seguridad</h3>'+
     '<p class="sub">Tus datos están en este móvil. Guarda una copia de vez en cuando por si lo pierdes o cambias de móvil.</p>'+
@@ -831,10 +892,11 @@ function leerCopia(inp){
   r.readAsText(f);
 }
 function menuMas(){
-  var it = function(ic,t,cl){ return '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="irTab(\''+cl+'\')"><span style="margin-right:10px">'+ic+'</span>'+t+'</button>'; };
+  var it = function(ic,t,cl){ if(!navVisible(cl,window._verComo)) return ''; return '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="irTab(\''+cl+'\')"><span style="margin-right:10px">'+ic+'</span>'+t+'</button>'; };
+  var admin=!window._verComo;
   abrirModal(
     '<h3 style="text-align:left">Más</h3>'+
-    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>' +'</div>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + (admin?'<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>':'') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCuenta()"><span style="margin-right:10px">👤</span>Mi cuenta</button>' +'</div>'+
     '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
       it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas','nominas') + it('🔑','Permisos y usuarios','permisos') +
       '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar mis datos de Eureka</button></div></details>'+
@@ -842,18 +904,17 @@ function menuMas(){
 }
 /* ---------- MODO OFFLINE / SINCRONIZACIÓN (golpe vs Eureka cloud) ---------- */
 function pintarBadgeSync(){
-  var p = db.pendientesSync||0;
-  var html = p>0
-    ? '<span class="dot"></span>Offline OK · '+p+' cambio'+(p===1?'':'s')+' por sincronizar'
-    : '<span class="dot"></span>Funciona sin internet · sincronizado';
+  var st=(window.Sync&&Sync.activo())?Sync.estado():null;
   ['badge-sync-d','badge-sync-m'].forEach(function(idv){
-    var e=document.getElementById(idv); if(e){ e.innerHTML=html; e.classList.toggle('pend', p>0); e.title='Brigada funciona sin internet, a diferencia de Eureka (cloud). Pulsa para sincronizar.'; }
+    var e=document.getElementById(idv); if(!e) return;
+    if(!st){ e.style.display='none'; return; }
+    var p=st.pendientes, html=!st.online?'<span class="dot"></span>Sin conexión'+(p?' · '+p+' por enviar':''):(st.err?'<span class="dot"></span>Error al sincronizar':(p>0?'<span class="dot"></span>Enviando '+p+'…':'<span class="dot"></span>Sincronizado'));
+    e.style.display=''; e.innerHTML=html; e.classList.toggle('pend', p>0||!!st.err||!st.online); e.title=st.err||'Pulsa para sincronizar ahora';
   });
 }
 function sincronizar(){
-  if((db.pendientesSync||0)===0){ abrirOffline(); return; }
-  toast('Sincronizando…');
-  setTimeout(function(){ db.pendientesSync=0; guardar(); pintarBadgeSync(); toast('✓ Sincronizado con la nube'); },700);
+  if(window.Sync&&Sync.activo()){ toast('Sincronizando…'); Sync.sincronizar().then(function(){ var st=Sync.estado(); toast(st.err?('⚠️ '+st.err):'✓ Sincronizado'); }); }
+  else abrirCuenta();
 }
 function abrirOffline(){
   abrirModal('<h3>✅ Funciona sin internet</h3>'+
@@ -1196,12 +1257,18 @@ function guardarYFacturar(facturar){
     if(acum>ant) algo=true;
   }); });
   if(!algo){ toast('No hay avance nuevo que certificar'); return; }
+  if(facturar && window.Sync && Sync.activo() && !window._numListo){
+    // con servidor conectado, el número de factura lo da el servidor (no se repite entre móviles)
+    Sync.reservarNumero(db.contadorFactura||0).then(function(n){ db.contadorFactura=n-1; window._numListo=true; guardarYFacturar(true); })
+      .catch(function(){ toast('Sin conexión: para facturar hace falta internet (así no se repiten números)'); });
+    return;
+  }
   var ce = {id:id(), numero:numero, fecha:hoy(), lineas:lineas, estado:'aprobada'};
   o.certificaciones.push(ce);
   var base = baseCertificacion(o, ce);
   if(facturar){
     var gi=document.getElementById('fac-iva'), gr=document.getElementById('fac-ret'), gs=document.getElementById('fac-isp');
-    emitirFactura(o, ce, base, {iva:gi?gi.value:'21', ret:gr?gr.value:'0', isp:gs?gs.checked:false});
+    emitirFactura(o, ce, base, {iva:gi?gi.value:'21', ret:gr?gr.value:'0', isp:gs?gs.checked:false}); window._numListo=false;
   } else {
     guardar(); toast('Certificación nº '+numero+' guardada: '+fe(base));
   }
@@ -1401,7 +1468,7 @@ function pintarCostes(o){
 function borrarCoste(tipo,cid){ if(!confirm('¿Borrar este gasto?')) return;
   var o=obraPorId(obraActual);
   if(tipo==='mat') o.costesMaterial=o.costesMaterial.filter(function(x){return x.id!==cid;});
-  else o.costesManoObra=o.costesManoObra.filter(function(x){return x.id!==cid;});
+  else { var _m=o.costesManoObra.find(function(x){return x.id===cid;}); if(_m&&_m.parteId) db.partes=(db.partes||[]).filter(function(p){return p.id!==_m.parteId;}); o.costesManoObra=o.costesManoObra.filter(function(x){return x.id!==cid;}); }
   guardar(); pintarSub(); toast('Coste borrado');
 }
 
@@ -1702,7 +1769,7 @@ function abrirNuevoParte(obraId){
   abrirModal(
     '<h3 style="text-align:left">📝 Parte de hoy</h3>'+
     '<div class="form-grp"><label>Obra</label><select class="inp" id="pa-ob">'+obs+'</select></div>'+
-    '<div class="form-grp"><label>¿Quién?</label>'+(eq.length?'<select class="inp" id="pa-op">'+opsel+'</select>':'<input class="inp" id="pa-opn" placeholder="Tu nombre">')+'</div>'+
+    '<div class="form-grp"><label>¿Quién?</label>'+(eq.length?'<select class="inp" id="pa-op">'+opsel+'</select>':'<input class="inp" id="pa-opn" placeholder="Tu nombre" value="'+esc((window.Sync&&Sync.estado().email||'').split('@')[0])+'">')+'</div>'+
     '<div class="form-grp"><label>Horas</label><div style="display:flex;gap:6px;margin-bottom:6px">'+[4,6,8,10].map(function(h){return '<button class="btn '+(h===8?'verde':'sec')+' peque hrapida" data-h="'+h+'" onclick="horasRapidas('+h+')" style="flex:1;padding:12px 0">'+h+'</button>';}).join('')+'</div>'+
     '<input class="inp" id="pa-h" type="number" step="any" value="8" inputmode="decimal"></div>'+
     '<div class="form-grp"><label>¿Qué has hecho?</label><input class="inp" id="pa-d" placeholder="p. ej. Alicatado del baño"></div>'+
@@ -1723,8 +1790,9 @@ function guardarParte(){
   var d=document.getElementById('pa-d').value.trim();
   var ch=op._libre?20:costeHoraOperario(op); var coste=redondear(h*ch);
   if(!db.partes) db.partes=[];
-  db.partes.push({id:id(), operario:op.nombre, obraId:obId, obraNombre:o.nombre, horas:h, desc:d, fecha:hoy(), foto:!!_fotoParte, fotoData:_fotoParte, firmado:_firmaHayTrazo, coste:coste});
-  o.costesManoObra.push({id:id(), operario:op.nombre+' (parte)', horas:h, costeHora:ch, fecha:hoy()});
+  var parteId=id();
+  db.partes.push({id:parteId, operario:op.nombre, obraId:obId, obraNombre:o.nombre, horas:h, desc:d, fecha:hoy(), foto:!!_fotoParte, fotoData:_fotoParte, firmado:_firmaHayTrazo, coste:coste});
+  o.costesManoObra.push({id:'cp_'+parteId, parteId:parteId, operario:op.nombre+' (parte)', horas:h, costeHora:ch, fecha:hoy()});
   _fotoParte=null; guardar(); cerrarModal();
   if(document.getElementById('p-partes').classList.contains('activa')) pintarPartes(); else if(obraActual===obId&&document.getElementById('p-obra').classList.contains('activa')) pintarSub();
   toast('✅ Parte guardado · '+fn(h)+' h en '+o.nombre);
@@ -1870,6 +1938,8 @@ function abrirSubcontrata(){
 function crearSubcontrata(){
   var n=document.getElementById('sc-n').value.trim(); if(!n){ toast('Pon la empresa'); return; }
   if(!db.subcontratistas) db.subcontratistas=[];
+  db.equipo.forEach(function(x){ if(!x.id) x.id=id(); });
+  db.subcontratistas.forEach(function(x){ if(!x.id) x.id=id(); });
   db.subcontratistas.push({nombre:n, rea:document.getElementById('sc-r').value.trim()||'—'});
   guardar(); cerrarModal(); pintarCumplimiento(); toast('Subcontrata apuntada en el libro');
 }
@@ -2773,6 +2843,7 @@ function sembrar(){
   pintarAsistente();
   var h=(location.hash||'').replace('#',''); if(h && MAP[h] && h!=='obra') irTab(h);
   if(primeraVez) abrirEmpresa(true);
+  if(window.Sync) Sync.iniciar();
   document.addEventListener('click',function(e){ var w=(e.target.closest)?e.target.closest('.buscar-wrap'):null; if(!w){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
   document.addEventListener('keydown',function(e){ var ae=document.activeElement, tag=ae?ae.tagName:''; if(e.key==='/' && tag!=='INPUT' && tag!=='TEXTAREA'){ var i=document.getElementById('buscador'); if(i){ e.preventDefault(); i.focus(); } } else if(e.key==='Escape'){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
 })();
@@ -2865,11 +2936,15 @@ function aplicarVerComo(){
   var rol=window._verComo;
   var b=document.getElementById('vercomo-banner');
   if(!b){ b=document.createElement('div'); b.id='vercomo-banner'; b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:300;font-weight:800;font-size:13px;text-align:center;padding:7px 12px'; document.body.appendChild(b); }
-  if(rol){ b.style.display='block'; b.style.background=rolColor(rol); b.style.color='#07101d';
+  if(rol && window._rolReal){ b.style.display='none'; document.body.style.paddingTop='0'; }
+  else if(rol){ b.style.display='block'; b.style.background=rolColor(rol); b.style.color='#07101d';
     b.innerHTML='👁️ Estás viendo como <b>'+esc(rol)+'</b> — '+esc((ROLES[rol]||{}).desc||'')+' &nbsp;<button onclick="verComo(\'Dueño\')" style="background:#07101d;color:#fff;border:none;padding:3px 12px;border-radius:7px;font-weight:800;cursor:pointer;margin-left:6px">Volver a Admin</button>';
     document.body.style.paddingTop='34px';
   } else { b.style.display='none'; document.body.style.paddingTop='0'; }
   document.querySelectorAll('.sidebar a[data-nav]').forEach(function(a){ a.style.display=navVisible(a.dataset.nav,rol)?'':'none'; });
+  var vc=document.getElementById('a-vercomo'); if(vc) vc.style.display=window._rolReal?'none':'';
+  var tabs={'t-obras':'obras','t-presupuestos':'presupuestos','t-clientes':'clientes','t-partes':'partes'};
+  for(var tb in tabs){ var te=document.getElementById(tb); if(te) te.style.display=navVisible(tabs[tb],rol)?'':'none'; }
   var cur=null; document.querySelectorAll('.pantalla.activa').forEach(function(s){ for(var k in MAP){ if(MAP[k]===s.id) cur=k; } });
   if(rol && cur && !navVisible(cur,rol)){ irTab(rol==='Operario'?'partes':(rol==='Gestor'?'fiscal':(rol==='Cliente'?'obras':'asistente'))); }
 }

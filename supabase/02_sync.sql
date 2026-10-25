@@ -112,7 +112,8 @@ create table if not exists public.brigada_contadores (
 );
 alter table public.brigada_contadores enable row level security;  -- sin policies: solo por la función
 
-create or replace function public.siguiente_numero(p_tenant uuid, p_serie text)
+-- p_desde = último número ya usado antes de conectar (así no se repite ni retrocede).
+create or replace function public.siguiente_numero(p_tenant uuid, p_serie text, p_desde bigint default 0)
 returns bigint
 language plpgsql
 security definer
@@ -123,13 +124,13 @@ begin
   select m.rol into v_rol from public.membresias m
    where m.tenant_id = p_tenant and m.usuario_id = auth.uid() and m.estado = 'activa';
   if v_rol is null or v_rol in ('solo_lectura','operario') then raise exception 'Sin permiso' using errcode = '42501'; end if;
-  insert into public.brigada_contadores as c (tenant_id, serie, ultimo) values (p_tenant, p_serie, 1)
-  on conflict (tenant_id, serie) do update set ultimo = c.ultimo + 1
+  insert into public.brigada_contadores as c (tenant_id, serie, ultimo) values (p_tenant, p_serie, greatest(p_desde,0) + 1)
+  on conflict (tenant_id, serie) do update set ultimo = greatest(c.ultimo, p_desde) + 1
   returning ultimo into v_n;
   return v_n;
 end $$;
-revoke all on function public.siguiente_numero(uuid,text) from public, anon;
-grant execute on function public.siguiente_numero(uuid,text) to authenticated;
+revoke all on function public.siguiente_numero(uuid,text,bigint) from public, anon;
+grant execute on function public.siguiente_numero(uuid,text,bigint) to authenticated;
 
 grant select on public.brigada_docs to authenticated;
 

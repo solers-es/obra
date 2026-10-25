@@ -50,3 +50,7 @@ select public.invitar_usuario(:'ta'::uuid,'beto@b.es','jefe_obra');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000b',false);
 \echo '== Beto ya ve los docs de A (>0)'
 select count(*)>0 from public.brigada_docs where tenant_id=:'ta';
+
+\echo '== Numero desde 10 (primera vez que se conecta una empresa que ya facturo 10) -> 11, luego 12; nunca retrocede'
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
+select public.siguiente_numero(:'ta'::uuid,'B-2026',10) union all select public.siguiente_numero(:'ta'::uuid,'B-2026',3);
