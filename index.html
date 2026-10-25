@@ -1185,13 +1185,13 @@ function mostrarModalFactura(o, fac, ce){
 /* ---------- FACTURAS ---------- */
 function pintarFacturas(o){
   var html='';
-  if(o.facturas.length===0){ html='<div class="vacio">Aún no hay facturas.<br>Emite una desde “Certificar”.</div>'; document.getElementById('o-fac').innerHTML=html; return; }
+  if(o.facturas.length===0){ html='<div class="vacio">Aún no hay facturas.<br>Se crean al marcar avance en “Avance”.</div>'; document.getElementById('o-fac').innerHTML=html; return; }
   o.facturas.slice().sort(function(a,b){return b.numero-a.numero;}).forEach(function(f){
     var ce = o.certificaciones.find(function(c){return c.id===f.certId;});
     html += '<div class="card">'+
       '<div class="obra-h" style="margin-bottom:10px"><div><div class="nom">'+esc(f.numeroCompleto)+'</div>'+
         '<div class="cli">'+esc(f.fecha)+(ce?' · certificación nº '+ce.numero:'')+'</div></div>'+
-        '<span class="estado '+(f.estado==='cobrada'?'cert':'curso')+'">'+(f.estado==='cobrada'?'Cobrada':'Emitida')+'</span></div>'+
+        '<span class="estado '+(f.estado==='cobrada'?'cert':'curso')+'">'+(f.estado==='cobrada'?'Cobrada':'Por cobrar')+'</span></div>'+
       '<div class="factura-doc" style="margin:0">'+
         lineasFiscalFactura(f)+
       '</div>'+
@@ -1199,7 +1199,7 @@ function pintarFacturas(o){
       '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
         '<button class="btn sec peque" onclick="imprimirFactura(\''+o.id+'\',\''+f.id+'\')">🖨️ PDF</button>'+
         '<button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+f.id+'\')">✉️ Correo</button>'+
-        (f.estado==='cobrada'?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="cobrarFactura(\''+o.id+'\',\''+f.id+'\')">Cobrada</button>')+
+        (f.estado==='cobrada'?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="cobrarFactura(\''+o.id+'\',\''+f.id+'\')">💶 Ya me han pagado</button>')+
       '</div>'+
     '</div>';
   });
