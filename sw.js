@@ -1,7 +1,7 @@
 // Brigada · service worker (red primero, caché de respaldo para abrir sin conexión)
-var CACHE = 'brigada-v1';
+var CACHE = 'brigada-v18';
 var ASSETS = [
-  './', './index.html', './manifest.json', './icono-192.png', './icono-512.png',
+  './', './index.html', './config.js', './sync.js', './manifest.json', './icono-192.png', './icono-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'

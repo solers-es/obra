@@ -111,7 +111,7 @@
   .btn.mini{width:auto;padding:8px 13px;font-size:12.5px;border-radius:10px}
   .fila-btn{display:flex;gap:9px;margin:0 0 12px}
   /* certificaciones */
-  .cert-part{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea)}
+  .cert-part{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea)}
   .cert-part:last-child{border-bottom:none}
   .cert-part .cn{font-size:13px;flex:1;min-width:0}
   .cert-part .cn small{display:block;color:var(--tx3);font-size:11px}
@@ -160,6 +160,7 @@
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
   .modal-bg.on{display:flex;animation:fade .2s}
   .modal{background:var(--grafito2);border:1px solid var(--linea);border-radius:18px;padding:22px 20px;max-width:380px;width:100%;max-height:88vh;overflow-y:auto}
+  #modal-cont>.fila-btn:last-child{position:sticky;bottom:-22px;background:var(--grafito2);padding:10px 0 4px;margin-bottom:-4px}
   .modal h3{margin:0 0 4px;font-size:18px;font-weight:800;text-align:center}
   .modal .marca-ok{width:60px;height:60px;border-radius:50%;background:rgba(46,204,113,.15);border:2px solid var(--verde);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px}
   /* toast */
@@ -307,7 +308,7 @@
   .top-right{display:flex;align-items:center;gap:10px;margin-left:auto}
   @media(min-width:980px){
     .top{align-items:flex-start}
-    .fichaje-bar.topfich{margin:0;max-width:420px}
+    .fichaje-bar.topfich{margin:0;max-width:420px;padding:6px 10px}
     .gantt-row{grid-template-columns:200px 1fr}
   }
   /* asistente inteligente */
@@ -346,14 +347,30 @@
   .imp-tabla td.acc .btn{display:inline-block;width:auto;height:auto;overflow:visible;vertical-align:middle;margin:0;padding:7px 12px;font-size:12px;line-height:1;border-radius:9px}
   .imp-tabla td.acc .btn+.btn{margin-left:7px}
   .imp-tabla .bdg{display:inline-block;vertical-align:middle}
+  /* zonas de toque comodas (dedos grandes, guantes) */
+  .borrar{min-width:44px;min-height:44px;font-size:16px}
+  .volver{min-height:44px;font-size:15px}
+  .btn.mini{min-height:44px}
+  .obratabs button{min-height:44px}
+  .inp{min-height:44px}
+  .buscar-input{min-height:44px}
+  .asis-c .btn.mini{min-height:40px}
+  input[type=checkbox]{width:22px;height:22px}
+  /* texto legible: nada por debajo de 12px en el flujo principal */
+  .fld label{font-size:12px}
+  .pill,.sello{font-size:12px}
+  small{font-size:12.5px!important}
+  .top .emp{font-size:12px}
+  .fichaje-bar .sub2{font-size:12.5px}
+  nav.bottom button,.tabbar button,#t-obras,#t-presupuestos,#t-partes,#t-clientes,#t-mas{font-size:12px}
 </style>
 </head>
 <body>
 
 <nav class="sidebar" id="sidebar">
   <div class="smarca"><div class="logo">B</div><b>Brigada</b></div>
-  <div class="semp">Reformas Vega S.L. · Mallorca</div>
-  <div id="badge-sync-d" class="syncbadge" onclick="sincronizar()"></div>
+  <div class="semp" id="semp"></div>
+  <div id="badge-sync-d" class="syncbadge" onclick="sincronizar()" style="display:none"></div>
   <a data-nav="asistente" onclick="irTab('asistente')"><span class="ic">🤖</span>Asistente</a>
   <a data-nav="obras" onclick="irTab('obras')"><span class="ic">🏗️</span>Obras</a>
   <div class="sgrp" data-grp="crm"><div class="grp" onclick="togGrp('crm')"><span class="gtx">CRM y ventas</span><span class="chev">▸</span></div><div class="grp-body">
@@ -378,9 +395,9 @@
     <a data-nav="nominas" onclick="irTab('nominas')"><span class="ic">💶</span>Nóminas</a>
     <a data-nav="permisos" onclick="irTab('permisos')"><span class="ic">🔑</span>Permisos y usuarios</a>
   </div></div>
-  <a onclick="abrirVerComo()"><span class="ic">👁️</span>Ver como…</a>
-  <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar de Eureka</a>
-  <div class="sfoot">🤖 Con IA · VeriFactu · margen real · <b style="color:#2ecc71">funciona sin internet</b><br>Prototipo · sin base de datos</div>
+  <a onclick="abrirVerComo()" id="a-vercomo"><span class="ic">👁️</span>Ver como…</a>
+  <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar clientes (Excel)</a>
+  <div class="sfoot">Funciona sin internet · margen real de cada obra</div>
 </nav>
 
 <div class="telefono">
@@ -390,13 +407,13 @@
       <div class="logo">B</div>
       <div>
         <h1>Brigada</h1>
-        <span class="prov">prototipo funcional · guarda en el navegador</span>
+        <span class="prov">tu obra, sin líos</span>
       </div>
-      <div class="emp"><b>Reformas Vega S.L.</b><br>Mallorca</div>
+      <div class="emp" id="emp-hd"></div>
     </div>
     <div class="top-right">
       <div class="fichaje-bar topfich" id="fichaje-top"></div>
-      <div id="badge-sync-m" class="syncbadge" onclick="sincronizar()"></div>
+      <div id="badge-sync-m" class="syncbadge" onclick="sincronizar()" style="display:none"></div>
     </div>
   </div>
 
@@ -416,15 +433,13 @@
     <!-- ===== LISTA DE OBRAS ===== -->
     <section id="p-obras" class="pantalla">
       <p class="tit">Mis obras</p>
-      <p class="sub">Margen calculado en vivo a partir de certificaciones y costes reales.</p>
-      <div class="kpis" id="kpis"></div>
+            <div class="kpis" id="kpis"></div>
       <div id="dash-obras"></div>
       <div id="lista-obras"></div>
       <div class="fila-btn">
         <button class="btn" onclick="abrirNuevaObra()">+ Nueva obra</button>
       </div>
-      <button class="btn sec peque" onclick="reiniciar()">↺ Borrar todo y reiniciar con el ejemplo</button>
-      <p class="pie-demo" style="margin-top:14px">Prototipo · todo se guarda en localStorage de este navegador · sin servidor</p>
+      <p class="sub" style="margin-top:18px"><a style="cursor:pointer;color:var(--tx3)" onclick="reiniciar()">Borrar todo y empezar de nuevo</a></p>
     </section>
 
     <!-- ===== DETALLE DE OBRA ===== -->
@@ -433,12 +448,13 @@
       <p class="tit" id="obra-tit">—</p>
       <p class="sub" id="obra-sub">—</p>
 
+      <div class="fila-btn" style="margin:0 0 10px"><button class="btn verde peque" onclick="abrirNuevoParte(obraActual)">📝 Parte de hoy</button></div>
       <div class="obratabs">
-        <button class="on" data-sub="o-pre" onclick="obraTab(this)">Presupuesto</button>
-        <button data-sub="o-cer" onclick="obraTab(this)">Certificar</button>
-        <button data-sub="o-fac" onclick="obraTab(this)">Facturas</button>
-        <button data-sub="o-cos" onclick="obraTab(this)">Costes</button>
-        <button data-sub="o-mar" onclick="obraTab(this)">Margen</button>
+        <button class="on" data-sub="o-pre" onclick="obraTab(this)">Partidas</button>
+        <button data-sub="o-cer" onclick="obraTab(this)">Avance</button>
+        <button data-sub="o-fac" onclick="obraTab(this)">Cobros</button>
+        <button data-sub="o-cos" onclick="obraTab(this)">Gastos</button>
+        <button data-sub="o-mar" onclick="obraTab(this)">Beneficio</button>
         <button data-sub="o-pla" onclick="obraTab(this)">Planificación</button>
         <button data-sub="o-pro" onclick="obraTab(this)">Promotor</button>
       </div>
@@ -455,8 +471,7 @@
     <!-- ===== PARTES ===== -->
     <section id="p-partes" class="pantalla">
       <p class="seccion-tit">📝 Partes de trabajo</p>
-      <p class="sub">El operario mete su parte desde el móvil: horas, foto y firma. Se imputa solo al coste de la obra. <b>Eureka no deja hacer esto desde el móvil.</b></p>
-      <div class="fila-btn"><button class="btn" onclick="abrirNuevoParte()">+ Nuevo parte</button></div>
+      <div class="fila-btn"><button class="btn" onclick="abrirNuevoParte()">＋ Nuevo parte</button></div>
       <div id="lista-partes"></div>
     </section>
 
@@ -515,7 +530,7 @@
     <!-- ===== OPORTUNIDADES ===== -->
     <section id="p-oportunidades" class="pantalla">
       <p class="seccion-tit">🎯 Oportunidades</p>
-      <p class="sub">El embudo comercial con <b>coste, venta y margen a la vista</b>. Oportunidad → Presupuesto → Obra. <span style="color:var(--naranja2)">🤖 margen real, no estimado.</span></p>
+      <p class="sub">El embudo comercial con <b>coste, venta y margen a la vista</b>. Oportunidad → Presupuesto → Obra. </p>
       <div class="fila-btn"><button class="btn" onclick="abrirNuevaOportunidad()">+ Nueva oportunidad</button></div>
       <div id="lista-oport"></div>
     </section>
@@ -523,8 +538,7 @@
     <!-- ===== PRESUPUESTOS ===== -->
     <section id="p-presupuestos" class="pantalla">
       <p class="seccion-tit">🧮 Presupuestos</p>
-      <p class="sub">Por capítulos y partidas, con <b>banco de precios</b> y coeficientes <b>Kmat/Ksub/Kmo</b>. Coste y venta calculados, como los que van en serio.</p>
-      <div class="fila-btn"><button class="btn" onclick="abrirNuevoPresupuesto()">+ Nuevo presupuesto</button></div>
+            <div class="fila-btn"><button class="btn" onclick="abrirNuevoPresupuesto()">＋ Nuevo presupuesto</button></div>
       <div id="lista-presu"></div>
     </section>
 
@@ -539,7 +553,7 @@
     <!-- ===== OTS ===== -->
     <section id="p-ots" class="pantalla">
       <p class="seccion-tit">🗂️ Órdenes de trabajo (OTS)</p>
-      <p class="sub">Órdenes por obra con <b>estado, brigada y anomalías</b>. Como Eureka, pero ligadas al margen real de la obra.</p>
+      <p class="sub">Órdenes por obra con <b>estado, brigada y anomalías</b>.</p>
       <div class="fila-btn"><button class="btn" onclick="abrirNuevoOts()">+ Nueva OT</button></div>
       <div id="lista-ots"></div>
     </section>
@@ -561,7 +575,7 @@
     <!-- ===== FICHAJE ===== -->
     <section id="p-fichaje" class="pantalla">
       <p class="seccion-tit">⏱️ Fichaje y localización</p>
-      <p class="sub">Fichan <b>todos</b> (dueño y trabajadores) con el botón de arriba. Al fichar se guarda la <b>ubicación GPS</b> y se valida que estás <b>en la obra</b> (geovalla). Mapa de dónde fichó cada uno. <span style="color:var(--naranja2)">Eureka no lo tiene a este nivel.</span></p>
+      <p class="sub">Fichan <b>todos</b> (dueño y trabajadores) con el botón de arriba. Al fichar se guarda la <b>ubicación GPS</b> y se valida que estás <b>en la obra</b> (geovalla). Mapa de dónde fichó cada uno.</p>
       <div id="cont-fichaje"></div>
     </section>
 
@@ -587,7 +601,7 @@
     <button id="t-mas" onclick="menuMas()"><span class="ic">☰</span>Más</button>
   </nav>
 
-  <div class="pie-demo">Brigada · prototipo funcional de gestión de obra · Solers</div>
+  
 </div>
 
 <div class="modal-bg" id="modal" onclick="cerrarModalFondo(event)">
@@ -595,6 +609,8 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="config.js"></script>
+<script src="sync.js"></script>
 <script>
 "use strict";
 
@@ -653,7 +669,8 @@ function pipelineDatos(){
 }
 
 /* ---------- persistencia ---------- */
-function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(db)); }catch(e){ console.error('No se pudo guardar',e); } }
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(db)); }catch(e){ console.error('No se pudo guardar',e); } try{ if(window.Sync) Sync.cambio(); }catch(e){ console.error(e); } }
 function cargar(){
   try{ var raw = localStorage.getItem(CLAVE); if(raw){ db = JSON.parse(raw); return true; } }
   catch(e){ console.error('No se pudo leer',e); }
@@ -678,7 +695,7 @@ function partidaPorId(o, pid){
 function pctAnterior(o, pid, numeroHasta){
   var pct=0;
   o.certificaciones.forEach(function(ce){
-    if(ce.numero < numeroHasta && ce.lineas[pid]!=null){ pct = Math.max(pct, Number(ce.lineas[pid])||0); }
+    if(ce.estado!=='anulada' && ce.numero < numeroHasta && ce.lineas[pid]!=null){ pct = Math.max(pct, Number(ce.lineas[pid])||0); }
   });
   return pct;
 }
@@ -717,6 +734,22 @@ var MAP = {asistente:'p-asistente', obras:'p-obras', obra:'p-obra', partes:'p-pa
            clientes:'p-clientes', oportunidades:'p-oportunidades', presupuestos:'p-presupuestos', presu:'p-presu', ots:'p-ots', estadisticas:'p-estadisticas', permisos:'p-permisos',
            fichaje:'p-fichaje', compras:'p-compras', fiscal:'p-fiscal', correo:'p-correo', impuestos:'p-impuestos', nominas:'p-nominas'};
 var NAVBTN = {obras:'t-obras', presupuestos:'t-presupuestos', partes:'t-partes', clientes:'t-clientes'};
+function refrescarPantalla(){
+  if(document.getElementById('modal').classList.contains('on')) return;   // no molestar si está escribiendo
+  var cur=null; document.querySelectorAll('.pantalla.activa').forEach(function(x){ for(var k in MAP){ if(MAP[k]===x.id) cur=k; } });
+  var y=window.scrollY;
+  if(cur==='obra') pintarSub(); else if(cur==='presu') pintarPresuDetalle(); else if(cur) irTab(cur);
+  window.scrollTo(0,y);
+}
+var DEMO_PANTALLAS={nominas:'Las nóminas son un <b>ejemplo orientativo</b>: no las uses para pagar ni presentar nada. Pasa los datos a tu gestoría.',
+  fiscal:'Esta pantalla es <b>informativa y de ejemplo</b>: no presenta impuestos. Tu gestoría es quien declara.',
+  impuestos:'Estos modelos son un <b>ejemplo</b> calculado con tus datos: no presentan nada ante Hacienda.',
+  cumplimiento:'Lista orientativa de obligaciones. Confírmalas con tu asesor.'};
+function marcarDemo(clave){
+  var sec=document.getElementById(MAP[clave]); if(!sec) return; var b=sec.querySelector('.demo-banner'); if(b) b.remove();
+  if(!DEMO_PANTALLAS[clave]) return;
+  sec.insertAdjacentHTML('afterbegin','<div class="demo-banner" style="background:#3a2d00;border:1px solid #7a5a00;color:#ffe29a;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.4">🧪 <b>DEMO.</b> '+DEMO_PANTALLAS[clave]+'</div>');
+}
 function irTab(clave){
   cerrarModal();
   document.querySelectorAll('.pantalla').forEach(function(s){ s.classList.remove('activa'); });
@@ -743,12 +776,13 @@ function irTab(clave){
   else if(clave==='impuestos') pintarImpuestos();
   else if(clave==='correo') pintarCorreo();
   else if(clave==='nominas') pintarNominas();
+  marcarDemo(clave);
   window.scrollTo(0,0);
 }
 /* ---------- ASISTENTE INTELIGENTE (como "Lo que te toca" de GestorOS) ---------- */
 function asisFacturasPorCobrar(){
   var n=0, tot=0;
-  (db.obras||[]).forEach(function(o){ (o.facturas||[]).forEach(function(f){ if(f.estado!=='cobrada'){ n++; tot+=Number(f.total)||0; } }); });
+  (db.obras||[]).forEach(function(o){ (o.facturas||[]).forEach(function(f){ var p=pendienteDe(f); if(p>0){ n++; tot+=p; } }); });
   return {n:n, total:redondear(tot)};
 }
 function asisCard(clr,ic,txt,btn,act){
@@ -760,7 +794,7 @@ function asisCard(clr,ic,txt,btn,act){
 }
 function pintarAsistente(){
   var c=document.getElementById('asis-cont'); if(!c) return;
-  var emp='Reformas Vega S.L.';
+  var emp=EMISOR.nombre||'tu empresa';
   var hora=new Date().getHours();
   var saludo=hora<12?'Buenos días':(hora<20?'Buenas tardes':'Buenas noches');
   var pres=db.presupuestos||[];
@@ -777,62 +811,163 @@ function pintarAsistente(){
   var tri=Math.floor(new Date().getMonth()/3);
   var finTri=['20 de abril','20 de julio','20 de octubre','30 de enero'][tri];
   var h='';
-  h+='<p class="tit">🤖 Asistente de Brigada</p>';
-  h+='<p class="sub">'+saludo+', '+esc(emp)+'. Esto es lo que te toca hoy — con un toque lo resuelves.</p>';
-  h+='<div class="asis">';
-  h+=asisCard(fc.n>0?'rojo':'verde','💶', fc.n>0?('<b>'+fc.n+' factura'+(fc.n===1?'':'s')+' por cobrar</b> · '+fe(fc.total)):'Todo cobrado — no hay facturas pendientes', fc.n>0?'Ver facturas':'Ver obras', "irTab('obras')");
-  h+=asisCard(presBorr>0?'ambar':'verde','📄', presBorr>0?('Tienes <b>'+presBorr+' presupuesto'+(presBorr===1?'':'s')+' por enviar</b> (en borrador) · '+presContr+' contratado'+(presContr===1?'':'s')):(pres.length+' presupuestos · todos enviados o contratados'), 'Ir a presupuestos', "irTab('presupuestos')");
-  if(riesgo&&riesgoPct!=null){ var clr=riesgoPct<10?'rojo':(riesgoPct<20?'ambar':'verde');
-    h+=asisCard(clr,'🏗️', obras.length+' obra'+(obras.length===1?'':'s')+' en marcha · margen más bajo: <b>'+esc(riesgo.nombre)+' ('+fn(riesgoPct)+'%)</b>'+(riesgoPct<20?' — ojo, se estrecha':''), 'Revisar obra', "abrirObra('"+riesgo.id+"')");
-  } else { h+=asisCard('verde','🏗️', obras.length+' obras · márgenes sin alertas', 'Ver obras', "irTab('obras')"); }
-  h+=asisCard(otsPend>0?'ambar':'verde','🗂️', otsPend>0?('<b>'+otsPend+' órdenes de trabajo</b> por ejecutar'):'OTS al día', 'Ver OTS', "irTab('ots')");
-  h+=asisCard('azul','⏱️', fichTxt, 'Fichaje y GPS', "irTab('fichaje')");
-  h+=asisCard('ambar','🧾', 'Fiscal: este trimestre toca <b>modelo 303 (IVA)</b> y <b>111 (retenciones)</b> · vence sobre el '+finTri+' <span style="color:var(--tx3)">(estimado)</span>', 'Fiscal y normativa', "irTab('fiscal')");
-  h+=asisCard('verde','⚖️', 'Normativa: revisa el <b>Plan de Seguridad</b> y que el equipo tenga la <b>TPC</b> y el fichaje al día', 'Cumplimiento', "irTab('cumplimiento')");
+  h+='<p class="tit">'+saludo+'</p>';
+  h+='<div style="display:grid;gap:10px;margin:14px 0 18px">'+
+     '<button class="btn" style="padding:18px;font-size:17px" onclick="irTab(\'presupuestos\');abrirNuevoPresupuesto()">🧮 Hacer un presupuesto</button>'+
+     (obras.length?'<button class="btn verde" style="padding:18px;font-size:17px" onclick="abrirNuevoParte()">📝 Parte de hoy</button>'+
+     '<button class="btn sec" style="padding:18px;font-size:17px" onclick="irTab(\'obras\')">🏗️ Mis obras ('+obras.length+')</button>':'')+'</div>';
+  if(!obras.length&&!pres.length) h+='<p class="sub">Empieza haciendo tu primer presupuesto. Cuando el cliente lo acepte, se convierte en obra con un toque.</p>';
+  h+=(obras.length||pres.length)?'<p class="sub" style="margin:0 0 8px"><b>Lo que te toca</b></p><div class="asis">':'<div class="asis" style="display:none">';
+  if(fc.n>0) h+=asisCard('rojo','💶','<b>'+fc.n+' factura'+(fc.n===1?'':'s')+' por cobrar</b> · '+fe(fc.total),'Ver',"irTab('obras')");
+  if(presBorr>0) h+=asisCard('ambar','📄','<b>'+presBorr+' presupuesto'+(presBorr===1?'':'s')+' sin cerrar</b>','Ver',"irTab('presupuestos')");
+  if(riesgo&&riesgoPct!=null&&riesgoPct<20) h+=asisCard(riesgoPct<10?'rojo':'ambar','🏗️','Ojo con <b>'+esc(riesgo.nombre)+'</b>: margen '+fn(riesgoPct)+'%','Revisar',"abrirObra('"+riesgo.id+"')");
+  if(!fc.n&&!presBorr&&!(riesgo&&riesgoPct!=null&&riesgoPct<20)) h+=asisCard('verde','✅','Todo al día. Nada urgente.','','');
   h+='</div>';
-  h+='<p class="tit" style="font-size:16px;margin-top:18px">¿Qué quieres hacer hoy?</p>';
-  h+='<div class="fila-btn" style="flex-wrap:wrap;gap:9px">'+
-     '<button class="btn peque" onclick="irTab(\'presupuestos\')">🧮 Nuevo presupuesto</button>'+
-     '<button class="btn peque" onclick="irTab(\'fichaje\')">⏱️ Fichar</button>'+
-     '<button class="btn sec peque" onclick="irTab(\'obras\')">🏗️ Ver obras</button>'+
-     '<button class="btn sec peque" onclick="irTab(\'oportunidades\')">🎯 Oportunidades</button></div>';
-  h+='<p class="pie-demo" style="margin-top:14px">El asistente se calcula solo con tus datos de Brigada · Con IA · VeriFactu · funciona sin internet.</p>';
+  h+='<p class="sub" style="margin-top:14px"><a style="color:var(--naranja2);cursor:pointer" onclick="menuMas()">Más cosas: fichaje, equipo, fiscal, clientes…</a></p>';
   c.innerHTML=h;
 }
 
 /* menú "Más" */
+var VERSION_TERMINOS='2026-10';
+function abrirTerminos(){
+  var L=(window.BRIGADA_CONFIG&&BRIGADA_CONFIG.legal)||{}, quien=L.razon?(esc(L.razon)+(L.nif?' (NIF '+esc(L.nif)+')':'')+(L.direccion?', '+esc(L.direccion):'')):'<b>[pendiente: datos de la empresa que ofrece Brigada]</b>', mail=L.email?esc(L.email):'<b>[pendiente: correo de contacto]</b>';
+  var e=db.empresa||{};
+  abrirModal('<h3 style="text-align:left">📄 Términos y privacidad</h3><div style="max-height:62vh;overflow:auto;font-size:14px;line-height:1.5;text-align:left">'+
+   '<p class="sub"><b>Texto base. Debe revisarlo un abogado antes de vender.</b> Versión '+VERSION_TERMINOS+'.</p>'+
+   '<h4>1. Qué es Brigada</h4><p>Una herramienta para que tu empresa de construcción o reformas haga presupuestos, controle obras, apunte partes de trabajo y emita certificaciones y facturas. La ofrece '+quien+'.</p>'+
+   '<h4>2. Tu responsabilidad</h4><p>Tú eres el responsable de los datos que metes (tus clientes, tus trabajadores, tus facturas) y de que sean correctos. Las facturas y presupuestos son tuyos: revisa importes, IVA y datos fiscales antes de enviarlos. Brigada no sustituye a tu gestoría ni a tu asesor fiscal.</p>'+
+   '<h4>3. Funciones de demostración</h4><p>Nóminas, fiscal e impuestos, y la lectura de albaranes con IA son <b>demostraciones</b>: no sirven para presentar impuestos ni pagar nóminas reales. La facturación electrónica con envío a Hacienda (VeriFactu) no está incluida todavía.</p>'+
+   '<h4>4. Qué datos se guardan y dónde</h4><p>Datos de tu empresa, clientes, obras, presupuestos, partes (horas, fotos y firmas de los operarios), facturas y, si usas cuentas, tu correo. '+((window.Sync&&Sync.configurado)?'Se guardan en el servidor de Brigada (Unión Europea) y en tu dispositivo.':'Ahora se guardan solo en este dispositivo.')+' No vendemos tus datos ni los usamos para publicidad.</p>'+
+   '<h4>5. Datos de tus trabajadores y clientes (RGPD)</h4><p>Sobre los datos personales de tus trabajadores y clientes, <b>tú eres el responsable del tratamiento</b> y '+(L.razon?esc(L.razon):'quien ofrece Brigada')+' actúa como <b>encargado</b>: los trata solo para darte el servicio, con medidas de seguridad (acceso por cuenta, separación entre empresas, el operario solo ve sus partes) y sin cederlos a terceros salvo proveedores técnicos necesarios (alojamiento). Informa a tus trabajadores de que fichan y apuntan partes con la app.</p>'+
+   '<h4>6. Tus derechos</h4><p>Puedes acceder, corregir, descargar (Más → Copia de seguridad) o pedir que se borren tus datos escribiendo a '+mail+'. También puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>'+
+   '<h4>7. Disponibilidad</h4><p>Hacemos copias y procuramos que funcione siempre, pero no garantizamos que no haya fallos. Guarda tu propia copia de seguridad con regularidad.</p>'+
+   '<h4>8. Cambios</h4><p>Si cambian estos términos te lo diremos y tendrás que volver a aceptarlos.</p>'+
+   '</div><button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>');
+}
+function terminosAceptados(){ var a=db.empresa&&db.empresa.aceptaTerminos; return !!(a&&a.version===VERSION_TERMINOS); }
+function abrirCuenta(){ abrirModal('<div id="cuenta-cont"></div>'); pintarCuenta(); }
+function pintarCuenta(){
+  var c=document.getElementById('cuenta-cont'); if(!c) return;
+  var st=Sync.estado(), h='<h3 style="text-align:left">👤 Mi cuenta</h3>';
+  var cerrar='<button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>';
+  if(!st.configurado){
+    h+='<p class="sub">Ahora Brigada guarda todo <b>solo en este móvil</b>. Para trabajar en equipo (oficina + operarios) y no perder nada, hay que conectar el servidor. Todavía no está conectado.</p>'+cerrar;
+  } else if(!st.sesion){
+    h+='<p class="sub">Entra con tu correo para ver tus obras en cualquier móvil.</p>'+
+      '<div class="form-grp"><label>Correo</label><input class="inp" id="ac-mail" type="email" autocomplete="username"></div>'+
+      '<div class="form-grp"><label>Contraseña (mín. 6)</label><input class="inp" id="ac-pass" type="password" autocomplete="current-password"></div>'+
+      '<label style="display:flex;align-items:flex-start;gap:10px;margin:8px 0;font-size:13px;color:var(--tx2)"><input type="checkbox" id="ac-ok" style="margin-top:3px"> <span>Acepto los <a style="color:var(--naranja2)" href="#" onclick="event.preventDefault();abrirTerminos()">términos y el aviso de privacidad</a> (solo al crear cuenta).</span></label>'+
+      '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
+      '<p class="sub" style="margin:0 0 6px"><a href="#" style="color:var(--naranja2)" onclick="event.preventDefault();cuentaAccion(\'rec\')">¿Has olvidado la contraseña?</a></p>'+
+      '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="cuentaAccion(\'reg\')">Crear cuenta</button><button class="btn verde" onclick="cuentaAccion(\'in\')">Entrar</button></div>'+cerrar;
+  } else if(!st.tenant){
+    var e=db.empresa||{};
+    h+='<p class="sub">Has entrado como <b>'+esc(st.email)+'</b>. Falta crear tu empresa en el servidor con los datos de «Mi empresa».</p>'+
+      '<p class="sub"><b>'+esc(e.nombre||'(sin nombre)')+'</b> · NIF '+esc(e.nif||'—')+'</p>'+
+      '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
+      '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="abrirEmpresa(false)">Cambiar datos</button><button class="btn verde" onclick="cuentaAccion(\'emp\')">Crear empresa y subir mis datos</button></div>'+
+      '<button class="btn sec" style="width:100%;margin-top:10px" onclick="cuentaAccion(\'inv2\')">🔄 Ya me han invitado a una empresa</button>'+
+      '<button class="btn sec peque" style="margin-top:10px" onclick="Sync.salir();pintarCuenta()">Salir</button>';
+  } else {
+    var rolTxt={admin:'Administrador',jefe_obra:'Jefe de obra',administrativo:'Administrativo',operario:'Operario',solo_lectura:'Solo lectura'}[st.rol]||st.rol;
+    h+='<p class="sub"><b>'+esc(st.email)+'</b><br>'+esc(st.empresa)+' · '+esc(rolTxt)+'</p>'+
+      '<p class="sub">'+(!st.online?'📴 Sin conexión · '+st.pendientes+' cambios por enviar':(st.err?'⚠️ '+esc(st.err):(st.pendientes?'⏳ Enviando '+st.pendientes+'…':'✅ Todo sincronizado'+(st.ult?' · '+new Date(st.ult).toTimeString().slice(0,5):''))))+'</p>'+
+      '<button class="btn verde" style="width:100%;margin:6px 0" onclick="sincronizar()">🔄 Sincronizar ahora</button>'+
+      (st.rol==='admin'?'<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">➕ Invitar a alguien a mi empresa</summary><p class="sub">Primero tiene que crearse su cuenta con su correo.</p>'+
+        '<div class="form-grp"><label>Su correo</label><input class="inp" id="iv-mail" type="email"></div>'+
+        '<div class="form-grp"><label>Qué puede hacer</label><select class="inp" id="iv-rol"><option value="operario">Operario (solo partes)</option><option value="jefe_obra">Jefe de obra</option><option value="administrativo">Administrativo</option><option value="solo_lectura">Solo lectura</option></select></div>'+
+        '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div><button class="btn peque" onclick="cuentaAccion(\'inv\')">Invitar</button></details>':'')+
+      (st.rol==='admin'?'<details style="margin:8px 0" ontoggle="if(this.open)cargarEquipo()"><summary class="sub" style="cursor:pointer">👥 Quién tiene acceso</summary><div id="eq-lista" class="sub">Cargando…</div></details>':'')+
+      '<button class="btn sec peque" style="margin-top:8px" onclick="if(confirm(\'¿Salir de esta cuenta? Los datos quedan en este móvil.\')){Sync.salir();pintarCuenta();pintarBadgeSync();}">Salir</button>'+cerrar;
+  }
+  c.innerHTML=h;
+}
+function cargarEquipo(){
+  var c=document.getElementById('eq-lista'); if(!c) return;
+  Sync.equipo().then(function(l){
+    var rolTxt={admin:'Administrador',jefe_obra:'Jefe de obra',administrativo:'Administrativo',operario:'Operario',solo_lectura:'Solo lectura'};
+    c.innerHTML=l.map(function(u){ var yo=u.usuario_id===Sync.miUid();
+      return '<div class="lin"><div class="d">'+esc(u.email)+(yo?' (tú)':'')+'</div>'+(yo?'<div class="m" style="font-size:12px">'+rolTxt[u.rol]+'</div>':
+        '<select class="inp" style="width:auto;min-height:44px" onchange="equipoAccion(\'rol\',\''+u.usuario_id+'\',this.value)">'+Object.keys(rolTxt).map(function(r){ return '<option value="'+r+'"'+(r===u.rol?' selected':'')+'>'+rolTxt[r]+'</option>'; }).join('')+'</select>'+
+        '<button class="borrar" title="Quitar acceso" onclick="equipoAccion(\'del\',\''+u.usuario_id+'\',\''+esc(u.email)+'\')">✕</button>')+'</div>'; }).join('')||'Nadie más.';
+  }).catch(function(e){ c.textContent=e.message; });
+}
+function equipoAccion(que,uid,x){
+  var fin=function(){ cargarEquipo(); }, fallo=function(e){ toast('⚠️ '+e.message); cargarEquipo(); };
+  if(que==='rol') Sync.cambiarRol(uid,x).then(function(){ toast('Rol cambiado'); fin(); }).catch(fallo);
+  else if(confirm('¿Quitar el acceso a '+x+'? Ya no podrá entrar ni ver nada de tu empresa.')) Sync.quitar(uid).then(function(){ toast('Acceso quitado'); fin(); }).catch(fallo);
+}
+function cuentaAccion(que){
+  var msg=function(t,ok){ var m=document.getElementById('ac-msg'); if(m){ m.style.color=ok?'var(--verde)':'var(--rojo)'; m.textContent=t; } };
+  var fin=function(r){ if(r&&r.confirmar){ msg('Te hemos mandado un correo: confírmalo y luego pulsa Entrar.',true); return; } pintarCuenta(); pintarBadgeSync(); if(r&&r.ok) toast('✅ Conectado'); };
+  var fallo=function(e){ msg(e.message==='Failed to fetch'?'No hay conexión con el servidor':(e.message||'Error')); };
+  if(que==='in'||que==='reg'){
+    var mail=document.getElementById('ac-mail').value.trim(), pass=document.getElementById('ac-pass').value;
+    if(!mail||pass.length<6){ msg('Pon tu correo y una contraseña de al menos 6 caracteres'); return; }
+    if(que==='reg'&&!document.getElementById('ac-ok').checked){ msg('Marca que aceptas los términos para crear la cuenta'); return; }
+    msg('Un momento…',true); (que==='in'?Sync.entrar(mail,pass):Sync.registrar(mail,pass)).then(fin).catch(fallo);
+  } else if(que==='emp'){
+    var e=db.empresa||{}; if(!e.nombre){ msg('Rellena antes «Mi empresa»'); return; } if(!Sync.nifValido(e.nif)){ msg('El NIF/CIF de «Mi empresa» no es válido'); return; }
+    msg('Creando…',true); Sync.crearEmpresa(e).then(fin).catch(fallo);
+  } else if(que==='rec'){
+    var m3=document.getElementById('ac-mail').value.trim(); if(!m3){ msg('Pon tu correo arriba y vuelve a tocar «¿Has olvidado la contraseña?»'); return; }
+    Sync.recuperar(m3).then(function(){ msg('Si ese correo tiene cuenta, te hemos mandado un enlace para poner otra contraseña.',true); }).catch(fallo);
+  } else if(que==='inv2'){
+    msg('Comprobando…',true); Sync.conectar().then(function(r){ if(r&&r.sinEmpresa) msg('Todavía no te han invitado. Pídele a tu jefe que te invite con este correo.'); else fin(r); }).catch(fallo);
+  } else if(que==='inv'){
+    var m2=document.getElementById('iv-mail').value.trim(); if(!m2){ msg('Pon su correo'); return; }
+    Sync.invitar(m2,document.getElementById('iv-rol').value).then(function(){ msg('✅ Invitado. Que entre con su correo.',true); }).catch(fallo);
+  }
+}
+function abrirCopia(){
+  abrirModal('<h3 style="text-align:left">💾 Copia de seguridad</h3>'+
+    '<p class="sub">Tus datos están en este móvil. Guarda una copia de vez en cuando por si lo pierdes o cambias de móvil.</p>'+
+    '<div style="display:grid;gap:8px;margin:10px 0"><button class="btn verde" style="padding:14px" onclick="bajarCopia()">⬇️ Guardar copia</button>'+
+    '<button class="btn sec" style="padding:14px" onclick="document.getElementById(\'cp-file\').click()">⬆️ Recuperar una copia</button>'+
+    '<input type="file" id="cp-file" accept=".json,application/json" style="display:none" onchange="leerCopia(this)"></div>'+
+    '<button class="btn sec peque" onclick="cerrarModal()">Cerrar</button>');
+}
+function bajarCopia(){
+  var b=new Blob([JSON.stringify(db)],{type:'application/json'}), a=document.createElement('a'), d=new Date();
+  a.href=URL.createObjectURL(b); a.download='brigada-copia-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.json';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); toast('Copia guardada');
+}
+function leerCopia(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ try{ var n=JSON.parse(r.result); if(!n||!Array.isArray(n.obras)||!Array.isArray(n.presupuestos)) throw 0;
+      if(!confirm('Esto sustituye lo que tienes ahora por la copia ('+n.obras.length+' obras, '+n.presupuestos.length+' presupuestos). ¿Seguir?')) return;
+      db=n; guardar(); cerrarModal(); obraActual=null; irTab('asistente'); toast('✅ Copia recuperada'); }
+    catch(e){ toast('Ese archivo no es una copia de Brigada'); } };
+  r.readAsText(f);
+}
 function menuMas(){
-  var it = function(ic,t,cl){ return '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="irTab(\''+cl+'\')"><span style="margin-right:8px">'+ic+'</span>'+t+'</button>'; };
+  var it = function(ic,t,cl){ if(!navVisible(cl,window._verComo)) return ''; return '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="irTab(\''+cl+'\')"><span style="margin-right:10px">'+ic+'</span>'+t+'</button>'; };
+  var admin=!window._verComo;
   abrirModal(
-    '<h3 style="text-align:left">Todas las secciones</h3>'+
-    '<div style="display:grid;gap:7px;margin:8px 0 4px">'+ it('🤖','Asistente (inicio)','asistente') +'</div>'+
-    '<div style="font-size:11px;font-weight:800;color:var(--naranja2);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">CRM y ventas</div>'+
-    '<div style="display:grid;gap:7px">'+ it('🎯','Oportunidades','oportunidades') + it('🧮','Presupuestos','presupuestos') + it('💼','Clientes','clientes') +'</div>'+
-    '<div style="font-size:11px;font-weight:800;color:var(--naranja2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">Operaciones</div>'+
-    '<div style="display:grid;gap:7px">'+ it('🏗️','Obras','obras') + it('🗂️','Órdenes de trabajo (OTS)','ots') + it('📝','Partes de trabajo','partes') + it('⏱️','Fichaje y GPS','fichaje') + it('👷','Equipo','equipo') + it('🛒','Compras y almacén','compras') + it('🔧','SAT / Mantenimientos','sat') +'</div>'+
-    '<div style="font-size:11px;font-weight:800;color:var(--naranja2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">Gestión</div>'+
-    '<div style="display:grid;gap:7px">'+ it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('🧾','Fiscal y Normativa','fiscal') + it('✉️','Correo','correo') + it('🔑','Permisos y usuarios','permisos') +'</div>'+
-    '<button class="btn sec peque" style="margin-top:10px;text-align:left;justify-content:flex-start" onclick="abrirMigracion()"><span style="margin-right:8px">📥</span>Importar mis datos de Eureka</button>'+
-    '<button class="btn sec peque" style="margin-top:14px" onclick="cerrarModal()">Cerrar</button>');
+    '<h3 style="text-align:left">Más</h3>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles (demo)','fiscal') + (admin?'<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>':'') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCuenta()"><span style="margin-right:10px">👤</span>Mi cuenta</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirTerminos()"><span style="margin-right:10px">📄</span>Términos y privacidad</button>' +'</div>'+
+    '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
+      it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas (demo)','nominas') + it('🔑','Permisos y usuarios','permisos') +
+      '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar clientes (Excel)</button></div></details>'+
+    '<button class="btn sec peque" style="margin-top:10px" onclick="cerrarModal()">Cerrar</button>');
 }
 /* ---------- MODO OFFLINE / SINCRONIZACIÓN (golpe vs Eureka cloud) ---------- */
 function pintarBadgeSync(){
-  var p = db.pendientesSync||0;
-  var html = p>0
-    ? '<span class="dot"></span>Offline OK · '+p+' cambio'+(p===1?'':'s')+' por sincronizar'
-    : '<span class="dot"></span>Funciona sin internet · sincronizado';
+  var st=(window.Sync&&Sync.activo())?Sync.estado():null;
   ['badge-sync-d','badge-sync-m'].forEach(function(idv){
-    var e=document.getElementById(idv); if(e){ e.innerHTML=html; e.classList.toggle('pend', p>0); e.title='Brigada funciona sin internet, a diferencia de Eureka (cloud). Pulsa para sincronizar.'; }
+    var e=document.getElementById(idv); if(!e) return;
+    if(!st){ e.style.display='none'; return; }
+    var p=st.pendientes, html=!st.online?'<span class="dot"></span>Sin conexión'+(p?' · '+p+' por enviar':''):(st.err?'<span class="dot"></span>Error al sincronizar':(p>0?'<span class="dot"></span>Enviando '+p+'…':'<span class="dot"></span>Sincronizado'));
+    e.style.display=''; e.innerHTML=html; e.classList.toggle('pend', p>0||!!st.err||!st.online); e.title=st.err||'Pulsa para sincronizar ahora';
   });
 }
 function sincronizar(){
-  if((db.pendientesSync||0)===0){ abrirOffline(); return; }
-  toast('Sincronizando…');
-  setTimeout(function(){ db.pendientesSync=0; guardar(); pintarBadgeSync(); toast('✓ Sincronizado con la nube'); },700);
+  if(window.Sync&&Sync.activo()){ toast('Sincronizando…'); Sync.sincronizar().then(function(){ var st=Sync.estado(); toast(st.err?('⚠️ '+st.err):'✓ Sincronizado'); }); }
+  else abrirCuenta();
 }
 function abrirOffline(){
   abrirModal('<h3>✅ Funciona sin internet</h3>'+
-    '<p class="sub" style="text-align:center;margin:0 0 12px">La gran pega de Eureka es que es <b>cloud</b>: sin internet, no funciona. Brigada guarda en el dispositivo y <b>sigue trabajando en la obra sin cobertura</b>; cuando vuelve la conexión, sube los datos solos.</p>'+
+    '<p class="sub" style="text-align:center;margin:0 0 12px">Brigada guarda en el dispositivo y <b>sigue trabajando en la obra sin cobertura</b>; cuando vuelve la conexión, sube los datos solos.</p>'+
     '<div class="card" style="margin:0"><div class="lin"><div class="d">Estado</div><div class="m ok">En línea</div></div>'+
     '<div class="lin"><div class="d">Cambios locales sin subir</div><div class="m">'+(db.pendientesSync||0)+'</div></div>'+
     '<div class="lin"><div class="d">Última sincronización</div><div class="m">'+hoy()+'</div></div></div>'+
@@ -840,26 +975,91 @@ function abrirOffline(){
 }
 
 /* ---------- MIGRACIÓN AUTOMÁTICA DESDE EUREKA ---------- */
-function abrirMigracion(){
-  cerrarModal();
-  abrirModal('<h3>📥 Importar mis datos de Eureka</h3>'+
-    '<p class="sub" style="text-align:center;margin:0 0 12px">Traemos tus clientes, obras, presupuestos y OTS de Eureka a Brigada <b>automáticamente</b>. La migración la hace la app — tú no tecleas nada.</p>'+
-    '<div id="mig-pasos" class="card" style="margin:0"></div>'+
-    '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" id="mig-go" onclick="correrMigracion()">Empezar migración</button></div>');
-  var pasos=['Conectando con Eureka…','Clientes','Obras','Presupuestos','Órdenes de trabajo (OTS)'];
-  document.getElementById('mig-pasos').innerHTML=pasos.map(function(p){return '<div class="lin"><div class="d">'+esc(p)+'</div><div class="m" style="color:var(--tx3)">—</div></div>';}).join('');
+/* ---------- IMPORTAR DESDE EXCEL / CSV (real) ---------- */
+function normH(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+function numES(v){ var t=String(v==null?'':v).replace(/[€\s]/g,''); if(!t) return 0;
+  if(t.indexOf(',')>=0 && t.indexOf('.')>=0){ t=t.lastIndexOf(',')>t.lastIndexOf('.')?t.replace(/\./g,'').replace(',','.'):t.replace(/,/g,''); }
+  else if(t.indexOf(',')>=0){ t=t.replace(',','.'); }
+  var n=parseFloat(t); return isNaN(n)?0:n; }
+function parseTabla(texto){
+  var t=String(texto||'').replace(/^﻿/,'').replace(/\r\n?/g,'\n').trim(); if(!t) return [];
+  var primera=t.split('\n')[0], sep=[';','\t',','].map(function(c){ return [c,(primera.split(c).length-1)]; }).sort(function(a,b){return b[1]-a[1];})[0][0];
+  var filas=[], f=[], c='', q=false;
+  for(var i=0;i<t.length;i++){ var ch=t[i];
+    if(q){ if(ch==='"'){ if(t[i+1]==='"'){ c+='"'; i++; } else q=false; } else c+=ch; }
+    else if(ch==='"'){ q=true; } else if(ch===sep){ f.push(c); c=''; } else if(ch==='\n'){ f.push(c); filas.push(f); f=[]; c=''; } else c+=ch; }
+  f.push(c); filas.push(f);
+  var cab=filas.shift().map(normH);
+  return filas.filter(function(r){ return r.some(function(x){ return String(x).trim(); }); }).map(function(r){ var o={}; cab.forEach(function(h,i){ if(h) o[h]=String(r[i]==null?'':r[i]).trim(); }); return o; });
 }
-function correrMigracion(){
-  var go=document.getElementById('mig-go'); if(go){ go.disabled=true; go.textContent='Migrando…'; }
-  var rows=document.querySelectorAll('#mig-pasos .lin'); var i=0;
-  var vals=['conectado ✓','107 clientes','185 obras','265 presupuestos','567 OTS'];
-  var t=setInterval(function(){
-    if(i<rows.length){ var m=rows[i].querySelector('.m'); m.textContent=vals[i]; m.style.color='var(--verde)'; i++; }
-    else{ clearInterval(t); db.migrado=true; guardar();
-      document.getElementById('mig-pasos').insertAdjacentHTML('afterend','<div class="total-linea" style="border-color:var(--verde);margin-top:10px"><span class="l">Migración completada</span><span class="v" style="color:var(--verde)">compatible ✓</span></div><p class="sub" style="text-align:center;margin:8px 0 0">107 clientes y 185 obras importados de Eureka.</p>');
-      if(go){ go.style.display='none'; } toast('✓ Datos de Eureka importados');
-    }
-  },650);
+function colDe(o,alias){ for(var i=0;i<alias.length;i++){ if(o[alias[i]]!=null&&o[alias[i]]!=='') return o[alias[i]]; } return ''; }
+var IMPORT_TIPOS={
+  clientes:{tit:'👥 Importar clientes', ayuda:'Primera fila = títulos. Columnas que entiendo: nombre, nif, telefono, email, direccion.', ejemplo:'nombre;nif;telefono;email;direccion\nAna López;12345678Z;600111222;ana@correo.es;C/ Sol 3, Palma\n'},
+  partidas:{tit:'🧮 Importar partidas', ayuda:'Primera fila = títulos. Columnas que entiendo: capitulo, descripcion, unidad, cantidad, precio (precio por unidad al cliente).', ejemplo:'capitulo;descripcion;unidad;cantidad;precio\nDemolición;Picado de alicatado;m2;12;8,50\nAlbañilería;Tabique de ladrillo;m2;9;32\n'}
+};
+/* BC3 / FIEBDC-3: capítulos y partidas de Presto, Arquímedes, CYPE… -> filas para importar */
+function parseBC3(texto){
+  var regs=String(texto||'').replace(/\r\n?/g,'\n').split('~').slice(1).map(function(r){ return r.replace(/\n/g,'').trim(); });
+  var C={}, D={}, raiz=null;
+  regs.forEach(function(r){
+    var t=r.charAt(0), campos=r.slice(2).split('|');
+    if(t==='C'){ var cod=(campos[0]||'').split('\\')[0].trim(); if(!cod) return;
+      C[cod]={ud:(campos[1]||'').trim(), res:(campos[2]||'').trim(), precio:numES((campos[3]||'').split('\\')[0])};
+      if(/##$/.test(cod)) raiz=cod; }
+    else if(t==='D'){ var padre=(campos[0]||'').split('\\')[0].trim(), p=(campos[1]||'').split('\\'), hijos=[];
+      for(var i=0;i+2<p.length+0&&i<p.length;i+=3){ if(p[i].trim()) hijos.push({c:p[i].trim(), f:numES(p[i+1])||1, r:numES(p[i+2])||1}); }
+      if(padre) D[padre]=(D[padre]||[]).concat(hijos); }
+  });
+  if(!Object.keys(C).length) return [];
+  if(!raiz){ var hijosDe={}; Object.keys(D).forEach(function(k){ D[k].forEach(function(h){ hijosDe[h.c]=1; }); }); raiz=Object.keys(D).filter(function(k){ return !hijosDe[k]; })[0]; }
+  function precioDe(cod,prof){ var c=C[cod]; if(!c) return 0; if(c.precio>0||prof>6) return c.precio; var t=0; (D[cod]||[]).forEach(function(h){ t+=precioDe(h.c,prof+1)*h.f*h.r; }); return Math.round(t*100)/100; }
+  var filas=[];
+  function recorre(cod,ruta,prof){
+    (D[cod]||[]).forEach(function(h){ var c=C[h.c]; if(!c) return;
+      var esCap=/#$/.test(h.c)&&!/##$/.test(h.c)||((D[h.c]||[]).length&&!c.ud&&prof<4);
+      if(esCap&&prof<6){ recorre(h.c, ruta?(ruta+' › '+c.res):c.res, prof+1); }
+      else filas.push({cap:ruta||'Trabajos', desc:c.res||h.c, ud:c.ud, cant:h.f*h.r, precio:precioDe(h.c,0)}); });
+  }
+  if(raiz) recorre(raiz,'',0);
+  return filas;
+}
+function filasABC3Csv(filas){ return 'capitulo;descripcion;unidad;cantidad;precio\n'+filas.map(function(f){ return [f.cap,f.desc,f.ud,String(f.cant).replace('.',','),String(f.precio).replace('.',',')].map(function(x){ return '"'+String(x).replace(/"/g,'""')+'"'; }).join(';'); }).join('\n')+'\n'; }
+function leerBC3(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ var buf=r.result, txt; try{ txt=new TextDecoder('windows-1252').decode(buf); }catch(e){ txt=new TextDecoder('utf-8').decode(buf); }
+    var filas=parseBC3(txt); if(!filas.length){ var v=document.getElementById('im-vista'); if(v) v.textContent='⚠️ No he encontrado capítulos ni partidas en ese BC3.'; return; }
+    document.getElementById('im-txt').value=filasABC3Csv(filas); vistaImportar('partidas'); toast('BC3 leído: revisa los precios antes de importar'); };
+  r.readAsArrayBuffer(f); }
+function abrirMigracion(){ abrirImportar('clientes'); }
+function abrirImportar(tipo){
+  var T=IMPORT_TIPOS[tipo];
+  abrirModal('<h3 style="text-align:left">'+T.tit+'</h3>'+
+    '<p class="sub">Desde Excel: copia las filas (con la primera fila de títulos) y pégalas aquí, o sube el archivo guardado como <b>CSV</b>. '+T.ayuda+'</p>'+
+    '<textarea class="inp" id="im-txt" rows="6" placeholder="Pega aquí desde Excel…" style="min-height:120px" oninput="vistaImportar(\''+tipo+'\')"></textarea>'+
+    '<div class="fila-btn" style="margin:8px 0"><button class="btn sec peque" onclick="document.getElementById(\'im-file\').click()">📂 Subir archivo CSV</button><button class="btn sec peque" onclick="bajarPlantilla(\''+tipo+'\')">⬇️ Plantilla de ejemplo</button>'+(tipo==='partidas'?'<button class="btn sec peque" onclick="document.getElementById(\'im-bc3\').click()">🏗️ Subir BC3</button>':'')+'</div>'+
+    (tipo==='partidas'?'<input type="file" id="im-bc3" accept=".bc3,.BC3,.txt" style="display:none" onchange="leerBC3(this)">':'')+
+    '<input type="file" id="im-file" accept=".csv,.txt,text/csv,text/plain" style="display:none" onchange="leerArchivoImportar(this,\''+tipo+'\')">'+
+    '<div id="im-vista" class="sub" style="min-height:22px"></div>'+
+    '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="hacerImportar(\''+tipo+'\')">✓ Importar</button></div>');
+}
+function leerArchivoImportar(inp,tipo){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ document.getElementById('im-txt').value=r.result; vistaImportar(tipo); }; r.readAsText(f,'utf-8'); }
+function bajarPlantilla(tipo){ var b=new Blob(['﻿'+IMPORT_TIPOS[tipo].ejemplo],{type:'text/csv'}), a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='plantilla-'+tipo+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+function filasImportar(tipo){
+  var f=parseTabla(document.getElementById('im-txt').value);
+  if(tipo==='clientes') return f.map(function(o){ return {razon:colDe(o,['nombre','razonsocial','cliente','razon']), nif:colDe(o,['nif','cif','nifcif','dni']), tel:colDe(o,['telefono','tel','movil']), email:colDe(o,['email','correo','mail']), dir:colDe(o,['direccion','dir','domicilio'])}; }).filter(function(x){ return x.razon; });
+  return f.map(function(o){ return {cap:colDe(o,['capitulo','cap','seccion'])||'Trabajos', desc:colDe(o,['descripcion','concepto','partida','resumen','trabajo']), ud:colDe(o,['unidad','ud','u']), cant:numES(colDe(o,['cantidad','medicion','cant','uds'])), precio:numES(colDe(o,['precio','pvp','importe','preciounitario','pu']))}; }).filter(function(x){ return x.desc; });
+}
+function vistaImportar(tipo){ var n=filasImportar(tipo).length, e=document.getElementById('im-vista'); if(e) e.textContent=n?('✅ He entendido '+n+(tipo==='clientes'?' clientes':' partidas')+'.'):(document.getElementById('im-txt').value.trim()?'⚠️ No encuentro filas. Revisa que la primera fila tenga los títulos.':''); }
+function hacerImportar(tipo){
+  var f=filasImportar(tipo); if(!f.length){ toast('No hay nada que importar'); return; }
+  if(tipo==='clientes'){
+    var ya={}; db.clientes.forEach(function(c){ ya[(c.nif||'').toUpperCase()||('n:'+(c.razon||'').toLowerCase())]=1; }); var nuevos=0, dup=0;
+    f.forEach(function(x){ var k=(x.nif||'').toUpperCase()||('n:'+x.razon.toLowerCase()); if(ya[k]){ dup++; return; } ya[k]=1; db.clientes.push({id:id(), razon:x.razon, comercial:x.razon, nif:x.nif, tel:x.tel, email:x.email, dir:x.dir, activo:true}); nuevos++; });
+    guardar(); cerrarModal(); pintarClientes(); toast('✅ '+nuevos+' clientes importados'+(dup?(' · '+dup+' ya existían'):'')); return;
+  }
+  var pr=presuPorId(presuActual); if(!pr){ toast('Abre un presupuesto primero'); return; }
+  f.forEach(function(x){ var c=pr.capitulos.find(function(k){return k.nombre===x.cap;}); if(!c){ c={id:id(), nombre:x.cap, partidas:[]}; pr.capitulos.push(c); }
+    c.partidas.push({id:id(), codigo:'', descripcion:x.desc, ud:x.ud||'ud', cantidad:Math.max(0,x.cant||0), mat:0, sub:0, mo:0, venta:Math.max(0,x.precio||0)}); });
+  guardar(); cerrarModal(); pintarPresuDetalle(); toast('✅ '+f.length+' partidas importadas');
 }
 
 /* ---------- PERMISOS / ROLES (vista profesional) ---------- */
@@ -874,7 +1074,7 @@ function rolColor(r){ return r==='Dueño'?'#f26419':r==='Oficina'?'#4f9dff':r===
 function rolBg(r){ return r==='Dueño'?'rgba(242,100,25,.14)':r==='Oficina'?'rgba(79,157,255,.14)':r==='Operario'?'rgba(46,204,113,.14)':r==='Gestor'?'rgba(43,179,163,.14)':'rgba(160,123,255,.14)'; }
 function pintarPermisos(){
   var cont=document.getElementById('cont-permisos'); if(!cont) return;
-  var html='<div class="fila-btn"><button class="btn peque" onclick="abrirNuevoUsuario()">+ Añadir usuario</button><button class="btn sec peque" onclick="abrirMigracion()">📥 Importar de Eureka</button></div>';
+  var html='<div class="fila-btn"><button class="btn peque" onclick="abrirNuevoUsuario()">+ Añadir usuario</button><button class="btn sec peque" onclick="abrirMigracion()">📥 Importar clientes (Excel)</button></div>';
   db.usuarios.forEach(function(u){
     html+='<div class="card"><div class="obra-h"><div><div class="nom">'+esc(u.nombre)+'</div><div class="cli">'+esc(u.email||'')+'</div></div>'+
       pill(u.rol, rolColor(u.rol), rolBg(u.rol))+'</div>'+
@@ -888,7 +1088,7 @@ function pintarPermisos(){
     html+='<tr><td style="padding:6px;border-top:1px solid var(--linea)">'+m+'</td>'+
       Object.keys(ROLES).map(function(r){ var ok=ROLES[r].mods[m]; return '<td style="padding:6px;text-align:center;border-top:1px solid var(--linea)">'+(ok?'<span style="color:var(--verde);font-weight:800">✓</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'; }).join('')+'</tr>';
   });
-  html+='</table></div></div><p class="sub" style="text-align:center">🤖 Tú das acceso a cada trabajador a lo que quieras — la vista profesional que pidió Vianney.</p>';
+  html+='</table></div></div><p class="sub" style="text-align:center">Vista orientativa de qué ve cada rol. Los accesos reales se dan desde «Más → Mi cuenta → Invitar».</p>';
   cont.innerHTML=html;
 }
 function abrirNuevoUsuario(){
@@ -925,15 +1125,15 @@ function pintarObras(){
     porCert += Math.max(0, presupuestoObra(o) - m.certificado);
   });
   var medio = cuentaPct? redondear(sumaPct/cuentaPct) : 0;
-  document.getElementById('kpis').innerHTML =
+  if(false) document.getElementById('kpis').innerHTML =
     '<div class="kpi"><div class="n">'+nCurso+'</div><div class="l">Obras</div></div>'+
     '<div class="kpi"><div class="n '+(medio>=0?'ok':'mal')+'">'+fn(medio)+'%</div><div class="l">Margen medio</div></div>'+
     '<div class="kpi"><div class="n">'+fe(porCert).replace(/\s?€/,'€')+'</div><div class="l">Por certificar</div></div>';
 
   var dash=document.getElementById('dash-obras');
   if(dash){
-    dash.innerHTML='<div class="dash-charts">'+
-      '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">🤖 Real: certificado − coste imputado</p><div class="chart-box"><canvas id="cObrMargen"></canvas></div></div>'+
+    dash.innerHTML=''; if(false) dash.innerHTML='<div class="dash-charts">'+
+      '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">Real: certificado − coste imputado</p><div class="chart-box"><canvas id="cObrMargen"></canvas></div></div>'+
       '<div class="chart-card"><h3>Embudo comercial</h3><p class="csub">Venta por estado de oportunidad</p><div class="chart-box"><canvas id="cObrPipe"></canvas></div></div>'+
     '</div>';
     setTimeout(function(){
@@ -947,7 +1147,7 @@ function pintarObras(){
   }
 
   if(db.obras.length===0){ cont.innerHTML = '<div class="vacio">No hay obras todavía.<br>Crea la primera con “+ Nueva obra”.</div>'; return; }
-  var html='';
+  var html='', terminadasHtml='';
   db.obras.forEach(function(o){
     var pre = presupuestoObra(o);
     var m = margenObra(o);
@@ -955,11 +1155,11 @@ function pintarObras(){
     var pctAvance = pre>0 ? Math.min(100, Math.round(m.certificado*100/pre)) : 0;
     var color = m.pct==null?'var(--tx3)':(m.pct>=0?'var(--verde)':'var(--rojo)');
     var clase = m.pct==null?'':(m.pct>=0?'ok':'mal');
-    html +=
-      '<div class="card clic" onclick="abrirObra(\''+o.id+'\')">'+
+    var tarjeta =
+      '<div class="card clic" onclick="abrirObra(\''+o.id+'\')"'+(o.terminada?' style="opacity:.75"':'')+'>'+
         '<div class="obra-h">'+
           '<div><div class="nom">'+esc(o.nombre)+'</div><div class="cli">'+esc(o.cliente||'Sin promotor')+'</div></div>'+
-          '<span class="estado '+(certificada?'cert':'curso')+'">'+(certificada?'Certificando':'En curso')+'</span>'+
+          '<span class="estado '+(o.terminada?'cert':(certificada?'cert':'curso'))+'">'+(o.terminada?'Terminada':(certificada?'Certificando':'En curso'))+'</span>'+
         '</div>'+
         '<div class="margen">'+
           '<div><div class="et">Certificado</div><div class="nu">'+fe(m.certificado)+'</div></div>'+
@@ -969,7 +1169,9 @@ function pintarObras(){
         '<div class="barra"><span style="width:'+pctAvance+'%;background:'+color+'"></span></div>'+
         '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="event.stopPropagation();editarObra(\''+o.id+'\')">✏️ Editar</button></div>'+
       '</div>';
+    if(o.terminada) terminadasHtml+=tarjeta; else html+=tarjeta;
   });
+  if(terminadasHtml) html+='<details style="margin-top:14px"><summary class="sub" style="cursor:pointer">✅ Obras terminadas</summary>'+terminadasHtml+'</details>';
   cont.innerHTML = html;
 }
 
@@ -1026,11 +1228,11 @@ function pintarPresupuesto(o){
           '<div class="fld"><label>Precio/ud ('+esc(p.unidad||'ud')+')</label><input class="inp" type="number" step="any" value="'+(p.precio)+'" onchange="editarPartida(\''+c.id+'\',\''+p.id+'\',\'precio\',this.value)"></div>'+
         '</div></div>';
     });
-    html += '<div class="partida"><button class="btn sec mini" onclick="abrirNuevaPartida(\''+c.id+'\')">+ Añadir partida</button></div>';
+    html += '<div class="partida"><button class="btn sec mini" onclick="abrirNuevaPartida(\''+c.id+'\')">＋ Añadir partida</button></div>';
     html += '</div></div>';
   });
   html += '<div class="total-linea"><span class="l">Total presupuesto</span><span class="v">'+fe(presupuestoObra(o))+'</span></div>';
-  html += '<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="abrirBancoBC3()">📥 Banco de precios (BC3)</button><button class="btn sec peque" onclick="exportarBC3()">⬆️ Exportar BC3</button><button class="btn sec peque" onclick="abrirNuevoCapitulo()">+ Capítulo</button></div>';
+  html += '<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="abrirBancoBC3()">📥 Añadir del banco de precios</button><button class="btn sec peque" onclick="abrirNuevoCapitulo()">＋ Nuevo capítulo</button></div>';
   document.getElementById('o-pre').innerHTML = html;
 }
 function exportarBC3(){
@@ -1047,7 +1249,7 @@ function editarPartida(cid,pid,campo,val){
   var v=parseFloat(String(val).replace(',','.')); p[campo]= isNaN(v)?0:v;
   guardar(); pintarPresupuesto(o); pintarSub();
 }
-function borrarPartida(cid,pid){
+function borrarPartida(cid,pid){ if(!confirm('¿Borrar esta partida?')) return;
   var o=obraPorId(obraActual); var c=o.capitulos.find(function(x){return x.id===cid;});
   c.partidas = c.partidas.filter(function(x){return x.id!==pid;});
   // limpiar líneas de certificación que apuntaban a esa partida
@@ -1067,16 +1269,18 @@ function pintarCertificar(o){
         '<div class="d">Certificación nº '+ce.numero+'<small>'+esc(ce.fecha)+'</small></div>'+
         '<span class="m">'+fe(baseCertificacion(o,ce))+'</span>'+
         (fact? '<span class="pill fact">Facturada</span>' : '<span class="pill">Sin facturar</span>')+
+        '<button class="btn sec mini" onclick="imprimirCert(\''+o.id+'\','+ce.numero+')">🖨️</button>'+
         '</div>';
     });
     html += '</div>';
   }
   if(o.capitulos.length===0 || presupuestoObra(o)===0){
-    html += '<div class="vacio">Primero crea el presupuesto (capítulos y partidas) para poder certificar.</div>';
+    html += '<div class="vacio">Primero añade las partidas de la obra.</div>';
     document.getElementById('o-cer').innerHTML = html; return;
   }
   html += '<div class="card"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 4px;font-weight:800">Nueva certificación · % ejecutado acumulado por partida</h3>'+
-          '<p class="sub" style="margin:4px 0 10px">Escribe el % total ejecutado de cada partida. Se certifica la diferencia con lo ya certificado antes.</p>';
+          '<p class="sub" style="margin:4px 0 10px">¿Cuánto llevas hecho de cada partida? Toca el % o escríbelo.</p>'+
+          '<button class="btn sec mini" style="margin-bottom:8px;min-height:38px;padding:8px 14px" onclick="pctTodo(100)">Todo al 100 %</button>';
   o.capitulos.forEach(function(c){
     c.partidas.forEach(function(p){
       var ant = pctAnterior(o, p.id, 999999);
@@ -1085,23 +1289,41 @@ function pintarCertificar(o){
           '<div class="mini"><span id="bar-'+p.id+'" style="width:'+Math.min(100,ant)+'%"></span></div></div>'+
         '<input class="inp cin" type="number" min="'+ant+'" max="100" step="any" value="'+ant+'" id="pct-'+p.id+'" oninput="previewLinea(\''+p.id+'\','+ant+','+totalPartida(p)+')">'+
         '<div class="cim" id="im-'+p.id+'">'+fe(0)+'</div>'+
+        '<div style="flex-basis:100%;display:flex;gap:6px">'+[25,50,75,100].filter(function(q){return q>ant;}).map(function(q){return '<button class="btn sec mini" style="flex:1;min-height:38px;padding:8px 0" onclick="pctPartida(\''+p.id+'\','+q+','+ant+')">'+q+'%</button>';}).join('')+'</div>'+
       '</div>';
     });
   });
   html += '<div class="total-linea" style="margin-top:12px"><span class="l">Total a certificar</span><span class="v" id="cert-total">'+fe(0)+'</span></div>';
-  html += '<div class="card" style="margin-top:10px"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 8px;font-weight:800">🧾 Fiscal de la factura</h3>'+
+  html += '<details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:13px">🧾 IVA 21 %'+(o.retPct?' · retención '+o.retPct+' %':'')+' (tocar para cambiar)</summary><div style="height:8px"></div>'+
     '<div class="pgrid">'+
       '<div class="fld"><label>IVA</label><select class="inp" id="fac-iva"><option value="21">21% general</option><option value="10">10% reforma vivienda</option><option value="4">4% superreducido</option></select></div>'+
-      '<div class="fld"><label>Retención garantía %</label><input class="inp" id="fac-ret" type="number" step="any" value="0" placeholder="p. ej. 5"></div>'+
+      '<div class="fld"><label>Retención de garantía %</label><input class="inp" id="fac-ret" type="number" step="any" value="'+(o.retPct||0)+'" placeholder="p. ej. 5"></div>'+
     '</div>'+
     '<label style="display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;color:var(--tx2)"><input type="checkbox" id="fac-isp" onchange="document.getElementById(\'fac-iva\').disabled=this.checked"> <b>Inversión del sujeto pasivo</b> — factura sin IVA (art. 84 LIVA, obra entre empresas)</label>'+
-    '</div>';
+    '</details>';
   html += '<div class="fila-btn" style="margin-top:12px">'+
           '<button class="btn verde" onclick="guardarYFacturar(true)">Certificar y facturar ✓</button></div>'+
           '<button class="btn sec peque" onclick="guardarYFacturar(false)">Guardar certificación sin facturar</button>';
   html += '</div>';
   document.getElementById('o-cer').innerHTML = html;
 }
+function pctPartida(pid,q,ant){ var i=document.getElementById('pct-'+pid); if(i){ i.value=q; previewLinea(pid,ant,0); } }
+function pctTodo(q){ var o=obraPorId(obraActual); o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){ var i=document.getElementById('pct-'+p.id); if(i){ i.value=q; previewLinea(p.id,pctAnterior(o,p.id,999999),0); } }); }); }
+function docCertHTML(o,ce){
+  var cl=clienteDeObra(o);
+  var h=cabeceraDoc('CERTIFICACIÓN','Nº '+ce.numero,ce.fecha,cl);
+  h+='<p style="margin:10px 0"><b>Obra:</b> '+esc(o.nombre)+'</p>';
+  h+='<table><tr><th>Partida</th><th class="n">Importe total</th><th class="n">% anterior</th><th class="n">% acumulado</th><th class="n">Este periodo</th></tr>';
+  o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){
+    var acum=Number(ce.lineas[p.id])||0, ant=pctAnterior(o,p.id,ce.numero); if(acum<=0 && ant<=0) return;
+    h+='<tr><td>'+esc(p.descripcion)+'</td><td class="n">'+fe(totalPartida(p))+'</td><td class="n">'+fn(ant)+'%</td><td class="n">'+fn(acum)+'%</td><td class="n">'+fe(importeLineaCert(o,ce,p.id))+'</td></tr>';
+  }); });
+  var base=baseCertificacion(o,ce), acumImp=0; o.certificaciones.forEach(function(c2){ if(c2.numero<=ce.numero) acumImp+=baseCertificacion(o,c2); });
+  h+='</table><div class="tot"><div class="r"><span>Certificado este periodo</span><span>'+fe(base)+'</span></div><div class="r"><span>Certificado a origen</span><span>'+fe(redondear(acumImp))+'</span></div><div class="r big"><span>Pendiente de ejecutar</span><span>'+fe(redondear(presupuestoObra(o)-acumImp))+'</span></div></div>';
+  h+='<p class="cond">Importes sin IVA.</p>';
+  return h;
+}
+function imprimirCert(oid,num){ var o=obraPorId(oid); if(!o) return; var ce=o.certificaciones.find(function(c){return c.numero===num;}); if(!ce) return; abrirDoc('Certificación '+num+' · '+o.nombre, docCertHTML(o,ce)); }
 function previewLinea(pid, ant, totalPart){
   var inp = document.getElementById('pct-'+pid);
   var acum = parseFloat(String(inp.value).replace(',','.')); if(isNaN(acum)) acum=ant;
@@ -1120,8 +1342,26 @@ function previewLinea(pid, ant, totalPart){
   }); });
   document.getElementById('cert-total').textContent = fe(tot);
 }
+function datosClienteFactura(){
+  var o=obraPorId(obraActual); var c=clienteDeObra(o); var real=clientePorId(c.id);
+  abrirModal('<h3 style="text-align:left">🧾 Datos para la factura</h3>'+
+    '<p class="sub">Una factura necesita el NIF y la dirección de <b>'+esc(c.razon||o.cliente||'tu cliente')+'</b>.</p>'+
+    '<div class="form-grp"><label>NIF / CIF</label><input class="inp" id="df-nif" value="'+esc(c.nif||'')+'"></div>'+
+    '<div class="form-grp"><label>Dirección</label><input class="inp" id="df-dir" value="'+esc(c.dir||'')+'"></div>'+
+    '<div class="form-grp"><label>Email (para enviársela)</label><input class="inp" id="df-mail" type="email" value="'+esc(c.email||'')+'"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="window._sinNif=true;cerrarModal();guardarYFacturar(true)">Facturar sin NIF</button><button class="btn verde" onclick="guardarDatosClienteFactura()">✓ Guardar y facturar</button></div>');
+}
+function guardarDatosClienteFactura(){
+  var o=obraPorId(obraActual); var c=clienteDeObra(o); var real=clientePorId(c.id);
+  var nif=document.getElementById('df-nif').value.trim(); if(!nif){ toast('Pon el NIF o pulsa «Facturar sin NIF»'); return; }
+  if(!real){ real={id:id(), razon:o.cliente||'Cliente', comercial:o.cliente||'', activo:true}; db.clientes.push(real); }
+  real.nif=nif; real.dir=document.getElementById('df-dir').value.trim(); real.email=document.getElementById('df-mail').value.trim();
+  guardar(); cerrarModal(); guardarYFacturar(true);
+}
 function guardarYFacturar(facturar){
   var o = obraPorId(obraActual);
+  if(facturar && !window._sinNif){ var cl=clienteDeObra(o); if(!cl.nif){ datosClienteFactura(); return; } }
+  window._sinNif=false;
   var numero = o.certificaciones.reduce(function(mx,c){return Math.max(mx,c.numero);},0) + 1;
   var lineas={}; var algo=false;
   o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){
@@ -1133,17 +1373,27 @@ function guardarYFacturar(facturar){
     if(acum>ant) algo=true;
   }); });
   if(!algo){ toast('No hay avance nuevo que certificar'); return; }
+  if(facturar && window.Sync && Sync.activo() && !window._numListo){
+    // con servidor conectado, el número de factura lo da el servidor (no se repite entre móviles)
+    Sync.reservarNumero(db.contadorFactura||0).then(function(n){ db.contadorFactura=n-1; window._numListo=true; guardarYFacturar(true); })
+      .catch(function(){ toast('Sin conexión: para facturar hace falta internet (así no se repiten números)'); });
+    return;
+  }
   var ce = {id:id(), numero:numero, fecha:hoy(), lineas:lineas, estado:'aprobada'};
   o.certificaciones.push(ce);
   var base = baseCertificacion(o, ce);
   if(facturar){
     var gi=document.getElementById('fac-iva'), gr=document.getElementById('fac-ret'), gs=document.getElementById('fac-isp');
-    emitirFactura(o, ce, base, {iva:gi?gi.value:'21', ret:gr?gr.value:'0', isp:gs?gs.checked:false});
+    emitirFactura(o, ce, base, {iva:gi?gi.value:'21', ret:gr?gr.value:'0', isp:gs?gs.checked:false}); window._numListo=false;
   } else {
     guardar(); toast('Certificación nº '+numero+' guardada: '+fe(base));
   }
   pintarSub();
 }
+function cobradoDe(f){ var t=0, ps=f.pagos||[]; ps.forEach(function(p){ if(p.tipo!=='retencion') t+=Number(p.importe)||0; }); if(!ps.length && f.estado==='cobrada') t=(f.aCobrar!=null?f.aCobrar:f.total); return redondear(t); }
+function pendienteDe(f){ if(f.anulada||f.rect) return 0; return Math.max(0, redondear((f.aCobrar!=null?f.aCobrar:f.total)-cobradoDe(f))); }
+function retCobradaDe(f){ var t=0; (f.pagos||[]).forEach(function(p){ if(p.tipo==='retencion') t+=Number(p.importe)||0; }); return redondear(t); }
+function retPendienteDe(f){ if(f.anulada||f.rect) return 0; return Math.max(0, redondear((f.retencion||0)-retCobradaDe(f))); }
 function emitirFactura(o, ce, base, fis){
   fis = fis||{};
   var isp = !!fis.isp;
@@ -1156,7 +1406,7 @@ function emitirFactura(o, ce, base, fis){
   db.contadorFactura = (db.contadorFactura||0)+1;
   var numCompleto = 'A-'+new Date().getFullYear()+'/'+String(db.contadorFactura).padStart(4,'0');
   var fac = {id:id(), certId:ce.id, numero:db.contadorFactura, numeroCompleto:numCompleto,
-             base:base, tipoIva:tipoIva, isp:isp, iva:iva, retPct:retPct, retencion:retencion, total:total, aCobrar:aCobrar, fecha:hoy(), estado:'emitida', verifactu:true};
+             base:base, tipoIva:tipoIva, isp:isp, iva:iva, retPct:retPct, retencion:retencion, total:total, aCobrar:aCobrar, fecha:hoy(), estado:'emitida', pagos:[]};
   o.facturas.push(fac);
   guardar();
   mostrarModalFactura(o, fac, ce);
@@ -1182,8 +1432,7 @@ function mostrarModalFactura(o, fac, ce){
       lineasFiscalFactura(fac)+
     '</div>'+
     (fac.isp?'<p class="sub" style="font-size:11px;text-align:center;margin:8px 0 0">Operación con <b>inversión del sujeto pasivo</b> (art. 84.Uno.2º.f LIVA): la declara el destinatario.</p>':'')+
-    '<div class="sellos"><span class="sello">✓ VeriFactu</span><span class="sello">✓ Emitida</span></div>'+
-    '<p class="sub" style="font-size:11px;text-align:center;margin:10px 0 12px">Sello VeriFactu de ejemplo (prototipo): no se envía nada a la AEAT.</p>'+
+    '<div class="sellos"><span class="sello">✓ Emitida</span></div>'+
     '<div class="fila-btn"><button class="btn peque" onclick="imprimirFactura(\''+o.id+'\',\''+fac.id+'\')">🖨️ Imprimir / PDF</button><button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+fac.id+'\')">✉️ Enviar</button></div>'+
     '<button class="btn sec peque" style="margin-top:8px" onclick="cerrarModal()">Hecho</button>';
   document.getElementById('modal').classList.add('on');
@@ -1192,22 +1441,26 @@ function mostrarModalFactura(o, fac, ce){
 /* ---------- FACTURAS ---------- */
 function pintarFacturas(o){
   var html='';
-  if(o.facturas.length===0){ html='<div class="vacio">Aún no hay facturas.<br>Emite una desde “Certificar”.</div>'; document.getElementById('o-fac').innerHTML=html; return; }
+  if(o.facturas.length===0){ html='<div class="vacio">Aún no hay facturas.<br>Se crean al marcar avance en “Avance”.</div>'; document.getElementById('o-fac').innerHTML=html; return; }
   o.facturas.slice().sort(function(a,b){return b.numero-a.numero;}).forEach(function(f){
     var ce = o.certificaciones.find(function(c){return c.id===f.certId;});
     html += '<div class="card">'+
       '<div class="obra-h" style="margin-bottom:10px"><div><div class="nom">'+esc(f.numeroCompleto)+'</div>'+
         '<div class="cli">'+esc(f.fecha)+(ce?' · certificación nº '+ce.numero:'')+'</div></div>'+
-        '<span class="estado '+(f.estado==='cobrada'?'cert':'curso')+'">'+(f.estado==='cobrada'?'Cobrada':'Emitida')+'</span></div>'+
+        '<span class="estado '+((pendienteDe(f)<=0)?'cert':'curso')+'">'+(f.anulada?'Anulada':(f.rect?'Rectificativa':(pendienteDe(f)<=0?'Cobrada':(cobradoDe(f)>0?'Cobro parcial':'Por cobrar'))))+'</span></div>'+
+      (f.rect?'<p class="sub" style="margin:0 0 8px">Anula la factura <b>'+esc(f.rectDeNum||'')+'</b>'+(f.motivo?' · '+esc(f.motivo):'')+'</p>':'')+
       '<div class="factura-doc" style="margin:0">'+
         lineasFiscalFactura(f)+
       '</div>'+
-      '<div class="sellos"><span class="sello">✓ VeriFactu</span>'+(f.isp?'<span class="sello">ISP</span>':'')+'</div>'+
+      (cobradoDe(f)>0&&pendienteDe(f)>0?'<p class="sub" style="margin:8px 0 0">Cobrado '+fe(cobradoDe(f))+' · <b>falta '+fe(pendienteDe(f))+'</b></p>':'')+
+      (f.retencion>0?'<p class="sub" style="margin:8px 0 0">🔒 Retención de garantía '+fe(f.retencion)+(retPendienteDe(f)>0?' · <b>pendiente de cobrar '+fe(retPendienteDe(f))+'</b> <button class="btn sec mini" onclick="abrirCobro(\''+o.id+'\',\''+f.id+'\',\'retencion\')">Cobrar retención</button>':' · ✓ cobrada')+'</p>':'')+
+      '<div class="sellos"><span class="sello">Nº '+esc(f.numeroCompleto)+'</span>'+(f.isp?'<span class="sello">ISP</span>':'')+'</div>'+
       '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
         '<button class="btn sec peque" onclick="imprimirFactura(\''+o.id+'\',\''+f.id+'\')">🖨️ PDF</button>'+
         '<button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+f.id+'\')">✉️ Correo</button>'+
-        (f.estado==='cobrada'?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="cobrarFactura(\''+o.id+'\',\''+f.id+'\')">Cobrada</button>')+
+        ((f.anulada||f.rect)?'':(pendienteDe(f)<=0?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="abrirCobro(\''+o.id+'\',\''+f.id+'\',\'cobro\')">💶 Ya me han pagado</button>'))+
       '</div>'+
+      (puedeAnular(o,f)?'<button class="btn sec mini" style="margin-top:8px" onclick="anularFactura(\''+o.id+'\',\''+f.id+'\')">↩️ Anular esta factura</button>':'')+
     '</div>';
   });
   var baseTot=0,ivaTot=0,totTot=0;
@@ -1215,12 +1468,75 @@ function pintarFacturas(o){
   html += '<div class="total-linea"><span class="l">Total facturado (base)</span><span class="v">'+fe(baseTot)+'</span></div>';
   document.getElementById('o-fac').innerHTML = html;
 }
-function cobrarFactura(oid,fid){ var o=obraPorId(oid); var f=o.facturas.find(function(x){return x.id===fid;}); if(f){ f.estado='cobrada'; guardar(); pintarSub(); toast('Factura marcada como cobrada'); } }
+function puedeAnular(o,f){ if(f.anulada||f.rect) return false; if((f.pagos||[]).length||f.estado==='cobrada') return false;
+  var vivas=o.facturas.filter(function(x){return !x.anulada&&!x.rect;}); return vivas.length&&vivas[vivas.length-1].id===f.id; }   // solo la última, sin cobros
+function anularFactura(oid,fid){
+  var o=obraPorId(oid), f=o.facturas.find(function(x){return x.id===fid;}); if(!f||!puedeAnular(o,f)){ toast('Esta factura ya no se puede anular'); return; }
+  var motivo=prompt('¿Por qué la anulas? (sale en la factura rectificativa)','Error en la factura'); if(motivo===null) return;
+  if(!confirm('Se creará una factura rectificativa que anula la '+f.numeroCompleto+' y el avance que certificaba quedará libre para volver a facturarlo. ¿Seguir?')) return;
+  var hacer=function(n){
+    var num='R-'+new Date().getFullYear()+'/'+String(n).padStart(4,'0');
+    var r={id:id(), rect:true, rectDe:f.id, rectDeNum:f.numeroCompleto, motivo:(motivo||'').trim(), certId:f.certId, numero:f.numero+0.5, numeroCompleto:num, fecha:hoy(),
+      base:-f.base, tipoIva:f.tipoIva, isp:f.isp, iva:-f.iva, retPct:f.retPct, retencion:-(f.retencion||0), total:-f.total, aCobrar:-(f.aCobrar!=null?f.aCobrar:f.total), estado:'rectificativa', pagos:[]};
+    db.contadorRect=n; o.facturas.push(r); f.anulada=true; f.estado='anulada';
+    var ce=o.certificaciones.find(function(c){return c.id===f.certId;}); if(ce) ce.estado='anulada';
+    guardar(); pintarSub(); toast('↩️ Factura anulada con la rectificativa '+num);
+  };
+  if(window.Sync&&Sync.activo()) Sync.reservarNumero(db.contadorRect||0,'R-'+new Date().getFullYear()).then(hacer).catch(function(){ toast('Sin conexión: para anular hace falta internet'); });
+  else hacer((db.contadorRect||0)+1);
+}
+function abrirCobro(oid,fid,tipo){
+  var o=obraPorId(oid), f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return;
+  var falta=(tipo==='retencion')?retPendienteDe(f):pendienteDe(f);
+  abrirModal('<h3 style="text-align:left">💶 '+(tipo==='retencion'?'Cobrar la retención':'Cobro de la factura')+'</h3>'+
+    '<p class="sub">'+esc(f.numeroCompleto)+' · falta por cobrar <b>'+fe(falta)+'</b></p>'+
+    '<div class="form-grp"><label>¿Cuánto te han pagado? (€)</label><input class="inp" id="cb-imp" type="number" step="any" inputmode="decimal" value="'+falta+'"></div>'+
+    '<p class="sub" style="font-size:12.5px">Si te han pagado solo una parte, cambia el importe: la factura sigue pendiente por el resto.</p>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="cobrarFactura(\''+oid+'\',\''+fid+'\',\''+tipo+'\')">✓ Apuntar cobro</button></div>');
+  setTimeout(function(){ var e=document.getElementById('cb-imp'); if(e){ e.focus(); e.select&&e.select(); } },100);
+}
+function cobrarFactura(oid,fid,tipo){ var o=obraPorId(oid); var f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return; tipo=tipo||'cobro';
+  var falta=(tipo==='retencion')?retPendienteDe(f):pendienteDe(f);
+  var imp=redondear(parseFloat(String(document.getElementById('cb-imp').value).replace(',','.'))||0);
+  if(imp<=0){ toast('Pon cuánto te han pagado'); return; } if(imp>falta+0.005){ toast('No puede ser más de lo que falta ('+fe(falta)+')'); return; }
+  f.pagos=f.pagos||[]; if(!f.pagos.length&&f.estado==='cobrada'){ f.pagos.push({id:id(),fecha:f.fecha,importe:(f.aCobrar!=null?f.aCobrar:f.total),tipo:'cobro'}); }
+  f.pagos.push({id:id(), fecha:hoy(), importe:imp, tipo:tipo});
+  f.estado=pendienteDe(f)<=0?'cobrada':(cobradoDe(f)>0?'parcial':'emitida');
+  guardar(); cerrarModal(); pintarSub(); toast(pendienteDe(f)<=0&&tipo==='cobro'?'✅ Factura cobrada':'✅ Cobro apuntado: '+fe(imp)); }
 
 /* ============================================================
    DOCUMENTOS IMPRIMIBLES (factura/presupuesto PDF) + CORREO (Gmail)
    ============================================================ */
-var EMISOR = {nombre:'Reformas Vega S.L.', nif:'B57 894 213', dir:'C/ Indústria 14 · 07011 Palma de Mallorca', tel:'971 00 11 22', email:'reformasvega@gmail.com'};
+var EMISOR_DEMO = {nombre:'Reformas Vega S.L.', nif:'B57 894 213', dir:'C/ Indústria 14 · 07011 Palma de Mallorca', tel:'971 00 11 22', email:'reformasvega@gmail.com'};
+var EMISOR = {nombre:'', nif:'', dir:'', tel:'', email:''};
+function aplicarEmpresa(){
+  var e=db.empresa||{}; EMISOR={nombre:e.nombre||'', nif:e.nif||'', dir:e.dir||'', tel:e.tel||'', email:e.email||''};
+  var ciudad=(e.dir||'').split(',').pop().trim();
+  var h=document.getElementById('emp-hd'); if(h) h.innerHTML='<b>'+esc(EMISOR.nombre||'Mi empresa')+'</b>';
+  var sm=document.getElementById('semp'); if(sm) sm.textContent=EMISOR.nombre;
+}
+function abrirEmpresa(primera){
+  var e=db.empresa||{};
+  abrirModal('<h3 style="text-align:left">'+(primera?'👋 Bienvenido a Brigada':'🏢 Mi empresa')+'</h3>'+
+    (primera?'<p class="sub">Dinos quién eres. Saldrá en tus presupuestos y facturas.</p>':'')+
+    '<div class="form-grp"><label>Nombre de la empresa</label><input class="inp" id="em-n" value="'+esc(e.nombre||'')+'" placeholder="p. ej. Reformas García S.L."></div>'+
+    '<div class="form-grp"><label>NIF / CIF</label><input class="inp" id="em-nif" value="'+esc(e.nif||'')+'"></div>'+
+    '<div class="form-grp"><label>Dirección</label><input class="inp" id="em-dir" value="'+esc(e.dir||'')+'" placeholder="Calle, nº, CP, ciudad"></div>'+
+    '<div class="pgrid"><div class="form-grp"><label>Teléfono</label><input class="inp" id="em-tel" type="tel" value="'+esc(e.tel||'')+'"></div>'+
+    '<div class="form-grp"><label>Email</label><input class="inp" id="em-mail" type="email" value="'+esc(e.email||'')+'"></div></div>'+
+    '<div class="form-grp"><label>Retención de garantía habitual (%)</label><input class="inp" id="em-ret" type="number" step="any" inputmode="decimal" value="'+(e.retPct||0)+'" placeholder="0 si no sueles tener"></div>'+
+    '<div class="form-grp"><label>Condiciones en tus presupuestos</label><input class="inp" id="em-cond" value="'+esc(e.cond||'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.')+'"></div>'+
+    (primera?'<label style="display:flex;align-items:flex-start;gap:10px;margin:10px 0;font-size:13px;color:var(--tx2)"><input type="checkbox" id="em-ok" style="margin-top:3px"> <span>He leído y acepto los <a style="color:var(--naranja2)" onclick="event.preventDefault();abrirTerminos()" href="#">términos y el aviso de privacidad</a>.</span></label>':'')+
+    '<div class="fila-btn" style="margin-top:14px">'+(primera?'<button class="btn sec peque" onclick="usarEjemplo()">Ver con datos de ejemplo</button>':'<button class="btn sec peque" onclick="cerrarModal()">Cancelar</button>')+
+    '<button class="btn verde" onclick="guardarEmpresa('+(primera?'true':'false')+')">✓ '+(primera?'Empezar':'Guardar')+'</button></div>');
+}
+function guardarEmpresa(primera){
+  var n=document.getElementById('em-n').value.trim(); if(!n){ toast('Pon el nombre de tu empresa'); return; }
+  var ok=document.getElementById('em-ok'); if(primera&&ok&&!ok.checked){ toast('Marca que aceptas los términos para empezar'); return; }
+  db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim(), retPct:Math.max(0,Math.min(20,parseFloat(String(document.getElementById('em-ret').value).replace(',','.'))||0)), aceptaTerminos:primera?{fecha:new Date().toISOString(),version:VERSION_TERMINOS}:((db.empresa&&db.empresa.aceptaTerminos)||null)};
+  guardar(); aplicarEmpresa(); cerrarModal(); pintarAsistente(); if(primera){ irTab('presupuestos'); abrirNuevoPresupuesto(); } else toast('Datos guardados');
+}
+function usarEjemplo(){ db=sembrar(); db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('asistente'); }
 function clientePorId(cid){ var a=db.clientes||[]; for(var i=0;i<a.length;i++){ if(a[i].id===cid) return a[i]; } return null; }
 function clienteDeObra(o){ var n=(o.cliente||'').toLowerCase(); var m=(db.clientes||[]).filter(function(c){ var r=(c.razon||'').toLowerCase(),k=(c.comercial||'').toLowerCase(); return n&&((r&&n.indexOf(r)>=0)||(k&&n.indexOf(k)>=0)||(r&&n.split(' ')[0]&&r.indexOf(n.split(' ')[0])>=0)); })[0]; return m||{razon:(o.cliente||'Cliente'),nif:'',dir:'',email:''}; }
 function qrSVG(){ var s=''; for(var y=0;y<13;y++){for(var x=0;x<13;x++){ if(((x*7+y*5+(x*y))%3)===0) s+='<rect x="'+(x*7)+'" y="'+(y*7)+'" width="7" height="7"/>'; }} return '<svg width="86" height="86" viewBox="0 0 91 91" xmlns="http://www.w3.org/2000/svg"><rect width="91" height="91" fill="#fff"/><g fill="#111">'+s+'</g><rect x="1.5" y="1.5" width="20" height="20" fill="none" stroke="#111" stroke-width="7"/></svg>'; }
@@ -1230,11 +1546,11 @@ function cabeceraDoc(tipo,num,fecha,cl){ return '<div class="hd"><div class="em"
 function abrirDoc(titulo,cuerpo){ var w=window.open('','_blank','width=900,height=1000'); if(!w){ toast('Permite las ventanas emergentes para imprimir'); return; } w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>'+titulo+'</title>'+docEstilo()+'</head><body>'+cuerpo+'<div class="noprint" style="text-align:center;margin:22px 0"><button onclick="window.print()" style="background:#f26419;color:#fff;border:none;padding:12px 24px;border-radius:9px;font-weight:800;font-size:15px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button></div></body></html>'); w.document.close(); w.focus(); setTimeout(function(){ try{w.print();}catch(e){} }, 500); }
 function docFacturaHTML(o,f){
   var cl=clienteDeObra(o); var ce=o.certificaciones.find(function(c){return c.id===f.certId;}); var tv=(f.tipoIva==null?21:f.tipoIva);
-  var h=cabeceraDoc('FACTURA', f.numeroCompleto, f.fecha, cl);
+  var h=cabeceraDoc(f.rect?'FACTURA RECTIFICATIVA':'FACTURA', f.numeroCompleto, f.fecha, cl);
+  if(f.rect) h+='<p style="margin:8px 0"><b>Rectifica la factura '+esc(f.rectDeNum||'')+'</b>'+(f.motivo?' · Motivo: '+esc(f.motivo):'')+'. Importes en negativo: anula íntegramente la factura rectificada.</p>';
   h+='<table><tr><th>Concepto</th><th class="n">Importe</th></tr><tr><td>Ejecución de obra — <b>'+esc(o.nombre)+'</b>'+(ce?'<br><span style="color:#777">Certificación nº '+ce.numero+'</span>':'')+'</td><td class="n">'+fe(f.base)+'</td></tr></table>';
   h+='<div class="tot"><div class="r"><span>Base imponible</span><b>'+fe(f.base)+'</b></div>'+(f.isp?'<div class="r"><span>IVA · Inversión del sujeto pasivo</span><b>0,00 €</b></div>':'<div class="r"><span>IVA '+fn(tv)+'%</span><b>'+fe(f.iva)+'</b></div>')+'<div class="r big"><span>TOTAL</span><span>'+fe(f.total)+'</span></div>'+(f.retencion>0?'<div class="r"><span>− Retención garantía '+fn(f.retPct)+'%</span><b>−'+fe(f.retencion)+'</b></div><div class="r big"><span>A COBRAR</span><span>'+fe(f.aCobrar)+'</span></div>':'')+'</div>';
-  h+='<div class="foot"><div class="sello">'+qrSVG()+'<br><b>✓ VeriFactu</b> · Factura verificable (RD 1007/2023). Huella encadenada y registro en la AEAT.</div><div style="text-align:right;font-size:11px;color:#777">'+(f.isp?'Operación con <b>inversión del sujeto pasivo</b><br>(art. 84.Uno.2º.f LIVA): la declara el destinatario.<br>':'')+'Forma de pago: transferencia · 30 días</div></div>';
-  h+='<p class="cond">Documento de ejemplo (prototipo Brigada). El sello VeriFactu y el QR son ilustrativos; la remisión real a la AEAT se activa con el motor de GestorOS.</p>';
+  h+='<div class="foot"><div class="sello"></div><div style="text-align:right;font-size:11px;color:#777">'+(f.isp?'Operación con <b>inversión del sujeto pasivo</b><br>(art. 84.Uno.2º.f LIVA): la declara el destinatario.<br>':'')+'Forma de pago: transferencia · 30 días</div></div>';
   return h;
 }
 function imprimirFactura(oid,fid){ var o=obraPorId(oid); if(!o) return; var f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return; abrirDoc('Factura '+f.numeroCompleto, docFacturaHTML(o,f)); }
@@ -1245,15 +1561,16 @@ function docPresupuestoHTML(pr){
   h+='<table><tr><th>Código</th><th>Descripción</th><th class="n">Cant.</th><th class="n">Precio</th><th class="n">Importe</th></tr>';
   pr.capitulos.forEach(function(c){ h+='<tr class="cap"><td colspan="4">'+esc(c.nombre)+'</td><td class="n">'+fe(capVenta(c,pr))+'</td></tr>'; c.partidas.forEach(function(p){ var cant=Number(p.cantidad)||0; var pu=ventaUnit(p,pr); h+='<tr><td>'+esc(p.codigo)+'</td><td>'+esc(p.descripcion)+'</td><td class="n">'+fn(cant)+' '+esc(p.ud)+'</td><td class="n">'+fe(pu)+'</td><td class="n">'+fe(cant*pu)+'</td></tr>'; }); });
   h+='</table><div class="tot"><div class="r"><span>Base (PEM)</span><b>'+fe(t.venta)+'</b></div><div class="r"><span>IVA '+Math.round((pr.iva||0.21)*100)+'%</span><b>'+fe(iva)+'</b></div><div class="r big"><span>TOTAL</span><span>'+fe(total)+'</span></div></div>';
-  h+='<p class="cond"><b>Validez:</b> 30 días. <b>Forma de pago:</b> 40% al inicio, 60% a la entrega. Presupuesto sujeto a mediciones reales en obra. Documento de ejemplo (prototipo Brigada).</p>';
+  h+='<p class="cond">'+esc((db.empresa&&db.empresa.cond)||'Validez 30 días.')+' Presupuesto sujeto a mediciones reales en obra.</p>';
   return h;
 }
-function imprimirPresu(pid){ var pr=presuPorId(pid); if(!pr) return; abrirDoc('Presupuesto '+pr.num, docPresupuestoHTML(pr)); }
+function imprimirPresu(pid){ var pr=presuPorId(pid); if(!pr) return; if(pr.estado==='borrador'){ pr.estado='enviado'; guardar(); } abrirDoc('Presupuesto '+pr.num, docPresupuestoHTML(pr)); }
 function abrirCorreo(tipo, a, b){
+  if(tipo==='presupuesto'){ var _p=presuPorId(a); if(_p&&_p.estado==='borrador'){ _p.estado='enviado'; guardar(); } }
   var para='', asunto='', cuerpo='';
   if(tipo==='presupuesto'){ var pr=presuPorId(a); var cl=clientePorId(pr.clienteId)||{}; var t=presuTotales(pr); var iva=redondear(t.venta*(pr.iva||0.21));
     para=cl.email||''; asunto='Presupuesto '+pr.num+' · '+pr.nombre;
-    cuerpo='Hola'+(cl.comercial?' '+cl.comercial:'')+',\n\nLe adjuntamos el presupuesto '+pr.num+' para «'+pr.nombre+'».\nImporte total: '+fe(redondear(t.venta+iva))+' (IVA incluido). Validez: 30 días.\n\nQuedamos a su disposición.\n\nUn saludo,\n'+EMISOR.nombre+'\n'+EMISOR.tel; }
+    cuerpo='Hola'+(cl.comercial?' '+cl.comercial:'')+',\n\nLe adjuntamos el presupuesto '+pr.num+' para «'+pr.nombre+'».\nImporte total: '+fe(redondear(t.venta+iva))+' (IVA incluido). '+((db.empresa&&db.empresa.cond)?db.empresa.cond:'Validez: 30 días.')+'\n\nQuedamos a su disposición.\n\nUn saludo,\n'+EMISOR.nombre+'\n'+EMISOR.tel; }
   else { var o=obraPorId(a); var f=o.facturas.find(function(x){return x.id===b;}); var cl2=clienteDeObra(o);
     para=cl2.email||''; asunto='Factura '+f.numeroCompleto+' · '+o.nombre;
     cuerpo='Hola,\n\nLe adjuntamos la factura '+f.numeroCompleto+' de «'+o.nombre+'».\nImporte: '+fe(f.total)+(f.retencion>0?' (a cobrar '+fe(f.aCobrar)+' tras retención de garantía)':'')+'.\n\nGracias por su confianza.\n\nUn saludo,\n'+EMISOR.nombre; }
@@ -1284,20 +1601,20 @@ function pintarCorreo(){
 /* ---------- COSTES ---------- */
 function pintarCostes(o){
   var html='';
-  html += '<div class="card"><div class="coste-blk"><h3>📦 Material (albaranes)</h3>';
-  if(o.costesMaterial.length===0){ html+='<p class="sub" style="margin:0 0 8px">Sin albaranes imputados.</p>'; }
+  html += '<div class="card"><div class="coste-blk"><h3>📦 Material</h3>';
+  if(o.costesMaterial.length===0){ html+='<p class="sub" style="margin:0 0 8px">Aún no has apuntado material.</p>'; }
   o.costesMaterial.forEach(function(a){
     html += '<div class="lin"><div class="d">'+esc(a.proveedor)+'<small>Albarán '+esc(a.albaran||'—')+' · '+esc(a.fecha||'')+'</small></div>'+
             '<div class="m">'+fe(a.importe)+'</div>'+
-            '<button class="borrar" onclick="borrarCoste(\'mat\',\''+a.id+'\')">✕</button></div>';
+            '<button class="borrar" onclick="borrarCoste(\'mat\',\''+a.id+'\')">✕</button></div>'+(a.foto?'<img src="'+a.foto+'" alt="albarán" style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;margin:2px 0 8px">':'');
   });
   html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal material</div><div class="m">'+fe(costeMaterial(o))+'</div></div>';
   html += '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
-          '<button class="btn peque" onclick="abrirAlbaranIA()">📸 Albarán con IA</button>'+
-          '<button class="btn sec peque" onclick="abrirNuevoMaterial()">+ A mano</button></div></div>';
+          '<button class="btn sec peque" onclick="abrirAlbaranIA()">📸 Albarán con IA (demo)</button>'+
+          '<button class="btn verde peque" onclick="abrirNuevoMaterial()">＋ Apuntar material</button></div></div>';
 
-  html += '<div class="coste-blk"><h3>👷 Mano de obra (horas × coste/hora)</h3>';
-  if(o.costesManoObra.length===0){ html+='<p class="sub" style="margin:0 0 8px">Sin partes imputados.</p>'; }
+  html += '<div class="coste-blk"><h3>👷 Mano de obra</h3>';
+  if(o.costesManoObra.length===0){ html+='<p class="sub" style="margin:0 0 8px">Aún no hay partes. Los partes de hoy aparecen aquí solos.</p>'; }
   o.costesManoObra.forEach(function(m){
     var imp = redondear((Number(m.horas)||0)*(Number(m.costeHora)||0));
     html += '<div class="lin"><div class="d">'+esc(m.operario)+'<small>'+fn(m.horas)+' h × '+fe(m.costeHora)+'/h</small></div>'+
@@ -1305,15 +1622,15 @@ function pintarCostes(o){
             '<button class="borrar" onclick="borrarCoste(\'mo\',\''+m.id+'\')">✕</button></div>';
   });
   html += '<div class="lin"><div class="d" style="font-weight:800">Subtotal mano de obra</div><div class="m">'+fe(costeManoObra(o))+'</div></div>';
-  html += '<button class="btn sec mini" style="margin-top:10px" onclick="abrirNuevaManoObra()">+ Añadir parte</button></div></div>';
+  html += '<button class="btn verde peque" style="margin-top:10px" onclick="abrirNuevoParte(obraActual)">📝 Parte de hoy</button></div></div>';
 
-  html += '<div class="total-linea"><span class="l">Coste real imputado</span><span class="v">'+fe(costeTotal(o))+'</span></div>';
+  html += '<div class="total-linea"><span class="l">Total gastado</span><span class="v">'+fe(costeTotal(o))+'</span></div>';
   document.getElementById('o-cos').innerHTML = html;
 }
-function borrarCoste(tipo,cid){
+function borrarCoste(tipo,cid){ if(!confirm('¿Borrar este gasto?')) return;
   var o=obraPorId(obraActual);
   if(tipo==='mat') o.costesMaterial=o.costesMaterial.filter(function(x){return x.id!==cid;});
-  else o.costesManoObra=o.costesManoObra.filter(function(x){return x.id!==cid;});
+  else { var _m=o.costesManoObra.find(function(x){return x.id===cid;}); if(_m&&_m.parteId) db.partes=(db.partes||[]).filter(function(p){return p.id!==_m.parteId;}); o.costesManoObra=o.costesManoObra.filter(function(x){return x.id!==cid;}); }
   guardar(); pintarSub(); toast('Coste borrado');
 }
 
@@ -1324,15 +1641,15 @@ function pintarMargen(o){
   var pos = m.margen>=0;
   var html = '<div class="card">'+
     '<div class="resumen-margen '+(pos?'pos':'neg')+'">'+
-      '<div class="fila"><span>Presupuesto (venta)</span><span style="font-weight:800">'+fe(pre)+'</span></div>'+
-      '<div class="fila"><span>Producción certificada</span><span style="font-weight:800">'+fe(m.certificado)+'</span></div>'+
-      '<div class="fila"><span>— Coste material</span><span>'+fe(costeMaterial(o))+'</span></div>'+
-      '<div class="fila"><span>— Coste mano de obra</span><span>'+fe(costeManoObra(o))+'</span></div>'+
-      '<div class="fila"><span style="font-weight:700">Coste real total</span><span style="font-weight:800">'+fe(m.coste)+'</span></div>'+
-      '<div class="fila big"><span style="font-weight:800">Margen de la obra</span>'+
+      '<div class="fila"><span>Presupuesto</span><span style="font-weight:800">'+fe(pre)+'</span></div>'+
+      '<div class="fila"><span>Hecho hasta ahora</span><span style="font-weight:800">'+fe(m.certificado)+'</span></div>'+
+      '<div class="fila"><span>— Material</span><span>'+fe(costeMaterial(o))+'</span></div>'+
+      '<div class="fila"><span>— Mano de obra</span><span>'+fe(costeManoObra(o))+'</span></div>'+
+      '<div class="fila"><span style="font-weight:700">Total gastado</span><span style="font-weight:800">'+fe(m.coste)+'</span></div>'+
+      '<div class="fila big"><span style="font-weight:800">Te queda</span>'+
         '<span class="v '+(pos?'ok':'mal')+'">'+fe(m.margen)+' · '+(m.pct==null?'—':fn(m.pct)+'%')+'</span></div>'+
     '</div></div>';
-  html += '<p class="sub" style="text-align:center">Margen = producción certificada − coste real imputado. % sobre lo certificado. Se recalcula solo al meter datos en Presupuesto, Certificar o Costes.</p>';
+  
   // ── Aviso de desviación (IA): proyecta el coste final según el ritmo actual ──
   var avance = pre>0 ? m.certificado/pre : 0;
   if(avance>0.02 && pre>0){
@@ -1345,9 +1662,8 @@ function pintarMargen(o){
     else { clz='v'; emo='✅'; tit='En rumbo: el margen aguanta'; }
     txt = 'Avance '+fn(Math.round(avance*100))+'%. Al ritmo de coste actual, la obra acabaría costando <b style="color:var(--tx)">'+fe(costeFinal)+'</b> sobre un presupuesto de '+fe(pre)+' → margen proyectado <b style="color:var(--tx)">'+fe(margenProy)+' ('+fn(pctProy)+'%)</b>.';
     html += '<div class="aviso '+clz+'"><div class="em">'+emo+'</div><div class="tx"><b>'+tit+'</b><span>'+txt+'</span></div></div>';
-    html += '<p class="sub" style="text-align:center;font-size:11px;margin-top:8px">🤖 Lo calcula la IA cruzando presupuesto, certificación y coste real. Eureka enseña el coste pasado; esto avisa <b>antes</b> de perder dinero.</p>';
   }
-  if(m.certificado===0){ html += '<div class="vacio">Todavía no has certificado nada: el margen en % aparecerá en cuanto emitas la primera certificación.</div>'; }
+  if(m.certificado===0){ html += '<div class="vacio">Aún no has marcado avance. Cuando lo hagas verás aquí cuánto te queda.</div>'; }
   document.getElementById('o-mar').innerHTML = html;
 }
 
@@ -1410,21 +1726,27 @@ function crearPartida(cid){
 }
 
 function abrirNuevoMaterial(){
-  abrirModal('<h3 style="text-align:left">Albarán de material</h3>'+
-    '<div class="form-grp"><label>Proveedor</label><input class="inp" id="f-prov" placeholder="p. ej. Material Eléctrico SL"></div>'+
-    '<div class="pgrid">'+
-      '<div class="form-grp"><label>Nº albarán</label><input class="inp" id="f-alb" placeholder="2241"></div>'+
-      '<div class="form-grp"><label>Importe (€)</label><input class="inp" id="f-imp" type="number" step="any" value="0"></div>'+
-    '</div>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearMaterial()">Imputar</button></div>');
-  setTimeout(function(){var e=document.getElementById('f-prov'); if(e) e.focus();},100);
+  _fotoMat=null;
+  var o=obraPorId(obraActual), provs={};
+  db.obras.forEach(function(x){ (x.costesMaterial||[]).forEach(function(m){ if(m.proveedor) provs[m.proveedor]=1; }); });
+  var dl=Object.keys(provs).map(function(p){ return '<option value="'+esc(p)+'">'; }).join('');
+  abrirModal('<h3 style="text-align:left">📦 Apuntar material</h3>'+
+    '<div class="form-grp"><label>¿Cuánto has gastado? (€)</label><input class="inp" id="f-imp" type="number" step="any" inputmode="decimal" placeholder="0"></div>'+
+    '<div class="form-grp"><label>¿En qué almacén o proveedor?</label><input class="inp" id="f-prov" list="f-provl" placeholder="p. ej. Bricolaje Palma"><datalist id="f-provl">'+dl+'</datalist></div>'+
+    '<div class="form-grp"><label>Nº de albarán (opcional)</label><input class="inp" id="f-alb"></div>'+
+    '<div class="form-grp"><div class="foto-box" id="mt-fotobox" onclick="document.getElementById(\'mt-foto\').click()">📷 Foto del albarán (opcional)</div><input type="file" id="mt-foto" accept="image/*" capture="environment" style="display:none" onchange="fotoMaterial(this)"></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearMaterial()">✓ Guardar</button></div>');
+  setTimeout(function(){var e=document.getElementById('f-imp'); if(e) e.focus();},100);
 }
+var _fotoMat=null;
+function reducirFoto(file,cb){ var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var m=Math.min(1,640/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=Math.round(im.width*m); c.height=Math.round(im.height*m); c.getContext('2d').drawImage(im,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.6)); }; im.onerror=function(){ cb(null); }; im.src=r.result; }; r.readAsDataURL(file); }
+function fotoMaterial(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var box=document.getElementById('mt-fotobox'); box.textContent='Procesando foto…'; reducirFoto(f,function(d){ _fotoMat=d; box.innerHTML=d?'<img src="'+d+'" alt="" style="width:100%;max-height:170px;object-fit:cover;border-radius:10px">':'No se pudo leer la foto'; }); }
 function crearMaterial(){
   var o=obraPorId(obraActual);
-  var prov=document.getElementById('f-prov').value.trim(); if(!prov){ toast('Pon el proveedor'); return; }
-  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(),
-    importe:parseFloat(document.getElementById('f-imp').value.replace(',','.'))||0, fecha:hoy()});
-  guardar(); cerrarModal(); pintarSub(); toast('Albarán imputado');
+  var imp=parseFloat(document.getElementById('f-imp').value.replace(',','.'))||0; if(imp<=0){ toast('Pon cuánto has gastado'); return; }
+  var prov=document.getElementById('f-prov').value.trim()||'Sin proveedor';
+  o.costesMaterial.push({id:id(), proveedor:prov, albaran:document.getElementById('f-alb').value.trim(), importe:imp, fecha:hoy(), foto:_fotoMat||undefined});
+  _fotoMat=null; guardar(); cerrarModal(); pintarSub(); toast('✅ Material apuntado: '+fe(imp));
 }
 
 /* ---------- ALBARÁN CON IA · el golpe que no tiene Eureka ---------- */
@@ -1436,11 +1758,11 @@ var MUESTRAS_IA = [
 ];
 function abrirAlbaranIA(){
   abrirModal(
-    '<h3>📸 Albarán con IA</h3>'+
-    '<p class="sub" style="text-align:center;margin:0 0 14px">Haz la foto del albarán. La IA lee proveedor, base e IVA y lo imputa solo a esta obra.</p>'+
+    '<h3>📸 Albarán con IA <span style="font-size:11px;background:#7a5a00;color:#ffe29a;border-radius:8px;padding:2px 8px;vertical-align:middle">DEMO</span></h3>'+
+    '<p class="sub" style="text-align:center;margin:0 0 14px">🧪 <b>Demostración:</b> simula la lectura con un albarán de ejemplo. Todavía no lee tus albaranes de verdad. Para apuntar material real usa «Apuntar material».</p>'+
     '<div id="ia-zona">'+
       '<button class="btn" onclick="escanearAlbaran()">📷 Hacer foto del albarán</button>'+
-      '<p class="sub" style="text-align:center;margin:12px 0 0;font-size:11px">Eureka te obliga a teclearlo a mano. Aquí lo lee la IA.</p>'+
+      ''+
     '</div>');
 }
 function escanearAlbaran(){
@@ -1471,8 +1793,8 @@ function mostrarAlbaranIA(){
 function confirmarAlbaranIA(){
   var m=window._iaSel; if(!m) return;
   var o=obraPorId(obraActual);
-  o.costesMaterial.push({id:id(), proveedor:m.proveedor+' · 🤖IA', albaran:m.albaran, importe:redondear(m.base), fecha:hoy()});
-  guardar(); cerrarModal(); pintarSub(); toast('Albarán leído e imputado por IA');
+  o.costesMaterial.push({id:id(), proveedor:m.proveedor+' · demo', albaran:m.albaran, importe:redondear(m.base), fecha:hoy()});
+  guardar(); cerrarModal(); pintarSub(); toast('Albarán de EJEMPLO imputado (demo)');
 }
 
 function abrirNuevaManoObra(){
@@ -1575,49 +1897,73 @@ function toggleFoto(el){ el.classList.toggle('set'); el.innerHTML = el.classList
 function costeHoraOperario(op){ var hm=Number(op.horasMes)||1; return redondear(((Number(op.sueldo)||0)+(Number(op.ss)||0))/hm); }
 function pintarPartes(){
   var cont=document.getElementById('lista-partes');
-  if(!db.partes || db.partes.length===0){ cont.innerHTML='<div class="vacio">Sin partes todavía.<br>Crea el primero con “+ Nuevo parte”.</div>'; return; }
-  var html='';
+  if(!db.partes || db.partes.length===0){ cont.innerHTML='<div class="vacio">Sin partes todavía.<br>Pulsa “+ Nuevo parte” cuando acabes la jornada.</div>'; return; }
+  var html='', dia=null;
   db.partes.slice().reverse().forEach(function(p){
-    html += '<div class="parte-c"><div class="ph"><b>'+esc(p.operario)+'</b><small>'+esc(p.fecha)+'</small></div>'+
-      '<small>'+esc(p.obraNombre)+' · '+fn(p.horas)+' h · '+fe(p.coste)+'</small>'+
+    if(p.fecha!==dia){ dia=p.fecha; var th=0; db.partes.forEach(function(q){ if(q.fecha===dia) th+=Number(q.horas)||0; }); html+='<p class="sub" style="margin:14px 0 6px"><b>'+(dia===hoy()?'Hoy':esc(dia))+'</b> · '+fn(th)+' h</p>'; }
+    html += '<div class="parte-c"><div class="ph"><b>'+esc(p.operario)+'</b><small>'+fn(p.horas)+' h</small></div>'+
+      '<small>'+esc(p.obraNombre)+'</small>'+
       (p.desc?'<div class="pd">'+esc(p.desc)+'</div>':'')+
+      (p.fotoData?'<img src="'+p.fotoData+'" alt="foto" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-top:8px">':'')+
       '<div style="display:flex;gap:7px;margin-top:8px">'+
-        (p.foto?'<span class="sello" style="background:rgba(79,157,255,.14);color:var(--azul);border-color:rgba(79,157,255,.4)">📷 Foto</span>':'')+
-        (p.firmado?'<span class="sello">✍️ Firmado</span>':'<span class="sello" style="background:var(--grafito3);color:var(--tx3);border-color:var(--linea)">sin firma</span>')+
+        (p.foto&&!p.fotoData?'<span class="sello" style="background:rgba(79,157,255,.14);color:var(--azul);border-color:rgba(79,157,255,.4)">📷 Foto</span>':'')+
+        (p.firmado?'<span class="sello">✍️ Firmado</span>':'')+
       '</div></div>';
   });
   cont.innerHTML=html;
 }
-function abrirNuevoParte(){
-  if(!db.equipo||db.equipo.length===0){ toast('Añade operarios en Equipo primero'); irTab('equipo'); return; }
-  if(!db.obras||db.obras.length===0){ toast('Crea una obra primero'); return; }
-  var ops=db.equipo.map(function(o,i){return '<option value="'+i+'">'+esc(o.nombre)+' ('+esc(o.oficio)+')</option>';}).join('');
-  var obs=db.obras.map(function(o){return '<option value="'+o.id+'">'+esc(o.nombre)+'</option>';}).join('');
+var _fotoParte=null;
+function fotoParte(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return;
+  var box=document.getElementById('pa-fotobox'); box.textContent='Procesando foto…';
+  var r=new FileReader();
+  r.onload=function(){ var im=new Image(); im.onload=function(){
+    var m=Math.min(1,640/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=Math.round(im.width*m); c.height=Math.round(im.height*m);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height); _fotoParte=c.toDataURL('image/jpeg',0.6);
+    box.innerHTML='<img src="'+_fotoParte+'" alt="" style="width:100%;max-height:170px;object-fit:cover;border-radius:10px">'; };
+    im.onerror=function(){ box.textContent='No se pudo leer la foto'; }; im.src=r.result; };
+  r.readAsDataURL(f);
+}
+function horasRapidas(h){ document.getElementById('pa-h').value=h; document.querySelectorAll('.hrapida').forEach(function(b){ b.classList.toggle('verde',+b.dataset.h===h); b.classList.toggle('sec',+b.dataset.h!==h); }); }
+function abrirNuevoParte(obraId){
+  if(!db.obras||db.obras.length===0){ toast('Crea una obra primero'); irTab('obras'); return; }
+  var ult=(db.partes||[])[(db.partes||[]).length-1]||{};
+  var obSel=(typeof obraId==='string'&&obraPorId(obraId))?obraId:((db.fichajeActivo&&db.fichajeActivo.obraId)||ult.obraId||obraActual||db.obras[0].id);
+  _fotoParte=null;
+  var eq=db.equipo||[];
+  var opsel=eq.map(function(o,i){return '<option value="'+i+'"'+(o.nombre===ult.operario?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
+  var abiertas=db.obras.filter(function(o){return !o.terminada||o.id===obSel;}); if(!abiertas.length) abiertas=db.obras;
+  var obs=abiertas.map(function(o){return '<option value="'+o.id+'"'+(o.id===obSel?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
   abrirModal(
-    '<h3 style="text-align:left">📝 Nuevo parte</h3>'+
-    '<div class="form-grp"><label>Operario</label><select class="inp" id="pa-op">'+ops+'</select></div>'+
+    '<h3 style="text-align:left">📝 Parte de hoy</h3>'+
     '<div class="form-grp"><label>Obra</label><select class="inp" id="pa-ob">'+obs+'</select></div>'+
-    '<div class="form-grp"><label>Horas trabajadas</label><input class="inp" id="pa-h" type="number" step="any" value="8"></div>'+
-    '<div class="form-grp"><label>Trabajo realizado</label><input class="inp" id="pa-d" placeholder="p. ej. Cableado planta 1 y cuadro"></div>'+
-    '<div class="form-grp"><label>Foto de obra</label><div class="foto-box" onclick="toggleFoto(this)">📷 Toca para adjuntar foto</div></div>'+
-    '<div class="form-grp"><label>Firma del operario</label><div class="firma-wrap"><canvas id="pa-firma" class="firma"></canvas></div>'+
-      '<button class="btn sec mini" onclick="limpiarFirma(\'pa-firma\')">Borrar firma</button></div>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde peque" onclick="guardarParte()">Guardar e imputar</button></div>');
-  setTimeout(function(){ initFirma('pa-firma'); },130);
+    '<div class="form-grp"><label>¿Quién?</label>'+(eq.length?'<select class="inp" id="pa-op">'+opsel+'</select>':'<input class="inp" id="pa-opn" placeholder="Tu nombre" value="'+esc((window.Sync&&Sync.estado().email||'').split('@')[0])+'">')+'</div>'+
+    '<div class="form-grp"><label>Horas</label><div style="display:flex;gap:6px;margin-bottom:6px">'+[4,6,8,10].map(function(h){return '<button class="btn '+(h===(ult.horas||8)?'verde':'sec')+' peque hrapida" data-h="'+h+'" onclick="horasRapidas('+h+')" style="flex:1;padding:12px 0">'+h+'</button>';}).join('')+'</div>'+
+    '<input class="inp" id="pa-h" type="number" step="any" value="'+(ult.horas||8)+'" inputmode="decimal"></div>'+
+    '<div class="form-grp"><label>¿Qué has hecho?</label><input class="inp" id="pa-d" placeholder="p. ej. Alicatado del baño">'+(ult.desc?'<button class="btn sec mini" style="margin-top:6px" onclick="document.getElementById(\'pa-d\').value=this.dataset.t" data-t="'+esc(ult.desc)+'">↺ Igual que la última vez: '+esc(ult.desc.slice(0,28))+'</button>':'')+'</div>'+
+    '<div class="form-grp"><div class="foto-box" id="pa-fotobox" onclick="document.getElementById(\'pa-foto\').click()">📷 Hacer foto (opcional)</div>'+
+    '<input type="file" id="pa-foto" accept="image/*" capture="environment" style="display:none" onchange="fotoParte(this)"></div>'+
+    '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">✍️ Firmar (opcional)</summary><div class="firma-wrap" style="margin-top:8px"><canvas id="pa-firma" class="firma"></canvas></div>'+
+      '<button class="btn sec mini" onclick="limpiarFirma(\'pa-firma\')">Borrar firma</button></details>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="guardarParte()">✓ Guardar parte</button></div>');
+  setTimeout(function(){ var d=document.querySelector('#modal-cont details'); if(d) d.addEventListener('toggle',function(){ if(d.open) initFirma('pa-firma'); }); },130);
 }
 function guardarParte(){
-  var op=db.equipo[+document.getElementById('pa-op').value];
-  var obId=document.getElementById('pa-ob').value; var o=obraPorId(obId);
+  var eq=db.equipo||[], opSel=document.getElementById('pa-op'), opn=document.getElementById('pa-opn');
+  var op=opSel?eq[+opSel.value]:{nombre:(opn&&opn.value.trim())||'Operario', sueldo:0, ss:0, horasMes:1, _libre:true};
+  var obId=document.getElementById('pa-ob').value; var o=obraPorId(obId); if(!o){ toast('Elige la obra'); return; }
   var h=parseFloat(document.getElementById('pa-h').value.replace(',','.'))||0;
   if(h<=0){ toast('Pon las horas'); return; }
-  var foto=document.querySelector('#modal-cont .foto-box').classList.contains('set');
-  var firmado=_firmaHayTrazo;
+  if(h>24){ toast('Un parte no puede pasar de 24 horas'); return; }
   var d=document.getElementById('pa-d').value.trim();
-  var ch=costeHoraOperario(op); var coste=redondear(h*ch);
+  var ch=op._libre?20:costeHoraOperario(op); var coste=redondear(h*ch);
   if(!db.partes) db.partes=[];
-  db.partes.push({id:id(), operario:op.nombre, obraId:obId, obraNombre:o.nombre, horas:h, desc:d, fecha:hoy(), foto:foto, firmado:firmado, coste:coste});
-  o.costesManoObra.push({id:id(), operario:op.nombre+' (parte)', horas:h, costeHora:ch, fecha:hoy()});
-  guardar(); cerrarModal(); pintarPartes(); toast('Parte guardado e imputado ('+fe(coste)+')');
+  var parteId=id();
+  db.partes.push({id:parteId, operario:op.nombre, obraId:obId, obraNombre:o.nombre, horas:h, desc:d, fecha:hoy(), foto:!!_fotoParte, fotoData:_fotoParte, firmado:_firmaHayTrazo, coste:coste});
+  o.costesManoObra.push({id:'cp_'+parteId, parteId:parteId, operario:op.nombre+' (parte)', horas:h, costeHora:ch, fecha:hoy()});
+  _fotoParte=null; guardar(); cerrarModal();
+  if(document.getElementById('p-partes').classList.contains('activa')) pintarPartes(); else if(obraActual===obId&&document.getElementById('p-obra').classList.contains('activa')) pintarSub();
+  toast('✅ Parte guardado · '+fn(h)+' h en '+o.nombre);
 }
 
 /* ============================================================
@@ -1760,6 +2106,8 @@ function abrirSubcontrata(){
 function crearSubcontrata(){
   var n=document.getElementById('sc-n').value.trim(); if(!n){ toast('Pon la empresa'); return; }
   if(!db.subcontratistas) db.subcontratistas=[];
+  db.equipo.forEach(function(x){ if(!x.id) x.id=id(); });
+  db.subcontratistas.forEach(function(x){ if(!x.id) x.id=id(); });
   db.subcontratistas.push({nombre:n, rea:document.getElementById('sc-r').value.trim()||'—'});
   guardar(); cerrarModal(); pintarCumplimiento(); toast('Subcontrata apuntada en el libro');
 }
@@ -1940,8 +2288,8 @@ function reiniciar(){
     '<p class="sub" style="text-align:center">Se borran todas las obras que tengas y se vuelve a cargar el ejemplo de fábrica. No se puede deshacer.</p>'+
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" style="background:linear-gradient(135deg,#ff6b6b,#ef4b55);color:#fff" onclick="hacerReset()">Sí, reiniciar</button></div>');
 }
-function hacerReset(){ db=sembrar(); guardar(); cerrarModal(); obraActual=null; irTab('obras'); toast('Reiniciado con el ejemplo'); }
-function empezarVacio(){ db={obras:[], contadorFactura:0}; guardar(); cerrarModal(); irTab('obras'); toast('Empezando de cero'); }
+function hacerReset(){ var emp=db.empresa; db=sembrar(); db.empresa=emp||undefined; guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('obras'); toast('Reiniciado con el ejemplo'); }
+function empezarVacio(){ var emp=db.empresa; db={obras:[], contadorFactura:0, empresa:emp}; guardar(); cerrarModal(); irTab('obras'); toast('Empezando de cero'); }
 
 /* ============================================================
    SEMILLA (ejemplo del primer arranque)
@@ -1981,30 +2329,25 @@ var BANCO = [
 /* ---------- PRESUPUESTOS (cálculo coste → venta con K) ---------- */
 function presuPorId(pid){ for(var i=0;i<db.presupuestos.length;i++){ if(db.presupuestos[i].id===pid) return db.presupuestos[i]; } return null; }
 function costeUnit(p){ return (Number(p.mat)||0)+(Number(p.sub)||0)+(Number(p.mo)||0); }
-function ventaUnit(p,pr){ return (Number(p.mat)||0)*pr.kmat + (Number(p.sub)||0)*pr.ksub + (Number(p.mo)||0)*pr.kmo; }
+function ventaUnit(p,pr){ if(p.venta!=null) return Number(p.venta)||0; return (Number(p.mat)||0)*pr.kmat + (Number(p.sub)||0)*pr.ksub + (Number(p.mo)||0)*pr.kmo; }
 function presuTotales(pr){
   var coste=0, venta=0;
   pr.capitulos.forEach(function(c){ c.partidas.forEach(function(p){ var cant=Number(p.cantidad)||0; coste+=cant*costeUnit(p); venta+=cant*ventaUnit(p,pr); }); });
   coste=redondear(coste); venta=redondear(venta);
   return {coste:coste, venta:venta, margen:redondear(venta-coste), pct: venta? redondear((venta-coste)*100/venta):0};
 }
+function pillPresu(pr){ if(pr.estado==='contratado') return pillOport('contratado'); if(pr.estado==='enviado') return pill('Enviado','#4f9dff','rgba(79,157,255,.14)'); return pill('Borrador','#a9b4c0','rgba(169,180,192,.12)'); }
 function pintarPresupuestos(){
   var cont=document.getElementById('lista-presu');
-  var nP=db.presupuestos.length, vTot=0, contr=0;
-  db.presupuestos.forEach(function(pr){ var t=presuTotales(pr); vTot+=t.venta; if(pr.estado==='contratado') contr++; });
-  var html='<div class="kpis"><div class="kpi"><div class="n">'+nP+'</div><div class="l">Presupuestos</div></div>'+
-    '<div class="kpi"><div class="n">'+fe(vTot).replace(/\s?€/,'€')+'</div><div class="l">Venta total</div></div>'+
-    '<div class="kpi"><div class="n ok">'+contr+'</div><div class="l">Contratados</div></div></div>';
-  if(nP===0){ html+='<div class="vacio">Sin presupuestos. Crea el primero con "+ Nuevo presupuesto".</div>'; }
+  var html='';
+  if(db.presupuestos.length===0){ html+='<div class="vacio">Aún no has hecho ningún presupuesto.<br><button class="btn" style="margin-top:10px" onclick="abrirNuevoPresupuesto()">＋ Hacer el primero</button></div>'; }
   db.presupuestos.slice().reverse().forEach(function(pr){
     var t=presuTotales(pr);
     html+='<div class="card clic" onclick="abrirPresu(\''+pr.id+'\')">'+
-      '<div class="obra-h"><div><div class="nom">'+esc(pr.num)+' · '+esc(pr.nombre)+'</div>'+
-      '<div class="cli">'+esc(nombreCliente(pr.clienteId))+' · '+esc(pr.actividad)+'</div></div>'+
-      (pr.estado==='contratado'?pillOport('contratado'):pill('Borrador','#a9b4c0','rgba(169,180,192,.12)'))+'</div>'+
-      '<div class="margen"><div><div class="et">Coste</div><div class="nu">'+fe(t.coste)+'</div></div>'+
-      '<div><div class="et">Venta</div><div class="nu">'+fe(t.venta)+'</div></div>'+
-      '<div class="pct"><div class="big ok">'+fn(t.pct)+'%</div><div class="lb">Margen</div></div></div></div>';
+      '<div class="obra-h"><div><div class="nom">'+esc(pr.nombre)+'</div>'+
+      '<div class="cli">'+esc(nombreCliente(pr.clienteId))+' · '+esc(pr.fecha||'')+'</div></div>'+pillPresu(pr)+'</div>'+
+      '<div class="margen"><div><div class="et">Total sin IVA</div><div class="nu">'+fe(t.venta)+'</div></div></div>'+
+      (pr.obraId?'<div class="fila-btn" style="margin-top:10px"><button class="btn verde peque" onclick="event.stopPropagation();abrirObra(\''+pr.obraId+'\')">🏗️ Ir a la obra</button></div>':'')+'</div>';
   });
   cont.innerHTML=html;
 }
@@ -2016,49 +2359,52 @@ function abrirPresu(pid){ presuActual=pid; var pr=presuPorId(pid); if(!pr) retur
 }
 function pintarPresuDetalle(){
   var pr=presuPorId(presuActual); if(!pr) return; var t=presuTotales(pr);
-  var html='<div class="card"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">'+
-    '<div><div class="et" style="font-size:10px;color:var(--tx3);font-weight:700">Kmat</div><div style="font-weight:800">'+fn(pr.kmat)+'</div></div>'+
-    '<div><div class="et" style="font-size:10px;color:var(--tx3);font-weight:700">Ksub</div><div style="font-weight:800">'+fn(pr.ksub)+'</div></div>'+
-    '<div><div class="et" style="font-size:10px;color:var(--tx3);font-weight:700">Kmo</div><div style="font-weight:800">'+fn(pr.kmo)+'</div></div></div>'+
-    '<p class="sub" style="text-align:center;margin:8px 0 0;font-size:11px">Venta = Material×Kmat + Subcontrata×Ksub + Mano de obra×Kmo</p></div>';
+  var html='';
+  if(pr.obraId||pr.estado==='contratado') html+='<div class="card" style="border-color:var(--ambar)"><p class="sub" style="margin:0">⚠️ Este presupuesto ya es una obra. Si lo cambias aquí, <b>la obra no se modifica</b>. Para cambiar partidas hazlo en la obra.</p><button class="btn verde peque" style="margin-top:8px" onclick="abrirObra(\''+pr.obraId+'\')"'+(pr.obraId?'':' style="display:none"')+'>🏗️ Ir a la obra</button></div>';
+  if(!pr.capitulos.length) html+='<div class="vacio">Aún no hay partidas.<br><button class="btn" style="margin-top:10px" onclick="abrirPartidaPropia()">＋ Mi propia partida</button> <button class="btn sec" style="margin-top:10px" onclick="abrirBanco()">📥 Del banco</button> <button class="btn sec" style="margin-top:10px" onclick="abrirImportar(\'partidas\')">📊 De Excel</button></div>';
   pr.capitulos.forEach(function(c){
     html+='<div class="cap abierto"><div class="cap-h"><span class="cnom">'+esc(c.nombre)+'</span><span class="ctot">'+fe(capVenta(c,pr))+'</span></div><div class="cap-body">';
     if(c.partidas.length===0) html+='<div class="partida" style="color:var(--tx3)">Sin partidas.</div>';
     c.partidas.forEach(function(p,i){
       var cant=Number(p.cantidad)||0;
-      html+='<div class="partida"><div class="pn"><span><b>'+esc(p.codigo)+'</b> · '+esc(p.descripcion)+'</span>'+
+      html+='<div class="partida"><div class="pn"><span>'+(p.codigo?'<b>'+esc(p.codigo)+'</b> · ':'')+esc(p.descripcion)+'</span>'+
         '<span><span class="pt">'+fe(cant*ventaUnit(p,pr))+'</span> <button class="borrar" onclick="dupPartida(\''+c.id+'\',\''+p.id+'\')">⧉</button> <button class="borrar" onclick="delPartidaPresu(\''+c.id+'\',\''+p.id+'\')">✕</button></span></div>'+
         '<div class="pgrid"><div class="fld"><label>Cantidad ('+esc(p.ud)+')</label><input class="inp" type="number" step="any" value="'+cant+'" onchange="editPartidaPresu(\''+c.id+'\',\''+p.id+'\',this.value)"></div>'+
-        '<div class="fld"><label>Coste unit. (mat+sub+mo)</label><input class="inp" value="'+fn(costeUnit(p))+' €" disabled></div></div>'+
-        '<div style="font-size:11px;color:var(--tx3);margin-top:3px">Material '+fe(p.mat)+' · Subc. '+fe(p.sub)+' · M.O. '+fe(p.mo)+' · coste línea '+fe(cant*costeUnit(p))+'</div></div>';
+        '<div class="fld"><label>Precio/ud al cliente (€)</label><input class="inp" type="number" step="any" inputmode="decimal" value="'+redondear(ventaUnit(p,pr))+'" onchange="editPrecioPresu(\''+c.id+'\',\''+p.id+'\',this.value)"></div></div>'+
+        '</div>';
     });
     html+='</div></div>';
   });
-  html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirBanco()">📥 Importar del banco de precios</button></div>';
-  html+='<div class="total-linea"><span class="l">Coste directo</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
-  html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Venta (PEM)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
-  html+='<div class="total-linea"><span class="l">Margen</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
+  html+='<div class="fila-btn" style="margin-top:10px"><button class="btn peque" onclick="abrirPartidaPropia()">＋ Mi propia partida</button><button class="btn sec peque" onclick="abrirBanco()">📥 Del banco de precios</button><button class="btn sec peque" onclick="abrirImportar(\'partidas\')">📊 De Excel</button></div>';
+  html+='<div class="total-linea"><span class="l">Lo que te cuesta</span><span class="v" style="font-size:16px;color:var(--tx2)">'+fe(t.coste)+'</span></div>';
+  html+='<div class="total-linea" style="border-color:var(--verde)"><span class="l">Precio al cliente (sin IVA)</span><span class="v" style="color:var(--verde)">'+fe(t.venta)+'</span></div>';
+  html+='<div class="total-linea"><span class="l">+ IVA '+Math.round((pr.iva||0.21)*100)+'% → Total con IVA</span><span class="v">'+fe(redondear(t.venta*(1+(pr.iva||0.21))))+'</span></div>';
+  html+='<div class="total-linea"><span class="l">Tu beneficio</span><span class="v">'+fe(t.margen)+' · '+fn(t.pct)+'%</span></div>';
   html+='<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="imprimirPresu(\''+pr.id+'\')">🖨️ Imprimir / PDF</button><button class="btn sec peque" onclick="abrirCorreo(\'presupuesto\',\''+pr.id+'\')">✉️ Enviar al cliente</button></div>';
-  if(pr.estado!=='contratado') html+='<div class="fila-btn" style="margin-top:8px"><button class="btn verde peque" onclick="contratarPresu()">✓ Marcar contratado → crear obra</button></div>';
+  html+='<div class="fila-btn" style="margin-top:8px"><button class="btn sec peque" onclick="duplicarPresu()">⧉ Copiar este presupuesto</button></div>';
+  html+='<div class="fila-btn" style="margin-top:8px"><button class="btn verde" onclick="contratarPresu()">'+(pr.obraId?'🏗️ Ir a la obra':'✓ Lo han aceptado → crear la obra')+'</button></div>';
   document.getElementById('presu-cont').innerHTML=html;
 }
 function capVenta(c,pr){ var v=0; c.partidas.forEach(function(p){ v+=(Number(p.cantidad)||0)*ventaUnit(p,pr); }); return redondear(v); }
 function editPartidaPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); p.cantidad=parseFloat(String(val).replace(',','.'))||0; guardar(); pintarPresuDetalle(); }
-function delPartidaPresu(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); c.partidas=c.partidas.filter(function(x){return x.id!==pid;}); guardar(); pintarPresuDetalle(); toast('Partida borrada'); }
+function delPartidaPresu(cid,pid){ if(!confirm('¿Borrar esta partida?')) return; var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); c.partidas=c.partidas.filter(function(x){return x.id!==pid;}); guardar(); pintarPresuDetalle(); toast('Partida borrada'); }
+function editPrecioPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var v=parseFloat(String(val).replace(',','.'))||0;
+  if(p.venta==null){ p.coste0=costeUnit(p); } p.venta=v; guardar(); pintarPresuDetalle(); }
 function dupPartida(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var n=JSON.parse(JSON.stringify(p)); n.id=id(); c.partidas.push(n); guardar(); pintarPresuDetalle(); toast('Partida duplicada'); }
 function abrirBanco(){
   var porCap={}; BANCO.forEach(function(b){ (porCap[b.cap]=porCap[b.cap]||[]).push(b); });
-  var html='<h3 style="text-align:left">Banco de precios</h3><p class="sub" style="margin:0 0 10px">Toca una partida para añadirla al presupuesto (estándar tipo FIEBDC/BC3).</p><div style="max-height:62vh;overflow:auto">';
+  var html='<h3 style="text-align:left">Banco de precios</h3><p class="sub" style="margin:0 0 10px">Pon la cantidad y toca ＋ en lo que vayas a hacer.</p><div style="max-height:62vh;overflow:auto">';
   for(var cap in porCap){ html+='<div style="font-weight:800;font-size:12px;margin:10px 0 4px;color:var(--naranja2)">'+esc(cap)+'</div>';
-    porCap[cap].forEach(function(b){ html+='<div class="lin"><div class="d" style="cursor:pointer" onclick="fichaBanco(\''+b.codigo+'\')"><b>'+esc(b.codigo)+'</b> '+esc(b.desc)+'<small>'+esc(b.ud)+' · coste '+fe(b.mat+b.sub+b.mo)+' · <span style="color:var(--naranja2)">ⓘ descomposición</span></small></div><div class="m" style="cursor:pointer" onclick="addBanco(\''+b.codigo+'\')">＋</div></div>'; });
+    porCap[cap].forEach(function(b){ html+='<div class="lin"><div class="d" style="cursor:pointer" onclick="fichaBanco(\''+b.codigo+'\')"><b>'+esc(b.codigo)+'</b> '+esc(b.desc)+'<small>'+esc(b.ud)+' · coste '+fe(b.mat+b.sub+b.mo)+' · <span style="color:var(--naranja2)">ⓘ descomposición</span></small></div><div style="display:flex;align-items:center;gap:6px"><input class="inp" id="bq-'+b.codigo+'" type="number" step="any" min="0" value="1" inputmode="decimal" style="width:64px;min-height:44px;padding:6px;text-align:center" aria-label="Cantidad"><div class="m" style="cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center" onclick="addBanco(\''+b.codigo+'\')">＋</div></div></div>'; });
   }
-  html+='</div><button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>';
+  html+='</div><button class="btn verde" style="margin-top:12px" onclick="cerrarModal()">✓ Listo</button>';
   abrirModal(html);
 }
 function addBanco(codigo){ var b=BANCO.find(function(x){return x.codigo===codigo;}); if(!b) return; var pr=presuPorId(presuActual);
   var c=pr.capitulos.find(function(x){return x.nombre===b.cap;}); if(!c){ c={id:id(), nombre:b.cap, partidas:[]}; pr.capitulos.push(c); }
-  c.partidas.push({id:id(), codigo:b.codigo, descripcion:b.desc, ud:b.ud, cantidad:1, mat:b.mat, sub:b.sub, mo:b.mo});
-  db.pendientesSync=(db.pendientesSync||0)+1; guardar(); pintarPresuDetalle(); pintarBadgeSync(); toast(b.codigo+' añadida'); }
+  var qi=document.getElementById('bq-'+codigo), q=qi?(parseFloat(String(qi.value).replace(',','.'))||1):1; if(qi) qi.value=1;
+  c.partidas.push({id:id(), codigo:b.codigo, descripcion:b.desc, ud:b.ud, cantidad:q, mat:b.mat, sub:b.sub, mo:b.mo});
+  db.pendientesSync=(db.pendientesSync||0)+1; guardar(); pintarPresuDetalle(); pintarBadgeSync(); toast('✅ '+b.desc.slice(0,30)+' × '+fn(q)); }
 
 /* descomposición de precios (rendimientos + medios auxiliares + K) — como el generador de Eureka */
 var COSTE_H = {of:19.5, pe:17.2};  // coste/hora oficial y peón
@@ -2086,41 +2432,78 @@ function fichaBanco(cod){
       '<div class="lin"><div class="d" style="font-weight:800">Coste directo</div><div class="m" style="font-weight:800">'+fe(coste)+'</div></div>'+
       '<div class="lin"><div class="d" style="font-weight:800;color:var(--verde)">Venta (×K 1,25 / 1,3 / 1,35)</div><div class="m" style="font-weight:800;color:var(--verde)">'+fe(venta)+'</div></div>'+
     '</div>'+
-    '<p class="sub" style="text-align:center;margin:8px 0 0;font-size:11px">Como el generador de precios de Eureka: rendimientos (h oficial/peón) + medios auxiliares + coeficientes K.</p>'+
+    '<p class="sub" style="text-align:center;margin:8px 0 0;font-size:11px">Rendimientos (h oficial/peón) + medios auxiliares + coeficientes K.</p>'+
     '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="abrirBanco()">‹ Volver al banco</button><button class="btn peque" onclick="addBanco(\''+cod+'\')">+ Añadir al presupuesto</button></div>');
 }
 function abrirNuevoPresupuesto(){
-  var ops=db.clientes.map(function(c){ return '<option value="'+c.id+'">'+esc(c.comercial||c.razon)+'</option>'; }).join('');
   abrirModal('<h3 style="text-align:left">Nuevo presupuesto</h3>'+
-    '<div class="form-grp"><label>Nombre</label><input class="inp" id="pr-nom" placeholder="p. ej. Reforma baño C/ Sol"></div>'+
-    '<div class="form-grp"><label>Cliente</label><select class="inp" id="pr-cli">'+ops+'</select></div>'+
-    '<div class="form-grp"><label>Actividad</label><select class="inp" id="pr-act"><option>Reforma</option><option>Obra Nueva</option><option>Mantenimiento</option><option>Pintura</option><option>Yeso</option></select></div>'+
-    '<div class="pgrid" style="grid-template-columns:repeat(3,1fr)"><div class="form-grp"><label>Kmat</label><input class="inp" id="pr-km" type="number" step="any" value="1.25"></div>'+
-    '<div class="form-grp"><label>Ksub</label><input class="inp" id="pr-ks" type="number" step="any" value="1.3"></div>'+
-    '<div class="form-grp"><label>Kmo</label><input class="inp" id="pr-ko" type="number" step="any" value="1.35"></div></div>'+
-    '<p class="sub" style="font-size:11px;margin:2px 0 0">Los coeficientes K aplican tu margen sobre material, subcontrata y mano de obra.</p>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearPresupuesto()">Crear</button></div>');
+    '<div class="form-grp"><label>¿Qué obra es?</label><input class="inp" id="pr-nom" placeholder="p. ej. Reforma baño C/ Sol"></div>'+
+    '<div class="form-grp"><label>¿Para quién?</label><input class="inp" id="pr-cli" list="pr-cli-l" autocomplete="off" placeholder="Escribe el nombre del cliente"><datalist id="pr-cli-l">'+db.clientes.map(function(c){ return '<option value="'+esc(c.comercial||c.razon)+'">'; }).join('')+'</datalist></div>'+
+    '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">Ajustar mi beneficio (avanzado)</summary>'+
+    '<div class="pgrid" style="grid-template-columns:repeat(3,1fr);margin-top:8px"><div class="form-grp"><label>Material ×</label><input class="inp" id="pr-km" type="number" step="any" value="1.25"></div>'+
+    '<div class="form-grp"><label>Subcontrata ×</label><input class="inp" id="pr-ks" type="number" step="any" value="1.3"></div>'+
+    '<div class="form-grp"><label>Mano de obra ×</label><input class="inp" id="pr-ko" type="number" step="any" value="1.35"></div></div>'+
+    '<p class="sub" style="font-size:11px;margin:2px 0 0">Cuánto sumas al coste. 1,25 = ganas un 25% sobre el material.</p></details>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearPresupuesto()">Crear y añadir partidas</button></div>');
+  setTimeout(function(){var e=document.getElementById('pr-nom'); if(e) e.focus();},100);
 }
 function crearPresupuesto(){
-  var nom=document.getElementById('pr-nom').value.trim(); if(!nom){ toast('Pon un nombre'); return; }
+  var nom=document.getElementById('pr-nom').value.trim(); if(!nom){ toast('Pon el nombre de la obra'); return; }
+  var cn=document.getElementById('pr-cli').value.trim(); if(!cn){ toast('Pon el nombre del cliente'); return; }
+  var ex=db.clientes.find(function(c){ var k=cn.toLowerCase(); return (c.comercial||'').toLowerCase()===k || (c.razon||'').toLowerCase()===k; });
+  var cid; if(ex){ cid=ex.id; } else { var c={id:id(), razon:cn, comercial:cn, nif:'', dir:'', email:'', activo:true}; db.clientes.push(c); cid=c.id; }
   db.contadorPresu=(db.contadorPresu||0)+1;
-  var num='2026-'+String(db.contadorPresu).padStart(5,'0');
-  var pr={id:id(), num:num, nombre:nom, clienteId:document.getElementById('pr-cli').value, actividad:document.getElementById('pr-act').value,
+  var num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0');
+  var pr={id:id(), num:num, nombre:nom, clienteId:cid, actividad:'Reforma',
     kmat:parseFloat(document.getElementById('pr-km').value.replace(',','.'))||1, ksub:parseFloat(document.getElementById('pr-ks').value.replace(',','.'))||1, kmo:parseFloat(document.getElementById('pr-ko').value.replace(',','.'))||1,
     iva:0.21, fecha:hoy(), estado:'borrador', capitulos:[]};
-  db.presupuestos.push(pr); guardar(); cerrarModal(); abrirPresu(pr.id); toast('Presupuesto '+num+' creado');
+  db.presupuestos.push(pr); guardar(); cerrarModal(); abrirPresu(pr.id); abrirBanco();
 }
-function contratarPresu(){ var pr=presuPorId(presuActual); pr.estado='contratado'; var t=presuTotales(pr);
-  var o={id:id(), nombre:pr.nombre, cliente:nombreCliente(pr.clienteId), contrato:t.venta, capitulos:[], certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
-  db.obras.push(o); guardar(); toast('Contratado · obra creada'); pintarPresuDetalle(); }
+function abrirPartidaPropia(){
+  var pr=presuPorId(presuActual); if(!pr) return;
+  var caps=pr.capitulos.map(function(c){ return '<option>'+esc(c.nombre)+'</option>'; }).join('');
+  abrirModal('<h3 style="text-align:left">Mi partida</h3>'+
+    '<div class="form-grp"><label>¿Qué trabajo es?</label><input class="inp" id="pp-d" placeholder="p. ej. Alicatado de pared"></div>'+
+    '<div class="pgrid"><div class="form-grp"><label>Cantidad</label><input class="inp" id="pp-c" type="number" step="any" value="1" inputmode="decimal"></div>'+
+    '<div class="form-grp"><label>Unidad</label><select class="inp" id="pp-u"><option>ud</option><option>m²</option><option>m</option><option>h</option><option>global</option></select></div></div>'+
+    '<div class="form-grp"><label>Precio por unidad al cliente (€)</label><input class="inp" id="pp-p" type="number" step="any" inputmode="decimal" placeholder="0"></div>'+
+    '<div class="form-grp"><label>En el capítulo</label><input class="inp" id="pp-k" list="pp-kl" value="'+(pr.capitulos.length?esc(pr.capitulos[pr.capitulos.length-1].nombre):'Trabajos')+'"><datalist id="pp-kl">'+caps+'</datalist></div>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearPartidaPropia()">✓ Añadir</button></div>');
+  setTimeout(function(){ var e=document.getElementById('pp-d'); if(e) e.focus(); },100);
+}
+function crearPartidaPropia(){
+  var pr=presuPorId(presuActual); var d=document.getElementById('pp-d').value.trim(); if(!d){ toast('Pon qué trabajo es'); return; }
+  var kn=document.getElementById('pp-k').value.trim()||'Trabajos';
+  var c=pr.capitulos.find(function(x){return x.nombre===kn;}); if(!c){ c={id:id(), nombre:kn, partidas:[]}; pr.capitulos.push(c); }
+  var num=function(i){ return parseFloat(document.getElementById(i).value.replace(',','.'))||0; };
+  c.partidas.push({id:id(), codigo:'', descripcion:d, ud:document.getElementById('pp-u').value, cantidad:Math.max(0,num('pp-c')), mat:0, sub:0, mo:0, venta:Math.max(0,num('pp-p'))});
+  guardar(); cerrarModal(); pintarPresuDetalle(); toast('Partida añadida'); }
+function duplicarPresu(){ var pr=presuPorId(presuActual); if(!pr) return; var n=JSON.parse(JSON.stringify(pr));
+  n.id=id(); db.contadorPresu=(db.contadorPresu||0)+1; n.num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0'); n.nombre=pr.nombre+' (copia)'; n.estado='borrador'; n.obraId=null; n.fecha=hoy();
+  n.capitulos.forEach(function(c){ c.id=id(); c.partidas.forEach(function(p){ p.id=id(); }); });
+  db.presupuestos.push(n); guardar(); abrirPresu(n.id); toast('Copia lista: cambia lo que haga falta'); }
+function contratarPresu(){
+  var pr=presuPorId(presuActual); if(!pr) return;
+  if(pr.obraId && obraPorId(pr.obraId)){ abrirObra(pr.obraId); return; }
+  var n=0; pr.capitulos.forEach(function(c){ n+=c.partidas.length; });
+  if(n===0){ toast('Añade alguna partida antes de contratar'); return; }
+  var t=presuTotales(pr);
+  // las partidas del presupuesto pasan a la obra con su PRECIO DE VENTA (lo que se certifica al cliente)
+  var caps=pr.capitulos.filter(function(c){ return c.partidas.length; }).map(function(c){
+    return {id:id(), nombre:c.nombre, _abierto:true, partidas:c.partidas.map(function(p){
+      return {id:id(), descripcion:p.descripcion, unidad:p.ud||'ud', medicion:Number(p.cantidad)||0, precio:redondear(ventaUnit(p,pr))};
+    })};
+  });
+  var o={id:id(), nombre:pr.nombre, cliente:nombreCliente(pr.clienteId), contrato:t.venta, presuId:pr.id, retPct:Number((db.empresa||{}).retPct)||0, capitulos:caps, certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
+  db.obras.push(o); pr.estado='contratado'; pr.obraId=o.id; guardar();
+  subActual='o-pre'; document.querySelectorAll('.obratabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.sub==='o-pre'); }); document.querySelectorAll('.obrasub').forEach(function(d){ d.classList.toggle('on', d.id==='o-pre'); });
+  abrirObra(o.id); toast('✅ Obra creada con '+n+' partidas'); }
 
 /* ---------- CLIENTES ---------- */
 function pintarClientes(){
   var cont=document.getElementById('lista-clientes'); var html='';
-  html='<div class="kpis"><div class="kpi"><div class="n">'+db.clientes.length+'</div><div class="l">Clientes</div></div>'+
-    '<div class="kpi"><div class="n ok">'+db.clientes.filter(function(c){return c.activo;}).length+'</div><div class="l">Activos</div></div>'+
-    '<div class="kpi"><div class="n">'+db.obras.length+'</div><div class="l">Obras</div></div></div>';
-  if(db.clientes.length===0) html+='<div class="vacio">Sin clientes.</div>';
+  html='';
+  if(db.clientes.length===0) html+='<div class="vacio">Aún no tienes clientes. Se crean solos al hacer un presupuesto.</div>';
   db.clientes.forEach(function(c){
     html+='<div class="card"><div class="obra-h"><div><div class="nom">'+esc(c.razon)+'</div><div class="cli">'+esc(c.comercial||'')+(c.nif?' · '+esc(c.nif):'')+'</div></div>'+
       (c.activo?pill('Activo','#2ecc71','rgba(46,204,113,.14)'):pill('Baja','#a9b4c0','rgba(169,180,192,.12)'))+'</div>'+
@@ -2131,16 +2514,18 @@ function pintarClientes(){
 }
 function abrirNuevoCliente(){
   abrirModal('<h3 style="text-align:left">Nuevo cliente</h3>'+
-    '<div class="form-grp"><label>Razón social</label><input class="inp" id="cl-raz" placeholder="p. ej. Promotora Sol SL"></div>'+
-    '<div class="form-grp"><label>Nombre comercial</label><input class="inp" id="cl-com" placeholder="p. ej. Grupo Sol"></div>'+
-    '<div class="form-grp"><label>CIF / NIF</label><input class="inp" id="cl-nif" placeholder="B07..."></div>'+
-    '<div class="form-grp"><label>Dirección</label><input class="inp" id="cl-dir" placeholder="C/ ... , Palma"></div>'+
-    '<div class="pgrid"><div class="form-grp"><label>Teléfono</label><input class="inp" id="cl-tel"></div><div class="form-grp"><label>Email</label><input class="inp" id="cl-mail"></div></div>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearCliente()">Guardar</button></div>');
+    '<div class="form-grp"><label>Nombre</label><input class="inp" id="cl-raz" placeholder="p. ej. Ana López"></div>'+
+    '<div class="form-grp"><label>Teléfono</label><input class="inp" id="cl-tel" type="tel" inputmode="tel"></div>'+
+    '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">Más datos (para facturar)</summary>'+
+    '<div class="form-grp" style="margin-top:8px"><label>NIF / CIF</label><input class="inp" id="cl-nif"></div>'+
+    '<div class="form-grp"><label>Dirección</label><input class="inp" id="cl-dir"></div>'+
+    '<div class="form-grp"><label>Email</label><input class="inp" id="cl-mail" type="email"></div></details>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearCliente()">✓ Guardar</button></div>');
+  setTimeout(function(){var e=document.getElementById('cl-raz'); if(e) e.focus();},100);
 }
 function crearCliente(){
-  var r=document.getElementById('cl-raz').value.trim(); if(!r){ toast('Pon la razón social'); return; }
-  db.clientes.push({id:id(), razon:r, comercial:document.getElementById('cl-com').value.trim(), nif:document.getElementById('cl-nif').value.trim(),
+  var r=document.getElementById('cl-raz').value.trim(); if(!r){ toast('Pon el nombre'); return; }
+  db.clientes.push({id:id(), razon:r, comercial:r, nif:document.getElementById('cl-nif').value.trim(),
     dir:document.getElementById('cl-dir').value.trim(), tel:document.getElementById('cl-tel').value.trim(), email:document.getElementById('cl-mail').value.trim(), activo:true});
   guardar(); cerrarModal(); pintarClientes(); toast('Cliente guardado');
 }
@@ -2230,7 +2615,7 @@ function pintarFichajeTop(){
       (fa.dentro?'<span class="fich-geo ok">● en obra</span>':'<span class="fich-geo out">● fuera</span>');
   } else {
     html='<button class="fich-btn play" onclick="fichar()" title="Fichar entrada">▶</button>'+
-      '<div class="fich-info"><div class="st">Fichar entrada</div><div class="sub2">Dueño y trabajadores · con GPS</div></div>';
+      '<div class="fich-info"><div class="st">Fichar entrada</div><div class="sub2">Empezar la jornada</div></div>';
   }
   var e=document.getElementById('fichaje-top'); if(e) e.innerHTML=html;
   var s=document.getElementById('fichaje-sec'); if(s) s.innerHTML=html;
@@ -2406,14 +2791,14 @@ function pintarEstadisticas(){
       '<div class="chart-card"><h3>Ingresos · Gastos · Balance</h3><p class="csub">Base imponible, de tus facturas y costes reales</p><div class="chart-box"><canvas id="cEstIngGas"></canvas></div></div>'+
       '<div class="chart-card"><h3>Embudo comercial</h3><p class="csub">Venta por estado de oportunidad</p><div class="chart-box"><canvas id="cEstPipe"></canvas></div></div>'+
     '</div>'+
-    '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">🤖 Margen real = certificado − coste imputado (lo que Eureka no da)</p><div class="chart-box"><canvas id="cEstMargen"></canvas></div></div>'+
+    '<div class="chart-card"><h3>Margen por obra (€)</h3><p class="csub">Margen real = certificado − coste imputado</p><div class="chart-box"><canvas id="cEstMargen"></canvas></div></div>'+
     '<div class="estad-grid">'+
       '<div class="card"><h3 style="font-size:12px;text-transform:'+hh+'">Ingresos (facturado)</h3>'+fila('Base imponible', baseIng)+fila('IVA repercutido', ivaIng)+fila('Total ingresos', redondear(baseIng+ivaIng))+'</div>'+
       '<div class="card"><h3 style="font-size:12px;text-transform:'+hh+'">Gastos (coste de obras)</h3>'+fila('Base imponible', baseGas)+fila('IVA soportado', ivaGas)+fila('Total gastos', redondear(baseGas+ivaGas))+'</div>'+
     '</div>'+
     '<div class="total-linea" style="border-color:'+(balance>=0?'var(--verde)':'var(--rojo)')+'"><span class="l">Balance (sin IVA)</span><span class="v" style="color:'+(balance>=0?'var(--verde)':'var(--rojo)')+'">'+fe(balance)+'</span></div>'+
     '<div class="total-linea"><span class="l">IVA a liquidar</span><span class="v">'+fe(ivaPagar)+'</span></div>'+
-    '<p class="sub" style="text-align:center;margin-top:10px">🤖 Calculado solo de tus obras. En Eureka esto vive en otra contabilidad; aquí está dentro, con VeriFactu.</p>';
+    '<p class="sub" style="text-align:center;margin-top:10px">Calculado solo con los datos de tus obras.</p>';
   document.getElementById('cont-estad').innerHTML=html;
   setTimeout(function(){
     hazChart('cEstIngGas',{type:'bar',data:{labels:['Ingresos','Gastos','Balance'],datasets:[{data:[baseIng,baseGas,balance],backgroundColor:[COL.verde,COL.rojo,(balance>=0?COL.verde:COL.rojo)],borderRadius:6,maxBarThickness:70}]},options:{plugins:{legend:{display:false}},scales:ejesOscuros()}});
@@ -2589,7 +2974,8 @@ function sembrar(){
    ARRANQUE
    ============================================================ */
 (function init(){
-  if(!cargar()){ db = sembrar(); guardar(); }
+  var primeraVez=!cargar();
+  if(primeraVez){ db={obras:[], contadorFactura:0}; }
   // saneado por si faltan campos
   if(!db.obras) db.obras=[];
   if(db.contadorFactura==null) db.contadorFactura=0;
@@ -2612,12 +2998,17 @@ function sembrar(){
   if(!db.impuestosPresentados) db.impuestosPresentados={};
   if(!db.nominas) db.nominas=[];
   if(!db.gestoriaEmail) db.gestoriaEmail='gestoria@asesoria.es';
+  if(!db.empresa){ db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); }
+  if(primeraVez){ delete db.empresa; }
+  aplicarEmpresa();
   window._verComo=null;
   pintarFichajeTop();
   pintarBadgeSync();
   pintarObras();
   pintarAsistente();
   var h=(location.hash||'').replace('#',''); if(h && MAP[h] && h!=='obra') irTab(h);
+  if(primeraVez) abrirEmpresa(true);
+  if(window.Sync) Sync.iniciar();
   document.addEventListener('click',function(e){ var w=(e.target.closest)?e.target.closest('.buscar-wrap'):null; if(!w){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
   document.addEventListener('keydown',function(e){ var ae=document.activeElement, tag=ae?ae.tagName:''; if(e.key==='/' && tag!=='INPUT' && tag!=='TEXTAREA'){ var i=document.getElementById('buscador'); if(i){ e.preventDefault(); i.focus(); } } else if(e.key==='Escape'){ var b=document.getElementById('buscar-res'); if(b) b.classList.remove('on'); } });
 })();
@@ -2710,11 +3101,15 @@ function aplicarVerComo(){
   var rol=window._verComo;
   var b=document.getElementById('vercomo-banner');
   if(!b){ b=document.createElement('div'); b.id='vercomo-banner'; b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:300;font-weight:800;font-size:13px;text-align:center;padding:7px 12px'; document.body.appendChild(b); }
-  if(rol){ b.style.display='block'; b.style.background=rolColor(rol); b.style.color='#07101d';
+  if(rol && window._rolReal){ b.style.display='none'; document.body.style.paddingTop='0'; }
+  else if(rol){ b.style.display='block'; b.style.background=rolColor(rol); b.style.color='#07101d';
     b.innerHTML='👁️ Estás viendo como <b>'+esc(rol)+'</b> — '+esc((ROLES[rol]||{}).desc||'')+' &nbsp;<button onclick="verComo(\'Dueño\')" style="background:#07101d;color:#fff;border:none;padding:3px 12px;border-radius:7px;font-weight:800;cursor:pointer;margin-left:6px">Volver a Admin</button>';
     document.body.style.paddingTop='34px';
   } else { b.style.display='none'; document.body.style.paddingTop='0'; }
   document.querySelectorAll('.sidebar a[data-nav]').forEach(function(a){ a.style.display=navVisible(a.dataset.nav,rol)?'':'none'; });
+  var vc=document.getElementById('a-vercomo'); if(vc) vc.style.display=window._rolReal?'none':'';
+  var tabs={'t-obras':'obras','t-presupuestos':'presupuestos','t-clientes':'clientes','t-partes':'partes'};
+  for(var tb in tabs){ var te=document.getElementById(tb); if(te) te.style.display=navVisible(tabs[tb],rol)?'':'none'; }
   var cur=null; document.querySelectorAll('.pantalla.activa').forEach(function(s){ for(var k in MAP){ if(MAP[k]===s.id) cur=k; } });
   if(rol && cur && !navVisible(cur,rol)){ irTab(rol==='Operario'?'partes':(rol==='Gestor'?'fiscal':(rol==='Cliente'?'obras':'asistente'))); }
 }
@@ -2736,7 +3131,7 @@ function guardarCliente(cid){ var c=clientePorId(cid); if(!c) return;
   c.razon=document.getElementById('ce-raz').value.trim()||c.razon; c.comercial=document.getElementById('ce-com').value.trim(); c.nif=document.getElementById('ce-nif').value.trim();
   c.dir=document.getElementById('ce-dir').value.trim(); c.tel=document.getElementById('ce-tel').value.trim(); c.email=document.getElementById('ce-mail').value.trim(); c.activo=document.getElementById('ce-act').checked;
   guardar(); cerrarModal(); pintarClientes(); toast('Cliente actualizado'); }
-function borrarCliente(cid){ db.clientes=db.clientes.filter(function(x){return x.id!==cid;}); guardar(); cerrarModal(); pintarClientes(); toast('Cliente borrado'); }
+function borrarCliente(cid){ if(!confirm('¿Borrar este cliente?')) return; db.clientes=db.clientes.filter(function(x){return x.id!==cid;}); guardar(); cerrarModal(); pintarClientes(); toast('Cliente borrado'); }
 
 function editarOperario(i){ var op=db.equipo[i]; if(!op) return;
   abrirModal('<h3 style="text-align:left">👷 Editar ficha del trabajador</h3>'+
@@ -2770,10 +3165,13 @@ function editarObra(oid){ var o=obraPorId(oid); if(!o) return;
   abrirModal('<h3 style="text-align:left">Editar obra</h3>'+
     '<div class="form-grp"><label>Nombre</label><input class="inp" id="obe-n" value="'+esc(o.nombre||'')+'"></div>'+
     '<div class="form-grp"><label>Cliente</label><input class="inp" id="obe-c" value="'+esc(o.cliente||'')+'"></div>'+
+    '<div class="form-grp"><label>Retención de garantía (%) que te aplica el cliente</label><input class="inp" id="obe-ret" type="number" step="any" inputmode="decimal" value="'+(o.retPct||0)+'" placeholder="0 = ninguna; lo habitual es 5"></div>'+
+    '<button class="btn sec" style="width:100%;margin-top:10px" onclick="terminarObra(\''+oid+'\','+(o.terminada?'false':'true')+')">'+(o.terminada?'↩️ Volver a abrir la obra':'✅ Marcar obra terminada')+'</button>'+
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="borrarObra(\''+oid+'\')" style="color:#f0714f">🗑 Borrar obra</button><button class="btn peque" onclick="guardarObra(\''+oid+'\')">Guardar</button></div>');
 }
-function guardarObra(oid){ var o=obraPorId(oid); if(!o) return; o.nombre=document.getElementById('obe-n').value.trim()||o.nombre; o.cliente=document.getElementById('obe-c').value.trim(); guardar(); cerrarModal(); pintarObras(); toast('Obra actualizada'); }
-function borrarObra(oid){ if(db.obras.length<=0) return; db.obras=db.obras.filter(function(x){return x.id!==oid;}); guardar(); cerrarModal(); irTab('obras'); toast('Obra borrada'); }
+function terminarObra(oid,t){ var o=obraPorId(oid); if(!o) return; o.terminada=!!t; guardar(); cerrarModal(); pintarObras(); toast(t?'✅ Obra terminada':'Obra abierta de nuevo'); }
+function guardarObra(oid){ var o=obraPorId(oid); if(!o) return; o.nombre=document.getElementById('obe-n').value.trim()||o.nombre; o.cliente=document.getElementById('obe-c').value.trim(); o.retPct=Math.max(0,Math.min(20,parseFloat(String(document.getElementById('obe-ret').value).replace(',','.'))||0)); guardar(); cerrarModal(); pintarObras(); toast('Obra actualizada'); }
+function borrarObra(oid){ if(!confirm('¿Seguro que quieres borrar la obra entera? No se puede deshacer.')) return; if(db.obras.length<=0) return; db.obras=db.obras.filter(function(x){return x.id!==oid;}); guardar(); cerrarModal(); irTab('obras'); toast('Obra borrada'); }
 
 /* ============================================================
    SIDEBAR · grupos colapsables (recuerda estado)

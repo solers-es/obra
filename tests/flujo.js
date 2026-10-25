@@ -1,0 +1,57 @@
+// Prueba del flujo principal de Brigada en un movil (390x844), solo con clics:
+// presupuesto -> obra -> avance -> factura -> cobro -> parte de trabajo.
+// Uso: npm i playwright (una vez) y  node tests/flujo.js
+const { chromium } = require('playwright');
+const path = require('path');
+const assert = require('assert');
+
+(async () => {
+  const b = await chromium.launch();
+  const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  const errs = [];
+  p.on('pageerror', e => errs.push(e.message));
+  p.on('dialog', d => d.accept());
+  const url = 'file://' + path.resolve(__dirname, '..', 'index.html');
+
+  for (const vacio of [false, true]) {
+    await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+    // primera vez: aparece el alta de empresa
+    assert.ok(await p.evaluate(() => document.getElementById('modal').classList.contains('on')), 'debe salir el alta de empresa');
+    if (vacio) {
+      await p.fill('#em-n', 'Reformas Garcia S.L.'); await p.fill('#em-nif', 'B12345678'); await p.fill('#em-dir', 'C/ Mayor 1, 07001 Palma');
+      await p.click('text=✓ Empezar'); assert.ok(await p.evaluate(() => document.getElementById('modal').classList.contains('on')), 'sin aceptar los términos no debe dejar empezar');
+      await p.check('#em-ok'); await p.click('text=✓ Empezar');
+      assert.strictEqual(await p.evaluate(() => EMISOR.nombre), 'Reformas Garcia S.L.');
+      assert.strictEqual(await p.evaluate(() => db.obras.length), 0, 'una empresa nueva empieza sin obras');
+    } else { await p.click('text=Ver con datos de ejemplo'); }
+    if (!vacio) await p.click('text=Hacer un presupuesto'); // con empresa nueva, el alta ya abre el presupuesto
+    await p.fill('#pr-nom', 'Reforma cocina Ana');
+    await p.fill('#pr-cli', 'Ana Lopez');
+    await p.click('text=Crear y añadir partidas');
+    await p.click('#modal-cont .lin >> nth=0 >> text=＋');
+    await p.click('#modal-cont .lin >> nth=1 >> text=＋');
+    await p.click('text=✓ Listo');
+    await p.click("button:visible:has-text('Mi propia partida')");
+    await p.fill('#pp-d', 'Alicatado'); await p.fill('#pp-c', '12'); await p.fill('#pp-p', '35.5');
+    await p.click('text=✓ Añadir');
+    await p.click('text=Lo han aceptado');
+    const o = await p.evaluate(() => { const o = db.obras[db.obras.length - 1]; return { partidas: o.capitulos.reduce((n, c) => n + c.partidas.length, 0), total: presupuestoObra(o) }; });
+    assert.strictEqual(o.partidas, 3, 'la obra debe nacer con las 3 partidas');
+    await p.click('text=Avance'); await p.click('text=Todo al 100 %');
+    await p.click('text=Certificar y facturar');
+    if (await p.locator('#df-nif').isVisible()) { console.log('  (pidió NIF del cliente)'); // cliente nuevo sin NIF: la app lo pide al facturar
+      await p.fill('#df-nif', '12345678Z'); await p.fill('#df-dir', 'C/ Sol 3, Palma'); await p.click('text=Guardar y facturar');
+    }
+    assert.strictEqual(await p.evaluate(() => db.obras[db.obras.length - 1].facturas.length), 1, 'debe haberse emitido la factura');
+    await p.evaluate(() => cerrarModal());
+    await p.click('text=Cobros'); await p.click('text=Ya me han pagado'); await p.click('text=✓ Apuntar cobro');
+    assert.deepStrictEqual(await p.evaluate(() => db.obras[db.obras.length - 1].facturas.map(f => f.estado)), ['cobrada']);
+    await p.click("button:visible:has-text('Parte de hoy')");
+    if (vacio) await p.fill('#pa-opn', 'Pepe');
+    await p.fill('#pa-d', 'Cocina'); await p.click('text=Guardar parte');
+    assert.ok((await p.evaluate(() => db.partes.length)) >= 1, 'debe haber un parte');
+    console.log(vacio ? 'OK base vacia' : 'OK datos de ejemplo');
+  }
+  assert.deepStrictEqual(errs, [], 'errores de JS: ' + errs.join(' | '));
+  await b.close();
+})().catch(e => { console.error('FALLO:', e.message); process.exit(1); });
