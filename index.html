@@ -1885,9 +1885,9 @@ function abrirNuevoParte(obraId){
     '<h3 style="text-align:left">📝 Parte de hoy</h3>'+
     '<div class="form-grp"><label>Obra</label><select class="inp" id="pa-ob">'+obs+'</select></div>'+
     '<div class="form-grp"><label>¿Quién?</label>'+(eq.length?'<select class="inp" id="pa-op">'+opsel+'</select>':'<input class="inp" id="pa-opn" placeholder="Tu nombre" value="'+esc((window.Sync&&Sync.estado().email||'').split('@')[0])+'">')+'</div>'+
-    '<div class="form-grp"><label>Horas</label><div style="display:flex;gap:6px;margin-bottom:6px">'+[4,6,8,10].map(function(h){return '<button class="btn '+(h===8?'verde':'sec')+' peque hrapida" data-h="'+h+'" onclick="horasRapidas('+h+')" style="flex:1;padding:12px 0">'+h+'</button>';}).join('')+'</div>'+
-    '<input class="inp" id="pa-h" type="number" step="any" value="8" inputmode="decimal"></div>'+
-    '<div class="form-grp"><label>¿Qué has hecho?</label><input class="inp" id="pa-d" placeholder="p. ej. Alicatado del baño"></div>'+
+    '<div class="form-grp"><label>Horas</label><div style="display:flex;gap:6px;margin-bottom:6px">'+[4,6,8,10].map(function(h){return '<button class="btn '+(h===(ult.horas||8)?'verde':'sec')+' peque hrapida" data-h="'+h+'" onclick="horasRapidas('+h+')" style="flex:1;padding:12px 0">'+h+'</button>';}).join('')+'</div>'+
+    '<input class="inp" id="pa-h" type="number" step="any" value="'+(ult.horas||8)+'" inputmode="decimal"></div>'+
+    '<div class="form-grp"><label>¿Qué has hecho?</label><input class="inp" id="pa-d" placeholder="p. ej. Alicatado del baño">'+(ult.desc?'<button class="btn sec mini" style="margin-top:6px" onclick="document.getElementById(\'pa-d\').value=this.dataset.t" data-t="'+esc(ult.desc)+'">↺ Igual que la última vez: '+esc(ult.desc.slice(0,28))+'</button>':'')+'</div>'+
     '<div class="form-grp"><div class="foto-box" id="pa-fotobox" onclick="document.getElementById(\'pa-foto\').click()">📷 Hacer foto (opcional)</div>'+
     '<input type="file" id="pa-foto" accept="image/*" capture="environment" style="display:none" onchange="fotoParte(this)"></div>'+
     '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">✍️ Firmar (opcional)</summary><div class="firma-wrap" style="margin-top:8px"><canvas id="pa-firma" class="firma"></canvas></div>'+
@@ -2340,17 +2340,18 @@ function editPrecioPresu(cid,pid,val){ var pr=presuPorId(presuActual); var c=pr.
 function dupPartida(cid,pid){ var pr=presuPorId(presuActual); var c=pr.capitulos.find(function(x){return x.id===cid;}); var p=c.partidas.find(function(x){return x.id===pid;}); var n=JSON.parse(JSON.stringify(p)); n.id=id(); c.partidas.push(n); guardar(); pintarPresuDetalle(); toast('Partida duplicada'); }
 function abrirBanco(){
   var porCap={}; BANCO.forEach(function(b){ (porCap[b.cap]=porCap[b.cap]||[]).push(b); });
-  var html='<h3 style="text-align:left">Banco de precios</h3><p class="sub" style="margin:0 0 10px">Toca ＋ en lo que vayas a hacer. Luego cambia las cantidades.</p><div style="max-height:62vh;overflow:auto">';
+  var html='<h3 style="text-align:left">Banco de precios</h3><p class="sub" style="margin:0 0 10px">Pon la cantidad y toca ＋ en lo que vayas a hacer.</p><div style="max-height:62vh;overflow:auto">';
   for(var cap in porCap){ html+='<div style="font-weight:800;font-size:12px;margin:10px 0 4px;color:var(--naranja2)">'+esc(cap)+'</div>';
-    porCap[cap].forEach(function(b){ html+='<div class="lin"><div class="d" style="cursor:pointer" onclick="fichaBanco(\''+b.codigo+'\')"><b>'+esc(b.codigo)+'</b> '+esc(b.desc)+'<small>'+esc(b.ud)+' · coste '+fe(b.mat+b.sub+b.mo)+' · <span style="color:var(--naranja2)">ⓘ descomposición</span></small></div><div class="m" style="cursor:pointer" onclick="addBanco(\''+b.codigo+'\')">＋</div></div>'; });
+    porCap[cap].forEach(function(b){ html+='<div class="lin"><div class="d" style="cursor:pointer" onclick="fichaBanco(\''+b.codigo+'\')"><b>'+esc(b.codigo)+'</b> '+esc(b.desc)+'<small>'+esc(b.ud)+' · coste '+fe(b.mat+b.sub+b.mo)+' · <span style="color:var(--naranja2)">ⓘ descomposición</span></small></div><div style="display:flex;align-items:center;gap:6px"><input class="inp" id="bq-'+b.codigo+'" type="number" step="any" min="0" value="1" inputmode="decimal" style="width:64px;min-height:44px;padding:6px;text-align:center" aria-label="Cantidad"><div class="m" style="cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center" onclick="addBanco(\''+b.codigo+'\')">＋</div></div></div>'; });
   }
   html+='</div><button class="btn verde" style="margin-top:12px" onclick="cerrarModal()">✓ Listo</button>';
   abrirModal(html);
 }
 function addBanco(codigo){ var b=BANCO.find(function(x){return x.codigo===codigo;}); if(!b) return; var pr=presuPorId(presuActual);
   var c=pr.capitulos.find(function(x){return x.nombre===b.cap;}); if(!c){ c={id:id(), nombre:b.cap, partidas:[]}; pr.capitulos.push(c); }
-  c.partidas.push({id:id(), codigo:b.codigo, descripcion:b.desc, ud:b.ud, cantidad:1, mat:b.mat, sub:b.sub, mo:b.mo});
-  db.pendientesSync=(db.pendientesSync||0)+1; guardar(); pintarPresuDetalle(); pintarBadgeSync(); toast(b.codigo+' añadida'); }
+  var qi=document.getElementById('bq-'+codigo), q=qi?(parseFloat(String(qi.value).replace(',','.'))||1):1; if(qi) qi.value=1;
+  c.partidas.push({id:id(), codigo:b.codigo, descripcion:b.desc, ud:b.ud, cantidad:q, mat:b.mat, sub:b.sub, mo:b.mo});
+  db.pendientesSync=(db.pendientesSync||0)+1; guardar(); pintarPresuDetalle(); pintarBadgeSync(); toast('✅ '+b.desc.slice(0,30)+' × '+fn(q)); }
 
 /* descomposición de precios (rendimientos + medios auxiliares + K) — como el generador de Eureka */
 var COSTE_H = {of:19.5, pe:17.2};  // coste/hora oficial y peón
