@@ -433,6 +433,7 @@
       <p class="tit" id="obra-tit">—</p>
       <p class="sub" id="obra-sub">—</p>
 
+      <div class="fila-btn" style="margin:0 0 10px"><button class="btn verde peque" onclick="abrirNuevoParte(obraActual)">📝 Parte de hoy</button></div>
       <div class="obratabs">
         <button class="on" data-sub="o-pre" onclick="obraTab(this)">Presupuesto</button>
         <button data-sub="o-cer" onclick="obraTab(this)">Certificar</button>
@@ -455,8 +456,7 @@
     <!-- ===== PARTES ===== -->
     <section id="p-partes" class="pantalla">
       <p class="seccion-tit">📝 Partes de trabajo</p>
-      <p class="sub">El operario mete su parte desde el móvil: horas, foto y firma. Se imputa solo al coste de la obra. <b>Eureka no deja hacer esto desde el móvil.</b></p>
-      <div class="fila-btn"><button class="btn" onclick="abrirNuevoParte()">+ Nuevo parte</button></div>
+      <div class="fila-btn"><button class="btn" onclick="abrirNuevoParte()">＋ Nuevo parte</button></div>
       <div id="lista-partes"></div>
     </section>
 
@@ -777,26 +777,18 @@ function pintarAsistente(){
   var tri=Math.floor(new Date().getMonth()/3);
   var finTri=['20 de abril','20 de julio','20 de octubre','30 de enero'][tri];
   var h='';
-  h+='<p class="tit">🤖 Asistente de Brigada</p>';
-  h+='<p class="sub">'+saludo+', '+esc(emp)+'. Esto es lo que te toca hoy — con un toque lo resuelves.</p>';
-  h+='<div class="asis">';
-  h+=asisCard(fc.n>0?'rojo':'verde','💶', fc.n>0?('<b>'+fc.n+' factura'+(fc.n===1?'':'s')+' por cobrar</b> · '+fe(fc.total)):'Todo cobrado — no hay facturas pendientes', fc.n>0?'Ver facturas':'Ver obras', "irTab('obras')");
-  h+=asisCard(presBorr>0?'ambar':'verde','📄', presBorr>0?('Tienes <b>'+presBorr+' presupuesto'+(presBorr===1?'':'s')+' por enviar</b> (en borrador) · '+presContr+' contratado'+(presContr===1?'':'s')):(pres.length+' presupuestos · todos enviados o contratados'), 'Ir a presupuestos', "irTab('presupuestos')");
-  if(riesgo&&riesgoPct!=null){ var clr=riesgoPct<10?'rojo':(riesgoPct<20?'ambar':'verde');
-    h+=asisCard(clr,'🏗️', obras.length+' obra'+(obras.length===1?'':'s')+' en marcha · margen más bajo: <b>'+esc(riesgo.nombre)+' ('+fn(riesgoPct)+'%)</b>'+(riesgoPct<20?' — ojo, se estrecha':''), 'Revisar obra', "abrirObra('"+riesgo.id+"')");
-  } else { h+=asisCard('verde','🏗️', obras.length+' obras · márgenes sin alertas', 'Ver obras', "irTab('obras')"); }
-  h+=asisCard(otsPend>0?'ambar':'verde','🗂️', otsPend>0?('<b>'+otsPend+' órdenes de trabajo</b> por ejecutar'):'OTS al día', 'Ver OTS', "irTab('ots')");
-  h+=asisCard('azul','⏱️', fichTxt, 'Fichaje y GPS', "irTab('fichaje')");
-  h+=asisCard('ambar','🧾', 'Fiscal: este trimestre toca <b>modelo 303 (IVA)</b> y <b>111 (retenciones)</b> · vence sobre el '+finTri+' <span style="color:var(--tx3)">(estimado)</span>', 'Fiscal y normativa', "irTab('fiscal')");
-  h+=asisCard('verde','⚖️', 'Normativa: revisa el <b>Plan de Seguridad</b> y que el equipo tenga la <b>TPC</b> y el fichaje al día', 'Cumplimiento', "irTab('cumplimiento')");
+  h+='<p class="tit">'+saludo+'</p>';
+  h+='<div style="display:grid;gap:10px;margin:14px 0 18px">'+
+     '<button class="btn" style="padding:18px;font-size:17px" onclick="irTab(\'presupuestos\');abrirNuevoPresupuesto()">🧮 Hacer un presupuesto</button>'+
+     '<button class="btn verde" style="padding:18px;font-size:17px" onclick="abrirNuevoParte()">📝 Parte de hoy</button>'+
+     '<button class="btn sec" style="padding:18px;font-size:17px" onclick="irTab(\'obras\')">🏗️ Mis obras ('+obras.length+')</button></div>';
+  h+='<p class="sub" style="margin:0 0 8px"><b>Lo que te toca</b></p><div class="asis">';
+  if(fc.n>0) h+=asisCard('rojo','💶','<b>'+fc.n+' factura'+(fc.n===1?'':'s')+' por cobrar</b> · '+fe(fc.total),'Ver',"irTab('obras')");
+  if(presBorr>0) h+=asisCard('ambar','📄','<b>'+presBorr+' presupuesto'+(presBorr===1?'':'s')+' sin cerrar</b>','Ver',"irTab('presupuestos')");
+  if(riesgo&&riesgoPct!=null&&riesgoPct<20) h+=asisCard(riesgoPct<10?'rojo':'ambar','🏗️','Ojo con <b>'+esc(riesgo.nombre)+'</b>: margen '+fn(riesgoPct)+'%','Revisar',"abrirObra('"+riesgo.id+"')");
+  if(!fc.n&&!presBorr&&!(riesgo&&riesgoPct!=null&&riesgoPct<20)) h+=asisCard('verde','✅','Todo al día. Nada urgente.','','');
   h+='</div>';
-  h+='<p class="tit" style="font-size:16px;margin-top:18px">¿Qué quieres hacer hoy?</p>';
-  h+='<div class="fila-btn" style="flex-wrap:wrap;gap:9px">'+
-     '<button class="btn peque" onclick="irTab(\'presupuestos\')">🧮 Nuevo presupuesto</button>'+
-     '<button class="btn peque" onclick="irTab(\'fichaje\')">⏱️ Fichar</button>'+
-     '<button class="btn sec peque" onclick="irTab(\'obras\')">🏗️ Ver obras</button>'+
-     '<button class="btn sec peque" onclick="irTab(\'oportunidades\')">🎯 Oportunidades</button></div>';
-  h+='<p class="pie-demo" style="margin-top:14px">El asistente se calcula solo con tus datos de Brigada · Con IA · VeriFactu · funciona sin internet.</p>';
+  h+='<p class="sub" style="margin-top:14px"><a style="color:var(--naranja2);cursor:pointer" onclick="menuMas()">Más cosas: fichaje, equipo, fiscal, clientes…</a></p>';
   c.innerHTML=h;
 }
 
@@ -1575,49 +1567,70 @@ function toggleFoto(el){ el.classList.toggle('set'); el.innerHTML = el.classList
 function costeHoraOperario(op){ var hm=Number(op.horasMes)||1; return redondear(((Number(op.sueldo)||0)+(Number(op.ss)||0))/hm); }
 function pintarPartes(){
   var cont=document.getElementById('lista-partes');
-  if(!db.partes || db.partes.length===0){ cont.innerHTML='<div class="vacio">Sin partes todavía.<br>Crea el primero con “+ Nuevo parte”.</div>'; return; }
-  var html='';
+  if(!db.partes || db.partes.length===0){ cont.innerHTML='<div class="vacio">Sin partes todavía.<br>Pulsa “+ Nuevo parte” cuando acabes la jornada.</div>'; return; }
+  var html='', dia=null;
   db.partes.slice().reverse().forEach(function(p){
-    html += '<div class="parte-c"><div class="ph"><b>'+esc(p.operario)+'</b><small>'+esc(p.fecha)+'</small></div>'+
-      '<small>'+esc(p.obraNombre)+' · '+fn(p.horas)+' h · '+fe(p.coste)+'</small>'+
+    if(p.fecha!==dia){ dia=p.fecha; var th=0; db.partes.forEach(function(q){ if(q.fecha===dia) th+=Number(q.horas)||0; }); html+='<p class="sub" style="margin:14px 0 6px"><b>'+(dia===hoy()?'Hoy':esc(dia))+'</b> · '+fn(th)+' h</p>'; }
+    html += '<div class="parte-c"><div class="ph"><b>'+esc(p.operario)+'</b><small>'+fn(p.horas)+' h</small></div>'+
+      '<small>'+esc(p.obraNombre)+'</small>'+
       (p.desc?'<div class="pd">'+esc(p.desc)+'</div>':'')+
+      (p.fotoData?'<img src="'+p.fotoData+'" alt="foto" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-top:8px">':'')+
       '<div style="display:flex;gap:7px;margin-top:8px">'+
-        (p.foto?'<span class="sello" style="background:rgba(79,157,255,.14);color:var(--azul);border-color:rgba(79,157,255,.4)">📷 Foto</span>':'')+
-        (p.firmado?'<span class="sello">✍️ Firmado</span>':'<span class="sello" style="background:var(--grafito3);color:var(--tx3);border-color:var(--linea)">sin firma</span>')+
+        (p.foto&&!p.fotoData?'<span class="sello" style="background:rgba(79,157,255,.14);color:var(--azul);border-color:rgba(79,157,255,.4)">📷 Foto</span>':'')+
+        (p.firmado?'<span class="sello">✍️ Firmado</span>':'')+
       '</div></div>';
   });
   cont.innerHTML=html;
 }
-function abrirNuevoParte(){
-  if(!db.equipo||db.equipo.length===0){ toast('Añade operarios en Equipo primero'); irTab('equipo'); return; }
-  if(!db.obras||db.obras.length===0){ toast('Crea una obra primero'); return; }
-  var ops=db.equipo.map(function(o,i){return '<option value="'+i+'">'+esc(o.nombre)+' ('+esc(o.oficio)+')</option>';}).join('');
-  var obs=db.obras.map(function(o){return '<option value="'+o.id+'">'+esc(o.nombre)+'</option>';}).join('');
+var _fotoParte=null;
+function fotoParte(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return;
+  var box=document.getElementById('pa-fotobox'); box.textContent='Procesando foto…';
+  var r=new FileReader();
+  r.onload=function(){ var im=new Image(); im.onload=function(){
+    var m=Math.min(1,640/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=Math.round(im.width*m); c.height=Math.round(im.height*m);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height); _fotoParte=c.toDataURL('image/jpeg',0.6);
+    box.innerHTML='<img src="'+_fotoParte+'" alt="" style="width:100%;max-height:170px;object-fit:cover;border-radius:10px">'; };
+    im.onerror=function(){ box.textContent='No se pudo leer la foto'; }; im.src=r.result; };
+  r.readAsDataURL(f);
+}
+function horasRapidas(h){ document.getElementById('pa-h').value=h; document.querySelectorAll('.hrapida').forEach(function(b){ b.classList.toggle('verde',+b.dataset.h===h); b.classList.toggle('sec',+b.dataset.h!==h); }); }
+function abrirNuevoParte(obraId){
+  if(!db.obras||db.obras.length===0){ toast('Crea una obra primero'); irTab('obras'); return; }
+  var ult=(db.partes||[])[(db.partes||[]).length-1]||{};
+  var obSel=(typeof obraId==='string'&&obraPorId(obraId))?obraId:((db.fichajeActivo&&db.fichajeActivo.obraId)||ult.obraId||obraActual||db.obras[0].id);
+  _fotoParte=null;
+  var eq=db.equipo||[];
+  var opsel=eq.map(function(o,i){return '<option value="'+i+'"'+(o.nombre===ult.operario?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
+  var obs=db.obras.map(function(o){return '<option value="'+o.id+'"'+(o.id===obSel?' selected':'')+'>'+esc(o.nombre)+'</option>';}).join('');
   abrirModal(
-    '<h3 style="text-align:left">📝 Nuevo parte</h3>'+
-    '<div class="form-grp"><label>Operario</label><select class="inp" id="pa-op">'+ops+'</select></div>'+
+    '<h3 style="text-align:left">📝 Parte de hoy</h3>'+
     '<div class="form-grp"><label>Obra</label><select class="inp" id="pa-ob">'+obs+'</select></div>'+
-    '<div class="form-grp"><label>Horas trabajadas</label><input class="inp" id="pa-h" type="number" step="any" value="8"></div>'+
-    '<div class="form-grp"><label>Trabajo realizado</label><input class="inp" id="pa-d" placeholder="p. ej. Cableado planta 1 y cuadro"></div>'+
-    '<div class="form-grp"><label>Foto de obra</label><div class="foto-box" onclick="toggleFoto(this)">📷 Toca para adjuntar foto</div></div>'+
-    '<div class="form-grp"><label>Firma del operario</label><div class="firma-wrap"><canvas id="pa-firma" class="firma"></canvas></div>'+
-      '<button class="btn sec mini" onclick="limpiarFirma(\'pa-firma\')">Borrar firma</button></div>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde peque" onclick="guardarParte()">Guardar e imputar</button></div>');
-  setTimeout(function(){ initFirma('pa-firma'); },130);
+    '<div class="form-grp"><label>¿Quién?</label>'+(eq.length?'<select class="inp" id="pa-op">'+opsel+'</select>':'<input class="inp" id="pa-opn" placeholder="Tu nombre">')+'</div>'+
+    '<div class="form-grp"><label>Horas</label><div style="display:flex;gap:6px;margin-bottom:6px">'+[4,6,8,10].map(function(h){return '<button class="btn '+(h===8?'verde':'sec')+' peque hrapida" data-h="'+h+'" onclick="horasRapidas('+h+')" style="flex:1;padding:12px 0">'+h+'</button>';}).join('')+'</div>'+
+    '<input class="inp" id="pa-h" type="number" step="any" value="8" inputmode="decimal"></div>'+
+    '<div class="form-grp"><label>¿Qué has hecho?</label><input class="inp" id="pa-d" placeholder="p. ej. Alicatado del baño"></div>'+
+    '<div class="form-grp"><div class="foto-box" id="pa-fotobox" onclick="document.getElementById(\'pa-foto\').click()">📷 Hacer foto (opcional)</div>'+
+    '<input type="file" id="pa-foto" accept="image/*" capture="environment" style="display:none" onchange="fotoParte(this)"></div>'+
+    '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">✍️ Firmar (opcional)</summary><div class="firma-wrap" style="margin-top:8px"><canvas id="pa-firma" class="firma"></canvas></div>'+
+      '<button class="btn sec mini" onclick="limpiarFirma(\'pa-firma\')">Borrar firma</button></details>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="guardarParte()">✓ Guardar parte</button></div>');
+  setTimeout(function(){ var d=document.querySelector('#modal-cont details'); if(d) d.addEventListener('toggle',function(){ if(d.open) initFirma('pa-firma'); }); },130);
 }
 function guardarParte(){
-  var op=db.equipo[+document.getElementById('pa-op').value];
-  var obId=document.getElementById('pa-ob').value; var o=obraPorId(obId);
+  var eq=db.equipo||[], opSel=document.getElementById('pa-op'), opn=document.getElementById('pa-opn');
+  var op=opSel?eq[+opSel.value]:{nombre:(opn&&opn.value.trim())||'Operario', sueldo:0, ss:0, horasMes:1, _libre:true};
+  var obId=document.getElementById('pa-ob').value; var o=obraPorId(obId); if(!o){ toast('Elige la obra'); return; }
   var h=parseFloat(document.getElementById('pa-h').value.replace(',','.'))||0;
   if(h<=0){ toast('Pon las horas'); return; }
-  var foto=document.querySelector('#modal-cont .foto-box').classList.contains('set');
-  var firmado=_firmaHayTrazo;
   var d=document.getElementById('pa-d').value.trim();
-  var ch=costeHoraOperario(op); var coste=redondear(h*ch);
+  var ch=op._libre?20:costeHoraOperario(op); var coste=redondear(h*ch);
   if(!db.partes) db.partes=[];
-  db.partes.push({id:id(), operario:op.nombre, obraId:obId, obraNombre:o.nombre, horas:h, desc:d, fecha:hoy(), foto:foto, firmado:firmado, coste:coste});
+  db.partes.push({id:id(), operario:op.nombre, obraId:obId, obraNombre:o.nombre, horas:h, desc:d, fecha:hoy(), foto:!!_fotoParte, fotoData:_fotoParte, firmado:_firmaHayTrazo, coste:coste});
   o.costesManoObra.push({id:id(), operario:op.nombre+' (parte)', horas:h, costeHora:ch, fecha:hoy()});
-  guardar(); cerrarModal(); pintarPartes(); toast('Parte guardado e imputado ('+fe(coste)+')');
+  _fotoParte=null; guardar(); cerrarModal();
+  if(document.getElementById('p-partes').classList.contains('activa')) pintarPartes(); else if(obraActual===obId&&document.getElementById('p-obra').classList.contains('activa')) pintarSub();
+  toast('✅ Parte guardado · '+fn(h)+' h en '+o.nombre);
 }
 
 /* ============================================================
