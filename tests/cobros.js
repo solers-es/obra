@@ -13,8 +13,15 @@ const { chromium } = require('playwright'); const path = require('path'), assert
   await p.click('text=Avance'); await p.click('text=Todo al 100 %'); await p.click('text=Certificar y facturar');
   if (await p.locator('#df-nif').isVisible()) { await p.click('text=Facturar sin NIF'); }
   await p.waitForTimeout(300); await p.evaluate(() => cerrarModal());
-  const f = () => p.evaluate(() => { const x = obraPorId(obraActual).facturas[0]; return { total: x.total, ret: x.retencion, aCobrar: x.aCobrar, pend: pendienteDe(x), cobr: cobradoDe(x), retPend: retPendienteDe(x), estado: x.estado }; });
+  const f = () => p.evaluate(() => { const x = obraPorId(obraActual).facturas.find(y => !y.anulada && !y.rect); return { total: x.total, ret: x.retencion, aCobrar: x.aCobrar, pend: pendienteDe(x), cobr: cobradoDe(x), retPend: retPendienteDe(x), estado: x.estado }; });
   let r = await f(); assert.deepStrictEqual([r.total, r.ret, r.aCobrar, r.pend], [1210, 50, 1160, 1160], JSON.stringify(r));
+  // anular la factura: rectificativa R-, el avance queda libre y se vuelve a facturar
+  await p.click('text=Cobros'); await p.click('text=Anular esta factura');
+  const an = await p.evaluate(() => { const o = obraPorId(obraActual); return { n: o.facturas.length, anulada: o.facturas[0].anulada, rect: o.facturas[1].numeroCompleto, rectTotal: o.facturas[1].total, cert: o.certificaciones[0].estado, pend: asisFacturasPorCobrar().total }; });
+  assert.deepStrictEqual([an.n, an.anulada, an.rect.slice(0, 2), an.rectTotal, an.cert, an.pend], [2, true, 'R-', -1210, 'anulada', 0], JSON.stringify(an));
+  await p.click('text=Avance'); await p.click('text=Todo al 100 %'); await p.click('text=Certificar y facturar'); if (await p.locator('#df-nif').isVisible()) await p.click('text=Facturar sin NIF'); await p.waitForTimeout(300); await p.evaluate(() => cerrarModal());
+  assert.strictEqual(await p.evaluate(() => obraPorId(obraActual).facturas.length), 3, 'se puede volver a facturar lo anulado');
+  await p.click('text=Cobros');
   // cobro parcial de 500 -> falta 660
   await p.click('text=Cobros'); await p.click('text=Ya me han pagado'); await p.fill('#cb-imp', '500'); await p.click('text=✓ Apuntar cobro');
   r = await f(); assert.deepStrictEqual([r.cobr, r.pend, r.estado], [500, 660, 'parcial']);

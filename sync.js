@@ -99,7 +99,7 @@ var Sync = (function () {
     if (esOperario()) { (db.partes || []).forEach(function (p) { out['partes/' + p.id] = { col: 'partes', id: p.id, datos: p }; }); return out; }
     COLS.forEach(function (c) { (db[c] || []).forEach(function (x) { if (x && x.id && !x._lite) out[c + '/' + x.id] = { col: c, id: x.id, datos: x }; }); });
     (db.obras || []).forEach(function (o) { if (!o._lite) out['obras_lite/' + o.id] = { col: 'obras_lite', id: o.id, datos: { id: o.id, nombre: o.nombre } }; });
-    out['ajustes/config'] = { col: 'ajustes', id: 'config', datos: { empresa: db.empresa || null, contadorFactura: db.contadorFactura || 0, contadorPresu: db.contadorPresu || 0, contadorOts: db.contadorOts || 0 } };
+    out['ajustes/config'] = { col: 'ajustes', id: 'config', datos: { empresa: db.empresa || null, contadorFactura: db.contadorFactura || 0, contadorRect: db.contadorRect || 0, contadorPresu: db.contadorPresu || 0, contadorOts: db.contadorOts || 0 } };
     return out;
   }
   function cambio() { // lo llama guardar(): detecta qué documentos han cambiado y los encola
@@ -137,8 +137,8 @@ var Sync = (function () {
     var c = d.coleccion;
     if (c === 'ajustes') {
       var a = d.datos || {}; if (a.empresa) db.empresa = a.empresa;
-      db.contadorFactura = Math.max(db.contadorFactura || 0, a.contadorFactura || 0); db.contadorPresu = Math.max(db.contadorPresu || 0, a.contadorPresu || 0); db.contadorOts = Math.max(db.contadorOts || 0, a.contadorOts || 0);
-      S.snap[k] = { h: hash(estable({ empresa: db.empresa || null, contadorFactura: db.contadorFactura || 0, contadorPresu: db.contadorPresu || 0, contadorOts: db.contadorOts || 0 })), m: d.mod_ms };
+      db.contadorFactura = Math.max(db.contadorFactura || 0, a.contadorFactura || 0); db.contadorRect = Math.max(db.contadorRect || 0, a.contadorRect || 0); db.contadorPresu = Math.max(db.contadorPresu || 0, a.contadorPresu || 0); db.contadorOts = Math.max(db.contadorOts || 0, a.contadorOts || 0);
+      S.snap[k] = { h: hash(estable({ empresa: db.empresa || null, contadorFactura: db.contadorFactura || 0, contadorRect: db.contadorRect || 0, contadorPresu: db.contadorPresu || 0, contadorOts: db.contadorOts || 0 })), m: d.mod_ms };
       return;
     }
     if (c === 'obras_lite') {
@@ -197,8 +197,8 @@ var Sync = (function () {
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.tenant) sincronizar(); });
 
   /* ---------- numeración de facturas ---------- */
-  function reservarNumero(desde) {
-    var serie = 'A-' + new Date().getFullYear();
+  function reservarNumero(desde, serie) {
+    serie = serie || ('A-' + new Date().getFullYear());
     return http('POST', '/rest/v1/rpc/siguiente_numero', { p_tenant: S.tenant, p_serie: serie, p_desde: desde || 0 });
   }
 

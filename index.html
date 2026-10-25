@@ -695,7 +695,7 @@ function partidaPorId(o, pid){
 function pctAnterior(o, pid, numeroHasta){
   var pct=0;
   o.certificaciones.forEach(function(ce){
-    if(ce.numero < numeroHasta && ce.lineas[pid]!=null){ pct = Math.max(pct, Number(ce.lineas[pid])||0); }
+    if(ce.estado!=='anulada' && ce.numero < numeroHasta && ce.lineas[pid]!=null){ pct = Math.max(pct, Number(ce.lineas[pid])||0); }
   });
   return pct;
 }
@@ -1338,9 +1338,9 @@ function guardarYFacturar(facturar){
   pintarSub();
 }
 function cobradoDe(f){ var t=0, ps=f.pagos||[]; ps.forEach(function(p){ if(p.tipo!=='retencion') t+=Number(p.importe)||0; }); if(!ps.length && f.estado==='cobrada') t=(f.aCobrar!=null?f.aCobrar:f.total); return redondear(t); }
-function pendienteDe(f){ return Math.max(0, redondear((f.aCobrar!=null?f.aCobrar:f.total)-cobradoDe(f))); }
+function pendienteDe(f){ if(f.anulada||f.rect) return 0; return Math.max(0, redondear((f.aCobrar!=null?f.aCobrar:f.total)-cobradoDe(f))); }
 function retCobradaDe(f){ var t=0; (f.pagos||[]).forEach(function(p){ if(p.tipo==='retencion') t+=Number(p.importe)||0; }); return redondear(t); }
-function retPendienteDe(f){ return Math.max(0, redondear((f.retencion||0)-retCobradaDe(f))); }
+function retPendienteDe(f){ if(f.anulada||f.rect) return 0; return Math.max(0, redondear((f.retencion||0)-retCobradaDe(f))); }
 function emitirFactura(o, ce, base, fis){
   fis = fis||{};
   var isp = !!fis.isp;
@@ -1394,7 +1394,8 @@ function pintarFacturas(o){
     html += '<div class="card">'+
       '<div class="obra-h" style="margin-bottom:10px"><div><div class="nom">'+esc(f.numeroCompleto)+'</div>'+
         '<div class="cli">'+esc(f.fecha)+(ce?' · certificación nº '+ce.numero:'')+'</div></div>'+
-        '<span class="estado '+(pendienteDe(f)<=0?'cert':'curso')+'">'+(pendienteDe(f)<=0?'Cobrada':(cobradoDe(f)>0?'Cobro parcial':'Por cobrar'))+'</span></div>'+
+        '<span class="estado '+((pendienteDe(f)<=0)?'cert':'curso')+'">'+(f.anulada?'Anulada':(f.rect?'Rectificativa':(pendienteDe(f)<=0?'Cobrada':(cobradoDe(f)>0?'Cobro parcial':'Por cobrar'))))+'</span></div>'+
+      (f.rect?'<p class="sub" style="margin:0 0 8px">Anula la factura <b>'+esc(f.rectDeNum||'')+'</b>'+(f.motivo?' · '+esc(f.motivo):'')+'</p>':'')+
       '<div class="factura-doc" style="margin:0">'+
         lineasFiscalFactura(f)+
       '</div>'+
@@ -1404,14 +1405,32 @@ function pintarFacturas(o){
       '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
         '<button class="btn sec peque" onclick="imprimirFactura(\''+o.id+'\',\''+f.id+'\')">🖨️ PDF</button>'+
         '<button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+f.id+'\')">✉️ Correo</button>'+
-        (pendienteDe(f)<=0?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="abrirCobro(\''+o.id+'\',\''+f.id+'\',\'cobro\')">💶 Ya me han pagado</button>')+
+        ((f.anulada||f.rect)?'':(pendienteDe(f)<=0?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="abrirCobro(\''+o.id+'\',\''+f.id+'\',\'cobro\')">💶 Ya me han pagado</button>'))+
       '</div>'+
+      (puedeAnular(o,f)?'<button class="btn sec mini" style="margin-top:8px" onclick="anularFactura(\''+o.id+'\',\''+f.id+'\')">↩️ Anular esta factura</button>':'')+
     '</div>';
   });
   var baseTot=0,ivaTot=0,totTot=0;
   o.facturas.forEach(function(f){baseTot+=f.base;ivaTot+=f.iva;totTot+=f.total;});
   html += '<div class="total-linea"><span class="l">Total facturado (base)</span><span class="v">'+fe(baseTot)+'</span></div>';
   document.getElementById('o-fac').innerHTML = html;
+}
+function puedeAnular(o,f){ if(f.anulada||f.rect) return false; if((f.pagos||[]).length||f.estado==='cobrada') return false;
+  var vivas=o.facturas.filter(function(x){return !x.anulada&&!x.rect;}); return vivas.length&&vivas[vivas.length-1].id===f.id; }   // solo la última, sin cobros
+function anularFactura(oid,fid){
+  var o=obraPorId(oid), f=o.facturas.find(function(x){return x.id===fid;}); if(!f||!puedeAnular(o,f)){ toast('Esta factura ya no se puede anular'); return; }
+  var motivo=prompt('¿Por qué la anulas? (sale en la factura rectificativa)','Error en la factura'); if(motivo===null) return;
+  if(!confirm('Se creará una factura rectificativa que anula la '+f.numeroCompleto+' y el avance que certificaba quedará libre para volver a facturarlo. ¿Seguir?')) return;
+  var hacer=function(n){
+    var num='R-'+new Date().getFullYear()+'/'+String(n).padStart(4,'0');
+    var r={id:id(), rect:true, rectDe:f.id, rectDeNum:f.numeroCompleto, motivo:(motivo||'').trim(), certId:f.certId, numero:f.numero+0.5, numeroCompleto:num, fecha:hoy(),
+      base:-f.base, tipoIva:f.tipoIva, isp:f.isp, iva:-f.iva, retPct:f.retPct, retencion:-(f.retencion||0), total:-f.total, aCobrar:-(f.aCobrar!=null?f.aCobrar:f.total), estado:'rectificativa', pagos:[]};
+    db.contadorRect=n; o.facturas.push(r); f.anulada=true; f.estado='anulada';
+    var ce=o.certificaciones.find(function(c){return c.id===f.certId;}); if(ce) ce.estado='anulada';
+    guardar(); pintarSub(); toast('↩️ Factura anulada con la rectificativa '+num);
+  };
+  if(window.Sync&&Sync.activo()) Sync.reservarNumero(db.contadorRect||0,'R-'+new Date().getFullYear()).then(hacer).catch(function(){ toast('Sin conexión: para anular hace falta internet'); });
+  else hacer((db.contadorRect||0)+1);
 }
 function abrirCobro(oid,fid,tipo){
   var o=obraPorId(oid), f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return;
@@ -1474,7 +1493,8 @@ function cabeceraDoc(tipo,num,fecha,cl){ return '<div class="hd"><div class="em"
 function abrirDoc(titulo,cuerpo){ var w=window.open('','_blank','width=900,height=1000'); if(!w){ toast('Permite las ventanas emergentes para imprimir'); return; } w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>'+titulo+'</title>'+docEstilo()+'</head><body>'+cuerpo+'<div class="noprint" style="text-align:center;margin:22px 0"><button onclick="window.print()" style="background:#f26419;color:#fff;border:none;padding:12px 24px;border-radius:9px;font-weight:800;font-size:15px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button></div></body></html>'); w.document.close(); w.focus(); setTimeout(function(){ try{w.print();}catch(e){} }, 500); }
 function docFacturaHTML(o,f){
   var cl=clienteDeObra(o); var ce=o.certificaciones.find(function(c){return c.id===f.certId;}); var tv=(f.tipoIva==null?21:f.tipoIva);
-  var h=cabeceraDoc('FACTURA', f.numeroCompleto, f.fecha, cl);
+  var h=cabeceraDoc(f.rect?'FACTURA RECTIFICATIVA':'FACTURA', f.numeroCompleto, f.fecha, cl);
+  if(f.rect) h+='<p style="margin:8px 0"><b>Rectifica la factura '+esc(f.rectDeNum||'')+'</b>'+(f.motivo?' · Motivo: '+esc(f.motivo):'')+'. Importes en negativo: anula íntegramente la factura rectificada.</p>';
   h+='<table><tr><th>Concepto</th><th class="n">Importe</th></tr><tr><td>Ejecución de obra — <b>'+esc(o.nombre)+'</b>'+(ce?'<br><span style="color:#777">Certificación nº '+ce.numero+'</span>':'')+'</td><td class="n">'+fe(f.base)+'</td></tr></table>';
   h+='<div class="tot"><div class="r"><span>Base imponible</span><b>'+fe(f.base)+'</b></div>'+(f.isp?'<div class="r"><span>IVA · Inversión del sujeto pasivo</span><b>0,00 €</b></div>':'<div class="r"><span>IVA '+fn(tv)+'%</span><b>'+fe(f.iva)+'</b></div>')+'<div class="r big"><span>TOTAL</span><span>'+fe(f.total)+'</span></div>'+(f.retencion>0?'<div class="r"><span>− Retención garantía '+fn(f.retPct)+'%</span><b>−'+fe(f.retencion)+'</b></div><div class="r big"><span>A COBRAR</span><span>'+fe(f.aCobrar)+'</span></div>':'')+'</div>';
   h+='<div class="foot"><div class="sello"></div><div style="text-align:right;font-size:11px;color:#777">'+(f.isp?'Operación con <b>inversión del sujeto pasivo</b><br>(art. 84.Uno.2º.f LIVA): la declara el destinatario.<br>':'')+'Forma de pago: transferencia · 30 días</div></div>';
