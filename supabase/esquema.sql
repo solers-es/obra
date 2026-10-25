@@ -34,6 +34,9 @@
 -- una policy de `membresias` tuviera que volver a consultar `membresias`.
 -- =============================================================================
 
+-- Las funciones de ayuda (SQL) consultan tablas que se crean más abajo: no validar cuerpos al crearlas.
+set check_function_bodies = off;
+
 create extension if not exists "pgcrypto" with schema extensions;
 
 create schema if not exists app;
