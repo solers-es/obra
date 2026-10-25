@@ -772,7 +772,7 @@ function irTab(clave){
 /* ---------- ASISTENTE INTELIGENTE (como "Lo que te toca" de GestorOS) ---------- */
 function asisFacturasPorCobrar(){
   var n=0, tot=0;
-  (db.obras||[]).forEach(function(o){ (o.facturas||[]).forEach(function(f){ if(f.estado!=='cobrada'){ n++; tot+=Number(f.total)||0; } }); });
+  (db.obras||[]).forEach(function(o){ (o.facturas||[]).forEach(function(f){ var p=pendienteDe(f); if(p>0){ n++; tot+=p; } }); });
   return {n:n, total:redondear(tot)};
 }
 function asisCard(clr,ic,txt,btn,act){
@@ -1180,10 +1180,10 @@ function pintarCertificar(o){
     });
   });
   html += '<div class="total-linea" style="margin-top:12px"><span class="l">Total a certificar</span><span class="v" id="cert-total">'+fe(0)+'</span></div>';
-  html += '<details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:13px">🧾 IVA y retención (por defecto 21 %)</summary><div style="height:8px"></div>'+
+  html += '<details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:13px">🧾 IVA 21 %'+(o.retPct?' · retención '+o.retPct+' %':'')+' (tocar para cambiar)</summary><div style="height:8px"></div>'+
     '<div class="pgrid">'+
       '<div class="fld"><label>IVA</label><select class="inp" id="fac-iva"><option value="21">21% general</option><option value="10">10% reforma vivienda</option><option value="4">4% superreducido</option></select></div>'+
-      '<div class="fld"><label>Retención garantía %</label><input class="inp" id="fac-ret" type="number" step="any" value="0" placeholder="p. ej. 5"></div>'+
+      '<div class="fld"><label>Retención de garantía %</label><input class="inp" id="fac-ret" type="number" step="any" value="'+(o.retPct||0)+'" placeholder="p. ej. 5"></div>'+
     '</div>'+
     '<label style="display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;color:var(--tx2)"><input type="checkbox" id="fac-isp" onchange="document.getElementById(\'fac-iva\').disabled=this.checked"> <b>Inversión del sujeto pasivo</b> — factura sin IVA (art. 84 LIVA, obra entre empresas)</label>'+
     '</details>';
@@ -1276,6 +1276,10 @@ function guardarYFacturar(facturar){
   }
   pintarSub();
 }
+function cobradoDe(f){ var t=0, ps=f.pagos||[]; ps.forEach(function(p){ if(p.tipo!=='retencion') t+=Number(p.importe)||0; }); if(!ps.length && f.estado==='cobrada') t=(f.aCobrar!=null?f.aCobrar:f.total); return redondear(t); }
+function pendienteDe(f){ return Math.max(0, redondear((f.aCobrar!=null?f.aCobrar:f.total)-cobradoDe(f))); }
+function retCobradaDe(f){ var t=0; (f.pagos||[]).forEach(function(p){ if(p.tipo==='retencion') t+=Number(p.importe)||0; }); return redondear(t); }
+function retPendienteDe(f){ return Math.max(0, redondear((f.retencion||0)-retCobradaDe(f))); }
 function emitirFactura(o, ce, base, fis){
   fis = fis||{};
   var isp = !!fis.isp;
@@ -1288,7 +1292,7 @@ function emitirFactura(o, ce, base, fis){
   db.contadorFactura = (db.contadorFactura||0)+1;
   var numCompleto = 'A-'+new Date().getFullYear()+'/'+String(db.contadorFactura).padStart(4,'0');
   var fac = {id:id(), certId:ce.id, numero:db.contadorFactura, numeroCompleto:numCompleto,
-             base:base, tipoIva:tipoIva, isp:isp, iva:iva, retPct:retPct, retencion:retencion, total:total, aCobrar:aCobrar, fecha:hoy(), estado:'emitida', verifactu:true};
+             base:base, tipoIva:tipoIva, isp:isp, iva:iva, retPct:retPct, retencion:retencion, total:total, aCobrar:aCobrar, fecha:hoy(), estado:'emitida', pagos:[]};
   o.facturas.push(fac);
   guardar();
   mostrarModalFactura(o, fac, ce);
@@ -1329,15 +1333,17 @@ function pintarFacturas(o){
     html += '<div class="card">'+
       '<div class="obra-h" style="margin-bottom:10px"><div><div class="nom">'+esc(f.numeroCompleto)+'</div>'+
         '<div class="cli">'+esc(f.fecha)+(ce?' · certificación nº '+ce.numero:'')+'</div></div>'+
-        '<span class="estado '+(f.estado==='cobrada'?'cert':'curso')+'">'+(f.estado==='cobrada'?'Cobrada':'Por cobrar')+'</span></div>'+
+        '<span class="estado '+(pendienteDe(f)<=0?'cert':'curso')+'">'+(pendienteDe(f)<=0?'Cobrada':(cobradoDe(f)>0?'Cobro parcial':'Por cobrar'))+'</span></div>'+
       '<div class="factura-doc" style="margin:0">'+
         lineasFiscalFactura(f)+
       '</div>'+
+      (cobradoDe(f)>0&&pendienteDe(f)>0?'<p class="sub" style="margin:8px 0 0">Cobrado '+fe(cobradoDe(f))+' · <b>falta '+fe(pendienteDe(f))+'</b></p>':'')+
+      (f.retencion>0?'<p class="sub" style="margin:8px 0 0">🔒 Retención de garantía '+fe(f.retencion)+(retPendienteDe(f)>0?' · <b>pendiente de cobrar '+fe(retPendienteDe(f))+'</b> <button class="btn sec mini" onclick="abrirCobro(\''+o.id+'\',\''+f.id+'\',\'retencion\')">Cobrar retención</button>':' · ✓ cobrada')+'</p>':'')+
       '<div class="sellos"><span class="sello">Nº '+esc(f.numeroCompleto)+'</span>'+(f.isp?'<span class="sello">ISP</span>':'')+'</div>'+
       '<div class="fila-btn" style="margin-top:10px;margin-bottom:0">'+
         '<button class="btn sec peque" onclick="imprimirFactura(\''+o.id+'\',\''+f.id+'\')">🖨️ PDF</button>'+
         '<button class="btn sec peque" onclick="abrirCorreo(\'factura\',\''+o.id+'\',\''+f.id+'\')">✉️ Correo</button>'+
-        (f.estado==='cobrada'?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="cobrarFactura(\''+o.id+'\',\''+f.id+'\')">💶 Ya me han pagado</button>')+
+        (pendienteDe(f)<=0?'<button class="btn verde peque" disabled>✓ Cobrada</button>':'<button class="btn peque" onclick="abrirCobro(\''+o.id+'\',\''+f.id+'\',\'cobro\')">💶 Ya me han pagado</button>')+
       '</div>'+
     '</div>';
   });
@@ -1346,7 +1352,24 @@ function pintarFacturas(o){
   html += '<div class="total-linea"><span class="l">Total facturado (base)</span><span class="v">'+fe(baseTot)+'</span></div>';
   document.getElementById('o-fac').innerHTML = html;
 }
-function cobrarFactura(oid,fid){ var o=obraPorId(oid); var f=o.facturas.find(function(x){return x.id===fid;}); if(f){ f.estado='cobrada'; guardar(); pintarSub(); toast('Factura marcada como cobrada'); } }
+function abrirCobro(oid,fid,tipo){
+  var o=obraPorId(oid), f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return;
+  var falta=(tipo==='retencion')?retPendienteDe(f):pendienteDe(f);
+  abrirModal('<h3 style="text-align:left">💶 '+(tipo==='retencion'?'Cobrar la retención':'Cobro de la factura')+'</h3>'+
+    '<p class="sub">'+esc(f.numeroCompleto)+' · falta por cobrar <b>'+fe(falta)+'</b></p>'+
+    '<div class="form-grp"><label>¿Cuánto te han pagado? (€)</label><input class="inp" id="cb-imp" type="number" step="any" inputmode="decimal" value="'+falta+'"></div>'+
+    '<p class="sub" style="font-size:12.5px">Si te han pagado solo una parte, cambia el importe: la factura sigue pendiente por el resto.</p>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="cobrarFactura(\''+oid+'\',\''+fid+'\',\''+tipo+'\')">✓ Apuntar cobro</button></div>');
+  setTimeout(function(){ var e=document.getElementById('cb-imp'); if(e){ e.focus(); e.select&&e.select(); } },100);
+}
+function cobrarFactura(oid,fid,tipo){ var o=obraPorId(oid); var f=o.facturas.find(function(x){return x.id===fid;}); if(!f) return; tipo=tipo||'cobro';
+  var falta=(tipo==='retencion')?retPendienteDe(f):pendienteDe(f);
+  var imp=redondear(parseFloat(String(document.getElementById('cb-imp').value).replace(',','.'))||0);
+  if(imp<=0){ toast('Pon cuánto te han pagado'); return; } if(imp>falta+0.005){ toast('No puede ser más de lo que falta ('+fe(falta)+')'); return; }
+  f.pagos=f.pagos||[]; if(!f.pagos.length&&f.estado==='cobrada'){ f.pagos.push({id:id(),fecha:f.fecha,importe:(f.aCobrar!=null?f.aCobrar:f.total),tipo:'cobro'}); }
+  f.pagos.push({id:id(), fecha:hoy(), importe:imp, tipo:tipo});
+  f.estado=pendienteDe(f)<=0?'cobrada':(cobradoDe(f)>0?'parcial':'emitida');
+  guardar(); cerrarModal(); pintarSub(); toast(pendienteDe(f)<=0&&tipo==='cobro'?'✅ Factura cobrada':'✅ Cobro apuntado: '+fe(imp)); }
 
 /* ============================================================
    DOCUMENTOS IMPRIMIBLES (factura/presupuesto PDF) + CORREO (Gmail)
@@ -1368,13 +1391,14 @@ function abrirEmpresa(primera){
     '<div class="form-grp"><label>Dirección</label><input class="inp" id="em-dir" value="'+esc(e.dir||'')+'" placeholder="Calle, nº, CP, ciudad"></div>'+
     '<div class="pgrid"><div class="form-grp"><label>Teléfono</label><input class="inp" id="em-tel" type="tel" value="'+esc(e.tel||'')+'"></div>'+
     '<div class="form-grp"><label>Email</label><input class="inp" id="em-mail" type="email" value="'+esc(e.email||'')+'"></div></div>'+
+    '<div class="form-grp"><label>Retención de garantía habitual (%)</label><input class="inp" id="em-ret" type="number" step="any" inputmode="decimal" value="'+(e.retPct||0)+'" placeholder="0 si no sueles tener"></div>'+
     '<div class="form-grp"><label>Condiciones en tus presupuestos</label><input class="inp" id="em-cond" value="'+esc(e.cond||'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.')+'"></div>'+
     '<div class="fila-btn" style="margin-top:14px">'+(primera?'<button class="btn sec peque" onclick="usarEjemplo()">Ver con datos de ejemplo</button>':'<button class="btn sec peque" onclick="cerrarModal()">Cancelar</button>')+
     '<button class="btn verde" onclick="guardarEmpresa('+(primera?'true':'false')+')">✓ '+(primera?'Empezar':'Guardar')+'</button></div>');
 }
 function guardarEmpresa(primera){
   var n=document.getElementById('em-n').value.trim(); if(!n){ toast('Pon el nombre de tu empresa'); return; }
-  db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim()};
+  db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim(), retPct:Math.max(0,Math.min(20,parseFloat(String(document.getElementById('em-ret').value).replace(',','.'))||0)), aceptaTerminos:(db.empresa&&db.empresa.aceptaTerminos)||null};
   guardar(); aplicarEmpresa(); cerrarModal(); pintarAsistente(); if(primera){ irTab('presupuestos'); abrirNuevoPresupuesto(); } else toast('Datos guardados');
 }
 function usarEjemplo(){ db=sembrar(); db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('asistente'); }
@@ -2332,7 +2356,7 @@ function contratarPresu(){
       return {id:id(), descripcion:p.descripcion, unidad:p.ud||'ud', medicion:Number(p.cantidad)||0, precio:redondear(ventaUnit(p,pr))};
     })};
   });
-  var o={id:id(), nombre:pr.nombre, cliente:nombreCliente(pr.clienteId), contrato:t.venta, presuId:pr.id, capitulos:caps, certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
+  var o={id:id(), nombre:pr.nombre, cliente:nombreCliente(pr.clienteId), contrato:t.venta, presuId:pr.id, retPct:Number((db.empresa||{}).retPct)||0, capitulos:caps, certificaciones:[], facturas:[], costesMaterial:[], costesManoObra:[]};
   db.obras.push(o); pr.estado='contratado'; pr.obraId=o.id; guardar();
   subActual='o-pre'; document.querySelectorAll('.obratabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.sub==='o-pre'); }); document.querySelectorAll('.obrasub').forEach(function(d){ d.classList.toggle('on', d.id==='o-pre'); });
   abrirObra(o.id); toast('✅ Obra creada con '+n+' partidas'); }
@@ -3003,11 +3027,12 @@ function editarObra(oid){ var o=obraPorId(oid); if(!o) return;
   abrirModal('<h3 style="text-align:left">Editar obra</h3>'+
     '<div class="form-grp"><label>Nombre</label><input class="inp" id="obe-n" value="'+esc(o.nombre||'')+'"></div>'+
     '<div class="form-grp"><label>Cliente</label><input class="inp" id="obe-c" value="'+esc(o.cliente||'')+'"></div>'+
+    '<div class="form-grp"><label>Retención de garantía (%) que te aplica el cliente</label><input class="inp" id="obe-ret" type="number" step="any" inputmode="decimal" value="'+(o.retPct||0)+'" placeholder="0 = ninguna; lo habitual es 5"></div>'+
     '<button class="btn sec" style="width:100%;margin-top:10px" onclick="terminarObra(\''+oid+'\','+(o.terminada?'false':'true')+')">'+(o.terminada?'↩️ Volver a abrir la obra':'✅ Marcar obra terminada')+'</button>'+
     '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="borrarObra(\''+oid+'\')" style="color:#f0714f">🗑 Borrar obra</button><button class="btn peque" onclick="guardarObra(\''+oid+'\')">Guardar</button></div>');
 }
 function terminarObra(oid,t){ var o=obraPorId(oid); if(!o) return; o.terminada=!!t; guardar(); cerrarModal(); pintarObras(); toast(t?'✅ Obra terminada':'Obra abierta de nuevo'); }
-function guardarObra(oid){ var o=obraPorId(oid); if(!o) return; o.nombre=document.getElementById('obe-n').value.trim()||o.nombre; o.cliente=document.getElementById('obe-c').value.trim(); guardar(); cerrarModal(); pintarObras(); toast('Obra actualizada'); }
+function guardarObra(oid){ var o=obraPorId(oid); if(!o) return; o.nombre=document.getElementById('obe-n').value.trim()||o.nombre; o.cliente=document.getElementById('obe-c').value.trim(); o.retPct=Math.max(0,Math.min(20,parseFloat(String(document.getElementById('obe-ret').value).replace(',','.'))||0)); guardar(); cerrarModal(); pintarObras(); toast('Obra actualizada'); }
 function borrarObra(oid){ if(!confirm('¿Seguro que quieres borrar la obra entera? No se puede deshacer.')) return; if(db.obras.length<=0) return; db.obras=db.obras.filter(function(x){return x.id!==oid;}); guardar(); cerrarModal(); irTab('obras'); toast('Obra borrada'); }
 
 /* ============================================================

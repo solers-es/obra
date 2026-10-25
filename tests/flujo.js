@@ -43,7 +43,7 @@ const assert = require('assert');
     }
     assert.strictEqual(await p.evaluate(() => db.obras[db.obras.length - 1].facturas.length), 1, 'debe haberse emitido la factura');
     await p.evaluate(() => cerrarModal());
-    await p.click('text=Cobros'); await p.click('text=Ya me han pagado');
+    await p.click('text=Cobros'); await p.click('text=Ya me han pagado'); await p.click('text=✓ Apuntar cobro');
     assert.deepStrictEqual(await p.evaluate(() => db.obras[db.obras.length - 1].facturas.map(f => f.estado)), ['cobrada']);
     await p.click("button:visible:has-text('Parte de hoy')");
     if (vacio) await p.fill('#pa-opn', 'Pepe');
