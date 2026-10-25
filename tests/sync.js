@@ -81,6 +81,17 @@ const sync = p => p.evaluate(() => Sync.sincronizar());
   const intento = await O.evaluate(async () => { const s = JSON.parse(localStorage.getItem('brigada_sync')); const r = await fetch(BRIGADA_CONFIG.supabaseUrl + '/rest/v1/rpc/subir_docs', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: 'x', Authorization: 'Bearer ' + s.ses.access }, body: JSON.stringify({ p_tenant: s.tenant, p_docs: [{ coleccion: 'obras', doc_id: 'x', datos: { nombre: 'HACK' }, mod_ms: Date.now() + 1e9 }] }) }); return r.status; });
   assert.strictEqual(intento, 400, 'el servidor debe rechazar al operario'); console.log('OK: el servidor rechaza escribir obras a un operario');
 
+  // --- Gestion del equipo: A ve a su gente, quita al operario y el movil del operario lo detecta
+  await A.evaluate(() => { cerrarModal(); abrirCuenta(); }); await A.click('text=Quién tiene acceso'); await A.waitForTimeout(800);
+  const lista = await A.evaluate(() => document.getElementById('eq-lista').textContent);
+  assert.ok(lista.includes('pepe@a.es') && lista.includes('(tú)'), 'A debe ver a Pepe en el equipo: ' + lista);
+  await A.evaluate(async () => { const e = await Sync.equipo(); const pepe = e.find(u => u.email === 'pepe@a.es'); equipoAccion('del', pepe.usuario_id, pepe.email); }); await A.waitForTimeout(800);
+  await sync(O); await O.waitForTimeout(500);
+  const revoc = await O.evaluate(() => ({ activo: Sync.activo(), lite: db.obras.filter(o => o._lite).length, partes: db.partes.length }));
+  assert.deepStrictEqual([revoc.activo, revoc.lite], [false, 0], 'al quitarle el acceso, el movil del operario vuelve a modo local');
+  const rec = await O.evaluate(() => Sync.recuperar('pepe@a.es').then(() => 'ok', e => e.message)); assert.strictEqual(rec, 'ok');
+  console.log('OK: el admin quita el acceso al operario y su movil lo detecta; recuperar contraseña responde');
+
   // --- Facturas: numeracion del servidor, sin repetir entre moviles
   async function facturar(p, id, nif) {
     await p.evaluate(i => { cerrarModal(); abrirObra(i); }, id); await p.click('.obratabs button[data-sub=o-cer]'); await p.click('text=Todo al 100 %');

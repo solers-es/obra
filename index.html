@@ -858,6 +858,7 @@ function pintarCuenta(){
       '<div class="form-grp"><label>Contraseña (mín. 6)</label><input class="inp" id="ac-pass" type="password" autocomplete="current-password"></div>'+
       '<label style="display:flex;align-items:flex-start;gap:10px;margin:8px 0;font-size:13px;color:var(--tx2)"><input type="checkbox" id="ac-ok" style="margin-top:3px"> <span>Acepto los <a style="color:var(--naranja2)" href="#" onclick="event.preventDefault();abrirTerminos()">términos y el aviso de privacidad</a> (solo al crear cuenta).</span></label>'+
       '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
+      '<p class="sub" style="margin:0 0 6px"><a href="#" style="color:var(--naranja2)" onclick="event.preventDefault();cuentaAccion(\'rec\')">¿Has olvidado la contraseña?</a></p>'+
       '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="cuentaAccion(\'reg\')">Crear cuenta</button><button class="btn verde" onclick="cuentaAccion(\'in\')">Entrar</button></div>'+cerrar;
   } else if(!st.tenant){
     var e=db.empresa||{};
@@ -876,9 +877,25 @@ function pintarCuenta(){
         '<div class="form-grp"><label>Su correo</label><input class="inp" id="iv-mail" type="email"></div>'+
         '<div class="form-grp"><label>Qué puede hacer</label><select class="inp" id="iv-rol"><option value="operario">Operario (solo partes)</option><option value="jefe_obra">Jefe de obra</option><option value="administrativo">Administrativo</option><option value="solo_lectura">Solo lectura</option></select></div>'+
         '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div><button class="btn peque" onclick="cuentaAccion(\'inv\')">Invitar</button></details>':'')+
+      (st.rol==='admin'?'<details style="margin:8px 0" ontoggle="if(this.open)cargarEquipo()"><summary class="sub" style="cursor:pointer">👥 Quién tiene acceso</summary><div id="eq-lista" class="sub">Cargando…</div></details>':'')+
       '<button class="btn sec peque" style="margin-top:8px" onclick="if(confirm(\'¿Salir de esta cuenta? Los datos quedan en este móvil.\')){Sync.salir();pintarCuenta();pintarBadgeSync();}">Salir</button>'+cerrar;
   }
   c.innerHTML=h;
+}
+function cargarEquipo(){
+  var c=document.getElementById('eq-lista'); if(!c) return;
+  Sync.equipo().then(function(l){
+    var rolTxt={admin:'Administrador',jefe_obra:'Jefe de obra',administrativo:'Administrativo',operario:'Operario',solo_lectura:'Solo lectura'};
+    c.innerHTML=l.map(function(u){ var yo=u.usuario_id===Sync.miUid();
+      return '<div class="lin"><div class="d">'+esc(u.email)+(yo?' (tú)':'')+'</div>'+(yo?'<div class="m" style="font-size:12px">'+rolTxt[u.rol]+'</div>':
+        '<select class="inp" style="width:auto;min-height:44px" onchange="equipoAccion(\'rol\',\''+u.usuario_id+'\',this.value)">'+Object.keys(rolTxt).map(function(r){ return '<option value="'+r+'"'+(r===u.rol?' selected':'')+'>'+rolTxt[r]+'</option>'; }).join('')+'</select>'+
+        '<button class="borrar" title="Quitar acceso" onclick="equipoAccion(\'del\',\''+u.usuario_id+'\',\''+esc(u.email)+'\')">✕</button>')+'</div>'; }).join('')||'Nadie más.';
+  }).catch(function(e){ c.textContent=e.message; });
+}
+function equipoAccion(que,uid,x){
+  var fin=function(){ cargarEquipo(); }, fallo=function(e){ toast('⚠️ '+e.message); cargarEquipo(); };
+  if(que==='rol') Sync.cambiarRol(uid,x).then(function(){ toast('Rol cambiado'); fin(); }).catch(fallo);
+  else if(confirm('¿Quitar el acceso a '+x+'? Ya no podrá entrar ni ver nada de tu empresa.')) Sync.quitar(uid).then(function(){ toast('Acceso quitado'); fin(); }).catch(fallo);
 }
 function cuentaAccion(que){
   var msg=function(t,ok){ var m=document.getElementById('ac-msg'); if(m){ m.style.color=ok?'var(--verde)':'var(--rojo)'; m.textContent=t; } };
@@ -892,6 +909,9 @@ function cuentaAccion(que){
   } else if(que==='emp'){
     var e=db.empresa||{}; if(!e.nombre){ msg('Rellena antes «Mi empresa»'); return; } if(!Sync.nifValido(e.nif)){ msg('El NIF/CIF de «Mi empresa» no es válido'); return; }
     msg('Creando…',true); Sync.crearEmpresa(e).then(fin).catch(fallo);
+  } else if(que==='rec'){
+    var m3=document.getElementById('ac-mail').value.trim(); if(!m3){ msg('Pon tu correo arriba y vuelve a tocar «¿Has olvidado la contraseña?»'); return; }
+    Sync.recuperar(m3).then(function(){ msg('Si ese correo tiene cuenta, te hemos mandado un enlace para poner otra contraseña.',true); }).catch(fallo);
   } else if(que==='inv2'){
     msg('Comprobando…',true); Sync.conectar().then(function(r){ if(r&&r.sinEmpresa) msg('Todavía no te han invitado. Pídele a tu jefe que te invite con este correo.'); else fin(r); }).catch(fallo);
   } else if(que==='inv'){

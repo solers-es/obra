@@ -152,3 +152,45 @@ begin
 end $$;
 revoke all on function public.invitar_usuario(uuid,text,app.rol_tenant) from public, anon;
 grant execute on function public.invitar_usuario(uuid,text,app.rol_tenant) to authenticated;
+
+-- 5. Gestión del equipo (solo admin) ------------------------------------------
+-- Ver quién tiene acceso, cambiar su rol o quitárselo. No se puede quitar/degradar
+-- al último administrador (la empresa se quedaría sin dueño).
+create or replace function public.equipo_empresa(p_tenant uuid)
+returns table (usuario_id uuid, email text, rol app.rol_tenant, estado app.estado_membresia)
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if app.mi_rol(p_tenant) is distinct from 'admin' then raise exception 'Solo el administrador' using errcode = '42501'; end if;
+  return query select m.usuario_id, u.email, m.rol, m.estado from public.membresias m
+    join public.usuarios u on u.id = m.usuario_id where m.tenant_id = p_tenant and m.estado <> 'revocada' order by m.creado_en;
+end $$;
+
+create or replace function public.cambiar_rol(p_tenant uuid, p_usuario uuid, p_rol app.rol_tenant)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if app.mi_rol(p_tenant) is distinct from 'admin' then raise exception 'Solo el administrador' using errcode = '42501'; end if;
+  if p_rol <> 'admin' and not exists (select 1 from public.membresias where tenant_id = p_tenant and usuario_id <> p_usuario and rol = 'admin' and estado = 'activa') then
+    raise exception 'Tiene que quedar al menos un administrador';
+  end if;
+  update public.membresias set rol = p_rol where tenant_id = p_tenant and usuario_id = p_usuario and estado <> 'revocada';
+  if not found then raise exception 'Esa persona no está en la empresa'; end if;
+end $$;
+
+create or replace function public.quitar_usuario(p_tenant uuid, p_usuario uuid)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if app.mi_rol(p_tenant) is distinct from 'admin' then raise exception 'Solo el administrador' using errcode = '42501'; end if;
+  if not exists (select 1 from public.membresias where tenant_id = p_tenant and usuario_id <> p_usuario and rol = 'admin' and estado = 'activa') then
+    raise exception 'Tiene que quedar al menos un administrador';
+  end if;
+  update public.membresias set estado = 'revocada' where tenant_id = p_tenant and usuario_id = p_usuario and estado <> 'revocada';
+  if not found then raise exception 'Esa persona no está en la empresa'; end if;
+end $$;
+
+revoke all on function public.equipo_empresa(uuid), public.cambiar_rol(uuid,uuid,app.rol_tenant), public.quitar_usuario(uuid,uuid) from public, anon;
+grant execute on function public.equipo_empresa(uuid), public.cambiar_rol(uuid,uuid,app.rol_tenant), public.quitar_usuario(uuid,uuid) to authenticated;

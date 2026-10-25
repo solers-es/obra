@@ -29,6 +29,7 @@ http.createServer((req, res) => {
         const id = execFileSync('psql', ['-qtA', '-d', DB], { input: "insert into auth.users(email) values (" + q(j.email) + ") returning id;", encoding: 'utf8' }).trim().split('\n')[0];
         claves[j.email] = { id, pass: j.password }; return ok(sesion(id, j.email));
       }
+      if (p === '/auth/v1/recover') return ok({});
       if (p === '/auth/v1/token') {
         if (u.searchParams.get('grant_type') === 'refresh_token') { const t = JSON.parse(Buffer.from(j.refresh_token.slice(2), 'base64url').toString()); return ok(sesion(t.sub, t.email)); }
         const c = claves[j.email]; if (!c || c.pass !== j.password) return err('Invalid login credentials');
@@ -36,7 +37,7 @@ http.createServer((req, res) => {
       }
       const sub = subDe(req); if (!sub) return err('JWT inválido', 401);
       if (p === '/rest/v1/membresias')
-        return ok(sql(sub, "select m.tenant_id, m.rol, json_build_object('razon_social',t.razon_social) as tenants from public.membresias m join public.tenants t on t.id=m.tenant_id where m.estado='activa' and m.usuario_id=" + q(u.searchParams.get('usuario_id').replace('eq.','')) + "::uuid order by m.creado_en"));
+        return ok(sql(sub, "select m.tenant_id, m.rol, json_build_object('razon_social',t.razon_social) as tenants from public.membresias m join public.tenants t on t.id=m.tenant_id where m.estado='activa' and m.usuario_id=" + q(u.searchParams.get('usuario_id').replace('eq.','')) + "::uuid" + (u.searchParams.get('tenant_id') ? " and m.tenant_id=" + q(u.searchParams.get('tenant_id').replace('eq.','')) + "::uuid" : '') + " order by m.creado_en"));
       if (p === '/rest/v1/brigada_docs') {
         const tid = u.searchParams.get('tenant_id').replace('eq.', ''), seq = +u.searchParams.get('seq').replace('gt.', '');
         return ok(sql(sub, "select coleccion,doc_id,datos,mod_ms,seq,borrado from public.brigada_docs where tenant_id=" + q(tid) + "::uuid and seq>" + seq + " order by seq limit 500"));
@@ -47,8 +48,12 @@ http.createServer((req, res) => {
         const lit = { crear_empresa: () => `public.crear_empresa(${q(j.p_nif)}, ${q(j.p_razon_social)}, ${j.p_direccion ? q(j.p_direccion) : 'null'}, null, null)`,
           subir_docs: () => `public.subir_docs(${q(j.p_tenant)}::uuid, ${q(JSON.stringify(j.p_docs))}::jsonb)`,
           siguiente_numero: () => `public.siguiente_numero(${q(j.p_tenant)}::uuid, ${q(j.p_serie)}, ${+j.p_desde || 0})`,
+          equipo_empresa: () => `* from public.equipo_empresa(${q(j.p_tenant)}::uuid)`,
+          cambiar_rol: () => `public.cambiar_rol(${q(j.p_tenant)}::uuid, ${q(j.p_usuario)}::uuid, ${q(j.p_rol)}::app.rol_tenant)`,
+          quitar_usuario: () => `public.quitar_usuario(${q(j.p_tenant)}::uuid, ${q(j.p_usuario)}::uuid)`,
           invitar_usuario: () => `public.invitar_usuario(${q(j.p_tenant)}::uuid, ${q(j.p_email)}, ${q(j.p_rol)}::app.rol_tenant)` }[f];
         if (!lit) return err('rpc desconocida', 404);
+        if (f === 'equipo_empresa') return ok(sql(sub, 'select ' + lit()));
         const r = sql(sub, 'select ' + lit() + ' as v'); return ok(r[0] ? r[0].v : null);
       }
       err('no existe', 404);

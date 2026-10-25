@@ -54,3 +54,23 @@ select count(*)>0 from public.brigada_docs where tenant_id=:'ta';
 \echo '== Numero desde 10 (primera vez que se conecta una empresa que ya facturo 10) -> 11, luego 12; nunca retrocede'
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
 select public.siguiente_numero(:'ta'::uuid,'B-2026',10) union all select public.siguiente_numero(:'ta'::uuid,'B-2026',3);
+
+\echo '== Equipo: Ana (admin de A) ve a su gente (ana, beto, op = 3)'
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
+select count(*) from public.equipo_empresa(:'ta'::uuid);
+\echo '== Operario NO puede ver el equipo (debe fallar)'
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000c',false);
+select * from public.equipo_empresa(:'ta'::uuid);
+\echo '== Ana no puede quitarse a si misma siendo la unica admin (debe fallar)'
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
+select public.quitar_usuario(:'ta'::uuid,'00000000-0000-0000-0000-00000000000a');
+\echo '== Ana quita al operario; despues el operario ya no lee NI escribe (0 filas / debe fallar)'
+select public.quitar_usuario(:'ta'::uuid,'00000000-0000-0000-0000-00000000000c');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000c',false);
+select count(*) from public.brigada_docs where tenant_id=:'ta';
+select public.subir_docs(:'ta'::uuid,'[{"coleccion":"partes","doc_id":"p9","datos":{},"mod_ms":1}]');
+\echo '== Ana cambia a Beto de jefe_obra a operario y Beto ya no ve obras (solo partes)'
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
+select public.cambiar_rol(:'ta'::uuid,'00000000-0000-0000-0000-00000000000b','operario');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000b',false);
+select count(*) filter (where coleccion='obras') as obras_visibles from public.brigada_docs where tenant_id=:'ta';

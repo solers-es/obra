@@ -81,6 +81,24 @@ var Sync = (function () {
     return http('POST', '/rest/v1/rpc/crear_empresa', { p_nif: e.nif, p_razon_social: e.nombre, p_direccion: e.dir || null, p_email: e.email || null, p_telefono: e.tel || null })
       .then(function () { return conectar(); });
   }
+  function recuperar(email) { return http('POST', '/auth/v1/recover', { email: email }, false); }
+  function equipo() { return http('POST', '/rest/v1/rpc/equipo_empresa', { p_tenant: S.tenant }); }
+  function cambiarRol(uid, rol) { return http('POST', '/rest/v1/rpc/cambiar_rol', { p_tenant: S.tenant, p_usuario: uid, p_rol: rol }); }
+  function quitar(uid) { return http('POST', '/rest/v1/rpc/quitar_usuario', { p_tenant: S.tenant, p_usuario: uid }); }
+  function miUid() { return S.ses ? S.ses.uid : ''; }
+  function sinAcceso() { // me han quitado de la empresa: vuelvo a modo local con lo que tengo
+    S.tenant = null; S.rol = null; S.cursor = 0; S.snap = {}; S.cola = {}; S.err = 'Ya no tienes acceso a esa empresa'; persistir(); pararBucle();
+    db.obras = (db.obras || []).filter(function (o) { return !o._lite; }); guardarLocal();
+    if (window._rolReal) { window._rolReal = false; window._verComo = null; if (window.aplicarVerComo) aplicarVerComo(); }
+    if (window.toast) toast('⚠️ Ya no tienes acceso a esa empresa'); pintarEstado();
+  }
+  function comprobarAcceso() {
+    return http('GET', '/rest/v1/membresias?select=tenant_id,rol&usuario_id=eq.' + S.ses.uid + '&tenant_id=eq.' + S.tenant + '&estado=eq.activa').then(function (m) {
+      if (!m || !m.length) { sinAcceso(); return false; }
+      if (m[0].rol !== S.rol) { S.rol = m[0].rol; persistir(); aplicarRol(); }
+      return true;
+    });
+  }
   function invitar(email, rol) { return http('POST', '/rest/v1/rpc/invitar_usuario', { p_tenant: S.tenant, p_email: email, p_rol: rol }); }
 
   /* ---------- roles ---------- */
@@ -185,7 +203,7 @@ var Sync = (function () {
       });
     });
   }
-  function sincronizar() { return traer().then(function () { cambio(); return empujar(); }).then(pintarEstado); }
+  function sincronizar() { if (!activo()) return Promise.resolve(); return comprobarAcceso().then(function (ok) { if (!ok) return; return traer().then(function () { cambio(); return empujar(); }); }).catch(function (e) { S.err = e.message; persistir(); }).then(pintarEstado); }
 
   /* ---------- bucle ---------- */
   function arrancarBucle() {
@@ -213,6 +231,6 @@ var Sync = (function () {
   /* ---------- arranque ---------- */
   function iniciar() { if (activo()) { aplicarRol(); arrancarBucle(); sincronizar(); } }
 
-  return { configurado: configurado, conectar: conectar, entrar: entrar, registrar: registrar, salir: salir, crearEmpresa: crearEmpresa, invitar: invitar, nifValido: nifValido,
+  return { configurado: configurado, recuperar: recuperar, equipo: equipo, cambiarRol: cambiarRol, quitar: quitar, miUid: miUid, conectar: conectar, entrar: entrar, registrar: registrar, salir: salir, crearEmpresa: crearEmpresa, invitar: invitar, nifValido: nifValido,
            cambio: cambio, sincronizar: sincronizar, estado: estado, activo: activo, reservarNumero: reservarNumero, iniciar: iniciar, esOperario: esOperario, soloLectura: soloLectura };
 })();
