@@ -19,7 +19,8 @@ const assert = require('assert');
     assert.ok(await p.evaluate(() => document.getElementById('modal').classList.contains('on')), 'debe salir el alta de empresa');
     if (vacio) {
       await p.fill('#em-n', 'Reformas Garcia S.L.'); await p.fill('#em-nif', 'B12345678'); await p.fill('#em-dir', 'C/ Mayor 1, 07001 Palma');
-      await p.click('text=✓ Empezar');
+      await p.click('text=✓ Empezar'); assert.ok(await p.evaluate(() => document.getElementById('modal').classList.contains('on')), 'sin aceptar los términos no debe dejar empezar');
+      await p.check('#em-ok'); await p.click('text=✓ Empezar');
       assert.strictEqual(await p.evaluate(() => EMISOR.nombre), 'Reformas Garcia S.L.');
       assert.strictEqual(await p.evaluate(() => db.obras.length), 0, 'una empresa nueva empieza sin obras');
     } else { await p.click('text=Ver con datos de ejemplo'); }

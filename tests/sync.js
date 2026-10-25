@@ -16,8 +16,8 @@ async function movil(b, nombre) {
 }
 async function cuenta(p, accion, mail) {
   await p.evaluate(() => { cerrarModal(); abrirCuenta(); });
-  await p.fill('#ac-mail', mail); await p.fill('#ac-pass', 'secreto1');
-  await p.click(accion === 'reg' ? 'text=Crear cuenta' : 'button:has-text("Entrar")');
+  await p.fill('#ac-mail', mail); await p.fill('#ac-pass', 'secreto1'); if (accion === 'reg') await p.check('#ac-ok');
+  await p.click(accion === 'reg' ? 'button:has-text("Crear cuenta")' : 'button:has-text("Entrar")');
   await p.waitForFunction(() => !/Un momento/.test((document.getElementById('ac-msg') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
   await p.waitForTimeout(600);
 }
@@ -28,7 +28,7 @@ const sync = p => p.evaluate(() => Sync.sincronizar());
   const A = await movil(b, 'A');
   // --- Empresa nueva en el movil A
   await A.fill('#em-n', 'Reformas Sync SL'); await A.fill('#em-nif', '00000001R'); await A.fill('#em-dir', 'C/ Sol 1, Palma');
-  await A.click('text=✓ Empezar'); await A.evaluate(() => cerrarModal());
+  await A.check('#em-ok'); await A.click('text=✓ Empezar'); await A.evaluate(() => cerrarModal());
   await cuenta(A, 'reg', 'ana@a.es');
   await A.click('text=Crear empresa y subir mis datos'); await A.waitForTimeout(1500);
   assert.ok(await A.evaluate(() => Sync.activo()), 'A debe quedar conectado a su empresa');

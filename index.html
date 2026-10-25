@@ -818,6 +818,23 @@ function pintarAsistente(){
 }
 
 /* menú "Más" */
+var VERSION_TERMINOS='2026-10';
+function abrirTerminos(){
+  var L=(window.BRIGADA_CONFIG&&BRIGADA_CONFIG.legal)||{}, quien=L.razon?(esc(L.razon)+(L.nif?' (NIF '+esc(L.nif)+')':'')+(L.direccion?', '+esc(L.direccion):'')):'<b>[pendiente: datos de la empresa que ofrece Brigada]</b>', mail=L.email?esc(L.email):'<b>[pendiente: correo de contacto]</b>';
+  var e=db.empresa||{};
+  abrirModal('<h3 style="text-align:left">📄 Términos y privacidad</h3><div style="max-height:62vh;overflow:auto;font-size:14px;line-height:1.5;text-align:left">'+
+   '<p class="sub"><b>Texto base. Debe revisarlo un abogado antes de vender.</b> Versión '+VERSION_TERMINOS+'.</p>'+
+   '<h4>1. Qué es Brigada</h4><p>Una herramienta para que tu empresa de construcción o reformas haga presupuestos, controle obras, apunte partes de trabajo y emita certificaciones y facturas. La ofrece '+quien+'.</p>'+
+   '<h4>2. Tu responsabilidad</h4><p>Tú eres el responsable de los datos que metes (tus clientes, tus trabajadores, tus facturas) y de que sean correctos. Las facturas y presupuestos son tuyos: revisa importes, IVA y datos fiscales antes de enviarlos. Brigada no sustituye a tu gestoría ni a tu asesor fiscal.</p>'+
+   '<h4>3. Funciones de demostración</h4><p>Nóminas, fiscal e impuestos, y la lectura de albaranes con IA son <b>demostraciones</b>: no sirven para presentar impuestos ni pagar nóminas reales. La facturación electrónica con envío a Hacienda (VeriFactu) no está incluida todavía.</p>'+
+   '<h4>4. Qué datos se guardan y dónde</h4><p>Datos de tu empresa, clientes, obras, presupuestos, partes (horas, fotos y firmas de los operarios), facturas y, si usas cuentas, tu correo. '+((window.Sync&&Sync.configurado)?'Se guardan en el servidor de Brigada (Unión Europea) y en tu dispositivo.':'Ahora se guardan solo en este dispositivo.')+' No vendemos tus datos ni los usamos para publicidad.</p>'+
+   '<h4>5. Datos de tus trabajadores y clientes (RGPD)</h4><p>Sobre los datos personales de tus trabajadores y clientes, <b>tú eres el responsable del tratamiento</b> y '+(L.razon?esc(L.razon):'quien ofrece Brigada')+' actúa como <b>encargado</b>: los trata solo para darte el servicio, con medidas de seguridad (acceso por cuenta, separación entre empresas, el operario solo ve sus partes) y sin cederlos a terceros salvo proveedores técnicos necesarios (alojamiento). Informa a tus trabajadores de que fichan y apuntan partes con la app.</p>'+
+   '<h4>6. Tus derechos</h4><p>Puedes acceder, corregir, descargar (Más → Copia de seguridad) o pedir que se borren tus datos escribiendo a '+mail+'. También puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>'+
+   '<h4>7. Disponibilidad</h4><p>Hacemos copias y procuramos que funcione siempre, pero no garantizamos que no haya fallos. Guarda tu propia copia de seguridad con regularidad.</p>'+
+   '<h4>8. Cambios</h4><p>Si cambian estos términos te lo diremos y tendrás que volver a aceptarlos.</p>'+
+   '</div><button class="btn sec peque" style="margin-top:12px" onclick="cerrarModal()">Cerrar</button>');
+}
+function terminosAceptados(){ var a=db.empresa&&db.empresa.aceptaTerminos; return !!(a&&a.version===VERSION_TERMINOS); }
 function abrirCuenta(){ abrirModal('<div id="cuenta-cont"></div>'); pintarCuenta(); }
 function pintarCuenta(){
   var c=document.getElementById('cuenta-cont'); if(!c) return;
@@ -829,6 +846,7 @@ function pintarCuenta(){
     h+='<p class="sub">Entra con tu correo para ver tus obras en cualquier móvil.</p>'+
       '<div class="form-grp"><label>Correo</label><input class="inp" id="ac-mail" type="email" autocomplete="username"></div>'+
       '<div class="form-grp"><label>Contraseña (mín. 6)</label><input class="inp" id="ac-pass" type="password" autocomplete="current-password"></div>'+
+      '<label style="display:flex;align-items:flex-start;gap:10px;margin:8px 0;font-size:13px;color:var(--tx2)"><input type="checkbox" id="ac-ok" style="margin-top:3px"> <span>Acepto los <a style="color:var(--naranja2)" href="#" onclick="event.preventDefault();abrirTerminos()">términos y el aviso de privacidad</a> (solo al crear cuenta).</span></label>'+
       '<div id="ac-msg" class="sub" style="color:var(--rojo)"></div>'+
       '<div class="fila-btn" style="margin-top:10px"><button class="btn sec peque" onclick="cuentaAccion(\'reg\')">Crear cuenta</button><button class="btn verde" onclick="cuentaAccion(\'in\')">Entrar</button></div>'+cerrar;
   } else if(!st.tenant){
@@ -859,6 +877,7 @@ function cuentaAccion(que){
   if(que==='in'||que==='reg'){
     var mail=document.getElementById('ac-mail').value.trim(), pass=document.getElementById('ac-pass').value;
     if(!mail||pass.length<6){ msg('Pon tu correo y una contraseña de al menos 6 caracteres'); return; }
+    if(que==='reg'&&!document.getElementById('ac-ok').checked){ msg('Marca que aceptas los términos para crear la cuenta'); return; }
     msg('Un momento…',true); (que==='in'?Sync.entrar(mail,pass):Sync.registrar(mail,pass)).then(fin).catch(fallo);
   } else if(que==='emp'){
     var e=db.empresa||{}; if(!e.nombre){ msg('Rellena antes «Mi empresa»'); return; } if(!Sync.nifValido(e.nif)){ msg('El NIF/CIF de «Mi empresa» no es válido'); return; }
@@ -896,7 +915,7 @@ function menuMas(){
   var admin=!window._verComo;
   abrirModal(
     '<h3 style="text-align:left">Más</h3>'+
-    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + (admin?'<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>':'') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCuenta()"><span style="margin-right:10px">👤</span>Mi cuenta</button>' +'</div>'+
+    '<div style="display:grid;gap:8px;margin:8px 0">'+ it('⏱️','Fichar','fichaje') + it('💼','Clientes','clientes') + it('👷','Mi equipo','equipo') + it('🛒','Compras','compras') + it('🔧','Averías y mantenimiento','sat') + it('🧾','Impuestos y papeles','fiscal') + (admin?'<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirEmpresa(false)"><span style="margin-right:10px">🏢</span>Mi empresa</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCopia()"><span style="margin-right:10px">💾</span>Copia de seguridad</button>':'') + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirCuenta()"><span style="margin-right:10px">👤</span>Mi cuenta</button>' + '<button class="btn sec" style="text-align:left;justify-content:flex-start;padding:14px" onclick="abrirTerminos()"><span style="margin-right:10px">📄</span>Términos y privacidad</button>' +'</div>'+
     '<details style="margin:8px 0"><summary class="sub" style="cursor:pointer">Ver todo</summary><div style="display:grid;gap:7px;margin-top:8px">'+
       it('🎯','Oportunidades','oportunidades') + it('🗂️','Órdenes de trabajo','ots') + it('📊','Estadísticas','estadisticas') + it('✅','Cumplimiento','cumplimiento') + it('✉️','Correo','correo') + it('💶','Nóminas','nominas') + it('🔑','Permisos y usuarios','permisos') +
       '<button class="btn sec peque" style="text-align:left;justify-content:flex-start" onclick="abrirMigracion()">📥 Importar mis datos de Eureka</button></div></details>'+
@@ -1393,12 +1412,14 @@ function abrirEmpresa(primera){
     '<div class="form-grp"><label>Email</label><input class="inp" id="em-mail" type="email" value="'+esc(e.email||'')+'"></div></div>'+
     '<div class="form-grp"><label>Retención de garantía habitual (%)</label><input class="inp" id="em-ret" type="number" step="any" inputmode="decimal" value="'+(e.retPct||0)+'" placeholder="0 si no sueles tener"></div>'+
     '<div class="form-grp"><label>Condiciones en tus presupuestos</label><input class="inp" id="em-cond" value="'+esc(e.cond||'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.')+'"></div>'+
+    (primera?'<label style="display:flex;align-items:flex-start;gap:10px;margin:10px 0;font-size:13px;color:var(--tx2)"><input type="checkbox" id="em-ok" style="margin-top:3px"> <span>He leído y acepto los <a style="color:var(--naranja2)" onclick="event.preventDefault();abrirTerminos()" href="#">términos y el aviso de privacidad</a>.</span></label>':'')+
     '<div class="fila-btn" style="margin-top:14px">'+(primera?'<button class="btn sec peque" onclick="usarEjemplo()">Ver con datos de ejemplo</button>':'<button class="btn sec peque" onclick="cerrarModal()">Cancelar</button>')+
     '<button class="btn verde" onclick="guardarEmpresa('+(primera?'true':'false')+')">✓ '+(primera?'Empezar':'Guardar')+'</button></div>');
 }
 function guardarEmpresa(primera){
   var n=document.getElementById('em-n').value.trim(); if(!n){ toast('Pon el nombre de tu empresa'); return; }
-  db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim(), retPct:Math.max(0,Math.min(20,parseFloat(String(document.getElementById('em-ret').value).replace(',','.'))||0)), aceptaTerminos:(db.empresa&&db.empresa.aceptaTerminos)||null};
+  var ok=document.getElementById('em-ok'); if(primera&&ok&&!ok.checked){ toast('Marca que aceptas los términos para empezar'); return; }
+  db.empresa={nombre:n, nif:document.getElementById('em-nif').value.trim(), dir:document.getElementById('em-dir').value.trim(), tel:document.getElementById('em-tel').value.trim(), email:document.getElementById('em-mail').value.trim(), cond:document.getElementById('em-cond').value.trim(), retPct:Math.max(0,Math.min(20,parseFloat(String(document.getElementById('em-ret').value).replace(',','.'))||0)), aceptaTerminos:primera?{fecha:new Date().toISOString(),version:VERSION_TERMINOS}:((db.empresa&&db.empresa.aceptaTerminos)||null)};
   guardar(); aplicarEmpresa(); cerrarModal(); pintarAsistente(); if(primera){ irTab('presupuestos'); abrirNuevoPresupuesto(); } else toast('Datos guardados');
 }
 function usarEjemplo(){ db=sembrar(); db.empresa=Object.assign({cond:'Validez 30 días. Forma de pago: 40% al aceptar, 60% al terminar.',demo:true},EMISOR_DEMO); guardar(); aplicarEmpresa(); cerrarModal(); obraActual=null; irTab('asistente'); }

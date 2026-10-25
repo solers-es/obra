@@ -4,7 +4,7 @@ const { chromium } = require('playwright'); const path = require('path'), assert
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs = [];
   p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
   await p.goto('file://' + path.resolve(__dirname, '..', 'index.html')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(300);
-  await p.fill('#em-n', 'Retenciones SL'); await p.fill('#em-ret', '5'); await p.click('text=✓ Empezar'); await p.evaluate(() => cerrarModal());
+  await p.fill('#em-n', 'Retenciones SL'); await p.fill('#em-ret', '5'); await p.check('#em-ok'); await p.click('text=✓ Empezar'); await p.evaluate(() => cerrarModal());
   // presupuesto de 1000 € (partida propia) -> obra con retención del 5 % heredada de la empresa
   await p.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); }); await p.fill('#pr-nom', 'Obra ret'); await p.selectOption('#pr-cli', '__nuevo'); await p.fill('#pr-cnuevo', 'Cli');
   await p.evaluate(() => { crearPresupuesto(); cerrarModal(); abrirPartidaPropia(); }); await p.fill('#pp-d', 'Trabajo'); await p.fill('#pp-c', '1'); await p.fill('#pp-p', '1000'); await p.click('text=✓ Añadir');
