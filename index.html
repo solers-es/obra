@@ -380,7 +380,7 @@
   </div></div>
   <a onclick="abrirVerComo()"><span class="ic">👁️</span>Ver como…</a>
   <a onclick="abrirMigracion()"><span class="ic">📥</span>Importar de Eureka</a>
-  <div class="sfoot">🤖 Con IA · VeriFactu · margen real · <b style="color:#2ecc71">funciona sin internet</b><br>Prototipo · sin base de datos</div>
+  <div class="sfoot">🤖 Con IA · VeriFactu · margen real · <b style="color:#2ecc71">funciona sin internet</b></div>
 </nav>
 
 <div class="telefono">
@@ -584,7 +584,7 @@
     <button id="t-mas" onclick="menuMas()"><span class="ic">☰</span>Más</button>
   </nav>
 
-  <div class="pie-demo">Brigada · prototipo funcional de gestión de obra · Solers</div>
+  
 </div>
 
 <div class="modal-bg" id="modal" onclick="cerrarModalFondo(event)">
@@ -2114,7 +2114,7 @@ function crearPresupuesto(){
   var cid=document.getElementById('pr-cli').value;
   if(cid==='__nuevo' || !cid){
     var cn=document.getElementById('pr-cnuevo').value.trim(); if(!cn){ toast('Pon el nombre del cliente'); return; }
-    var c={id:id(), razon:cn, comercial:cn, nif:'', dir:'', email:''}; db.clientes.push(c); cid=c.id;
+    var c={id:id(), razon:cn, comercial:cn, nif:'', dir:'', email:'', activo:true}; db.clientes.push(c); cid=c.id;
   }
   db.contadorPresu=(db.contadorPresu||0)+1;
   var num=new Date().getFullYear()+'-'+String(db.contadorPresu).padStart(5,'0');
@@ -2166,10 +2166,8 @@ function contratarPresu(){
 /* ---------- CLIENTES ---------- */
 function pintarClientes(){
   var cont=document.getElementById('lista-clientes'); var html='';
-  html='<div class="kpis"><div class="kpi"><div class="n">'+db.clientes.length+'</div><div class="l">Clientes</div></div>'+
-    '<div class="kpi"><div class="n ok">'+db.clientes.filter(function(c){return c.activo;}).length+'</div><div class="l">Activos</div></div>'+
-    '<div class="kpi"><div class="n">'+db.obras.length+'</div><div class="l">Obras</div></div></div>';
-  if(db.clientes.length===0) html+='<div class="vacio">Sin clientes.</div>';
+  html='';
+  if(db.clientes.length===0) html+='<div class="vacio">Aún no tienes clientes. Se crean solos al hacer un presupuesto.</div>';
   db.clientes.forEach(function(c){
     html+='<div class="card"><div class="obra-h"><div><div class="nom">'+esc(c.razon)+'</div><div class="cli">'+esc(c.comercial||'')+(c.nif?' · '+esc(c.nif):'')+'</div></div>'+
       (c.activo?pill('Activo','#2ecc71','rgba(46,204,113,.14)'):pill('Baja','#a9b4c0','rgba(169,180,192,.12)'))+'</div>'+
@@ -2180,16 +2178,18 @@ function pintarClientes(){
 }
 function abrirNuevoCliente(){
   abrirModal('<h3 style="text-align:left">Nuevo cliente</h3>'+
-    '<div class="form-grp"><label>Razón social</label><input class="inp" id="cl-raz" placeholder="p. ej. Promotora Sol SL"></div>'+
-    '<div class="form-grp"><label>Nombre comercial</label><input class="inp" id="cl-com" placeholder="p. ej. Grupo Sol"></div>'+
-    '<div class="form-grp"><label>CIF / NIF</label><input class="inp" id="cl-nif" placeholder="B07..."></div>'+
-    '<div class="form-grp"><label>Dirección</label><input class="inp" id="cl-dir" placeholder="C/ ... , Palma"></div>'+
-    '<div class="pgrid"><div class="form-grp"><label>Teléfono</label><input class="inp" id="cl-tel"></div><div class="form-grp"><label>Email</label><input class="inp" id="cl-mail"></div></div>'+
-    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn peque" onclick="crearCliente()">Guardar</button></div>');
+    '<div class="form-grp"><label>Nombre</label><input class="inp" id="cl-raz" placeholder="p. ej. Ana López"></div>'+
+    '<div class="form-grp"><label>Teléfono</label><input class="inp" id="cl-tel" type="tel" inputmode="tel"></div>'+
+    '<details style="margin:6px 0"><summary class="sub" style="cursor:pointer">Más datos (para facturar)</summary>'+
+    '<div class="form-grp" style="margin-top:8px"><label>NIF / CIF</label><input class="inp" id="cl-nif"></div>'+
+    '<div class="form-grp"><label>Dirección</label><input class="inp" id="cl-dir"></div>'+
+    '<div class="form-grp"><label>Email</label><input class="inp" id="cl-mail" type="email"></div></details>'+
+    '<div class="fila-btn" style="margin-top:14px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="crearCliente()">✓ Guardar</button></div>');
+  setTimeout(function(){var e=document.getElementById('cl-raz'); if(e) e.focus();},100);
 }
 function crearCliente(){
-  var r=document.getElementById('cl-raz').value.trim(); if(!r){ toast('Pon la razón social'); return; }
-  db.clientes.push({id:id(), razon:r, comercial:document.getElementById('cl-com').value.trim(), nif:document.getElementById('cl-nif').value.trim(),
+  var r=document.getElementById('cl-raz').value.trim(); if(!r){ toast('Pon el nombre'); return; }
+  db.clientes.push({id:id(), razon:r, comercial:r, nif:document.getElementById('cl-nif').value.trim(),
     dir:document.getElementById('cl-dir').value.trim(), tel:document.getElementById('cl-tel').value.trim(), email:document.getElementById('cl-mail').value.trim(), activo:true});
   guardar(); cerrarModal(); pintarClientes(); toast('Cliente guardado');
 }
