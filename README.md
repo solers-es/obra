@@ -54,7 +54,7 @@ Cómo funciona: cada obra, parte, presupuesto, cliente… es un documento por em
 
 - `node tests/flujo.js` — flujo completo en móvil, modo local (necesita `playwright`).
 - `node tests/cobros.js` — cobros parciales y retención de garantía.
-- `node tests/importar.js` — importar clientes y partidas desde Excel/CSV.
+- `node tests/importar.js` — importar clientes, partidas (Excel/CSV) y BC3.
 - `sh supabase/tests/run.sh` — esquema + RLS + roles contra un Postgres local (`PGHOST/PGPORT/PGUSER`).
 - `sh tests/run-sync.sh` — 2 móviles de oficina + 1 operario contra un servidor de pruebas sobre ese Postgres real.
 

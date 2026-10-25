@@ -997,13 +997,46 @@ var IMPORT_TIPOS={
   clientes:{tit:'👥 Importar clientes', ayuda:'Primera fila = títulos. Columnas que entiendo: nombre, nif, telefono, email, direccion.', ejemplo:'nombre;nif;telefono;email;direccion\nAna López;12345678Z;600111222;ana@correo.es;C/ Sol 3, Palma\n'},
   partidas:{tit:'🧮 Importar partidas', ayuda:'Primera fila = títulos. Columnas que entiendo: capitulo, descripcion, unidad, cantidad, precio (precio por unidad al cliente).', ejemplo:'capitulo;descripcion;unidad;cantidad;precio\nDemolición;Picado de alicatado;m2;12;8,50\nAlbañilería;Tabique de ladrillo;m2;9;32\n'}
 };
+/* BC3 / FIEBDC-3: capítulos y partidas de Presto, Arquímedes, CYPE… -> filas para importar */
+function parseBC3(texto){
+  var regs=String(texto||'').replace(/\r\n?/g,'\n').split('~').slice(1).map(function(r){ return r.replace(/\n/g,'').trim(); });
+  var C={}, D={}, raiz=null;
+  regs.forEach(function(r){
+    var t=r.charAt(0), campos=r.slice(2).split('|');
+    if(t==='C'){ var cod=(campos[0]||'').split('\\')[0].trim(); if(!cod) return;
+      C[cod]={ud:(campos[1]||'').trim(), res:(campos[2]||'').trim(), precio:numES((campos[3]||'').split('\\')[0])};
+      if(/##$/.test(cod)) raiz=cod; }
+    else if(t==='D'){ var padre=(campos[0]||'').split('\\')[0].trim(), p=(campos[1]||'').split('\\'), hijos=[];
+      for(var i=0;i+2<p.length+0&&i<p.length;i+=3){ if(p[i].trim()) hijos.push({c:p[i].trim(), f:numES(p[i+1])||1, r:numES(p[i+2])||1}); }
+      if(padre) D[padre]=(D[padre]||[]).concat(hijos); }
+  });
+  if(!Object.keys(C).length) return [];
+  if(!raiz){ var hijosDe={}; Object.keys(D).forEach(function(k){ D[k].forEach(function(h){ hijosDe[h.c]=1; }); }); raiz=Object.keys(D).filter(function(k){ return !hijosDe[k]; })[0]; }
+  function precioDe(cod,prof){ var c=C[cod]; if(!c) return 0; if(c.precio>0||prof>6) return c.precio; var t=0; (D[cod]||[]).forEach(function(h){ t+=precioDe(h.c,prof+1)*h.f*h.r; }); return Math.round(t*100)/100; }
+  var filas=[];
+  function recorre(cod,ruta,prof){
+    (D[cod]||[]).forEach(function(h){ var c=C[h.c]; if(!c) return;
+      var esCap=/#$/.test(h.c)&&!/##$/.test(h.c)||((D[h.c]||[]).length&&!c.ud&&prof<4);
+      if(esCap&&prof<6){ recorre(h.c, ruta?(ruta+' › '+c.res):c.res, prof+1); }
+      else filas.push({cap:ruta||'Trabajos', desc:c.res||h.c, ud:c.ud, cant:h.f*h.r, precio:precioDe(h.c,0)}); });
+  }
+  if(raiz) recorre(raiz,'',0);
+  return filas;
+}
+function filasABC3Csv(filas){ return 'capitulo;descripcion;unidad;cantidad;precio\n'+filas.map(function(f){ return [f.cap,f.desc,f.ud,String(f.cant).replace('.',','),String(f.precio).replace('.',',')].map(function(x){ return '"'+String(x).replace(/"/g,'""')+'"'; }).join(';'); }).join('\n')+'\n'; }
+function leerBC3(inp){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ var buf=r.result, txt; try{ txt=new TextDecoder('windows-1252').decode(buf); }catch(e){ txt=new TextDecoder('utf-8').decode(buf); }
+    var filas=parseBC3(txt); if(!filas.length){ var v=document.getElementById('im-vista'); if(v) v.textContent='⚠️ No he encontrado capítulos ni partidas en ese BC3.'; return; }
+    document.getElementById('im-txt').value=filasABC3Csv(filas); vistaImportar('partidas'); toast('BC3 leído: revisa los precios antes de importar'); };
+  r.readAsArrayBuffer(f); }
 function abrirMigracion(){ abrirImportar('clientes'); }
 function abrirImportar(tipo){
   var T=IMPORT_TIPOS[tipo];
   abrirModal('<h3 style="text-align:left">'+T.tit+'</h3>'+
     '<p class="sub">Desde Excel: copia las filas (con la primera fila de títulos) y pégalas aquí, o sube el archivo guardado como <b>CSV</b>. '+T.ayuda+'</p>'+
     '<textarea class="inp" id="im-txt" rows="6" placeholder="Pega aquí desde Excel…" style="min-height:120px" oninput="vistaImportar(\''+tipo+'\')"></textarea>'+
-    '<div class="fila-btn" style="margin:8px 0"><button class="btn sec peque" onclick="document.getElementById(\'im-file\').click()">📂 Subir archivo CSV</button><button class="btn sec peque" onclick="bajarPlantilla(\''+tipo+'\')">⬇️ Plantilla de ejemplo</button></div>'+
+    '<div class="fila-btn" style="margin:8px 0"><button class="btn sec peque" onclick="document.getElementById(\'im-file\').click()">📂 Subir archivo CSV</button><button class="btn sec peque" onclick="bajarPlantilla(\''+tipo+'\')">⬇️ Plantilla de ejemplo</button>'+(tipo==='partidas'?'<button class="btn sec peque" onclick="document.getElementById(\'im-bc3\').click()">🏗️ Subir BC3</button>':'')+'</div>'+
+    (tipo==='partidas'?'<input type="file" id="im-bc3" accept=".bc3,.BC3,.txt" style="display:none" onchange="leerBC3(this)">':'')+
     '<input type="file" id="im-file" accept=".csv,.txt,text/csv,text/plain" style="display:none" onchange="leerArchivoImportar(this,\''+tipo+'\')">'+
     '<div id="im-vista" class="sub" style="min-height:22px"></div>'+
     '<div class="fila-btn" style="margin-top:12px"><button class="btn sec peque" onclick="cerrarModal()">Cancelar</button><button class="btn verde" onclick="hacerImportar(\''+tipo+'\')">✓ Importar</button></div>');

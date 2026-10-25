@@ -22,5 +22,14 @@ const { chromium } = require('playwright'); const path = require('path'), assert
   assert.deepStrictEqual(t.caps, ['Demolición', 'Albañilería', 'Trabajos']); assert.strictEqual(t.venta, 12 * 8.5 + 9 * 1032.4 + 20);
   // y se convierte en obra con esos importes
   await p.click('text=Lo han aceptado'); assert.strictEqual(await p.evaluate(() => presupuestoObra(obraPorId(obraActual))), t.venta);
-  assert.deepStrictEqual(errs, []); await b.close(); console.log('OK importar clientes y partidas');
+  // BC3 real (windows-1252): capítulos, cantidades de la descomposición y precio calculado si la partida no lo trae
+  await p.evaluate(() => { irTab('presupuestos'); abrirNuevoPresupuesto(); }); await p.fill('#pr-nom', 'Desde BC3'); await p.fill('#pr-cli', 'Ana López'); await p.evaluate(() => { crearPresupuesto(); cerrarModal(); });
+  await p.click("button:visible:has-text('De Excel')");
+  await p.setInputFiles('#im-bc3', path.resolve(__dirname, 'ejemplo.bc3'));
+  await p.waitForFunction(() => document.getElementById('im-txt').value.length > 20);
+  assert.ok((await p.textContent('#im-vista')).includes('4 partidas'), await p.textContent('#im-vista'));
+  await p.click('text=✓ Importar');
+  const bc = await p.evaluate(() => presuPorId(presuActual).capitulos.map(c => [c.nombre, c.partidas.map(q => [q.descripcion, q.ud, q.cantidad, q.venta])]));
+  assert.deepStrictEqual(bc, [['Demolición', [['Picado de alicatado y solado', 'm2', 25, 8.5], ['Demolición de tabique', 'm2', 9.5, 12]]], ['Albañilería y revestimientos', [['Tabique ladrillo hueco doble', 'm2', 40, 32.4], ['Colocación de puerta', 'ud', 3, 149.25]]]], JSON.stringify(bc));
+  assert.deepStrictEqual(errs, []); await b.close(); console.log('OK importar clientes, partidas y BC3');
 })().catch(e => { console.error('FALLO:', e.message); process.exit(1); });
