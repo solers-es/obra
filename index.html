@@ -1015,11 +1015,11 @@ function pintarPresupuesto(o){
           '<div class="fld"><label>Precio/ud ('+esc(p.unidad||'ud')+')</label><input class="inp" type="number" step="any" value="'+(p.precio)+'" onchange="editarPartida(\''+c.id+'\',\''+p.id+'\',\'precio\',this.value)"></div>'+
         '</div></div>';
     });
-    html += '<div class="partida"><button class="btn sec mini" onclick="abrirNuevaPartida(\''+c.id+'\')">+ Añadir partida</button></div>';
+    html += '<div class="partida"><button class="btn sec mini" onclick="abrirNuevaPartida(\''+c.id+'\')">＋ Añadir partida</button></div>';
     html += '</div></div>';
   });
   html += '<div class="total-linea"><span class="l">Total presupuesto</span><span class="v">'+fe(presupuestoObra(o))+'</span></div>';
-  html += '<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="abrirBancoBC3()">📥 Banco de precios (BC3)</button><button class="btn sec peque" onclick="exportarBC3()">⬆️ Exportar BC3</button><button class="btn sec peque" onclick="abrirNuevoCapitulo()">+ Capítulo</button></div>';
+  html += '<div class="fila-btn" style="margin-top:12px"><button class="btn peque" onclick="abrirBancoBC3()">📥 Añadir del banco de precios</button><button class="btn sec peque" onclick="abrirNuevoCapitulo()">＋ Nuevo capítulo</button></div>';
   document.getElementById('o-pre').innerHTML = html;
 }
 function exportarBC3(){
