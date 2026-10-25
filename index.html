@@ -111,7 +111,7 @@
   .btn.mini{width:auto;padding:8px 13px;font-size:12.5px;border-radius:10px}
   .fila-btn{display:flex;gap:9px;margin:0 0 12px}
   /* certificaciones */
-  .cert-part{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea)}
+  .cert-part{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea)}
   .cert-part:last-child{border-bottom:none}
   .cert-part .cn{font-size:13px;flex:1;min-width:0}
   .cert-part .cn small{display:block;color:var(--tx3);font-size:11px}
@@ -1068,7 +1068,8 @@ function pintarCertificar(o){
     document.getElementById('o-cer').innerHTML = html; return;
   }
   html += '<div class="card"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 4px;font-weight:800">Nueva certificación · % ejecutado acumulado por partida</h3>'+
-          '<p class="sub" style="margin:4px 0 10px">Escribe el % total ejecutado de cada partida. Se certifica la diferencia con lo ya certificado antes.</p>';
+          '<p class="sub" style="margin:4px 0 10px">¿Cuánto llevas hecho de cada partida? Toca el % o escríbelo.</p>'+
+          '<button class="btn sec mini" style="margin-bottom:8px;min-height:38px;padding:8px 14px" onclick="pctTodo(100)">Todo al 100 %</button>';
   o.capitulos.forEach(function(c){
     c.partidas.forEach(function(p){
       var ant = pctAnterior(o, p.id, 999999);
@@ -1077,23 +1078,26 @@ function pintarCertificar(o){
           '<div class="mini"><span id="bar-'+p.id+'" style="width:'+Math.min(100,ant)+'%"></span></div></div>'+
         '<input class="inp cin" type="number" min="'+ant+'" max="100" step="any" value="'+ant+'" id="pct-'+p.id+'" oninput="previewLinea(\''+p.id+'\','+ant+','+totalPartida(p)+')">'+
         '<div class="cim" id="im-'+p.id+'">'+fe(0)+'</div>'+
+        '<div style="flex-basis:100%;display:flex;gap:6px">'+[25,50,75,100].filter(function(q){return q>ant;}).map(function(q){return '<button class="btn sec mini" style="flex:1;min-height:38px;padding:8px 0" onclick="pctPartida(\''+p.id+'\','+q+','+ant+')">'+q+'%</button>';}).join('')+'</div>'+
       '</div>';
     });
   });
   html += '<div class="total-linea" style="margin-top:12px"><span class="l">Total a certificar</span><span class="v" id="cert-total">'+fe(0)+'</span></div>';
-  html += '<div class="card" style="margin-top:10px"><h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin:0 0 8px;font-weight:800">🧾 Fiscal de la factura</h3>'+
+  html += '<details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:13px">🧾 IVA y retención (por defecto 21 %)</summary><div style="height:8px"></div>'+
     '<div class="pgrid">'+
       '<div class="fld"><label>IVA</label><select class="inp" id="fac-iva"><option value="21">21% general</option><option value="10">10% reforma vivienda</option><option value="4">4% superreducido</option></select></div>'+
       '<div class="fld"><label>Retención garantía %</label><input class="inp" id="fac-ret" type="number" step="any" value="0" placeholder="p. ej. 5"></div>'+
     '</div>'+
     '<label style="display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;color:var(--tx2)"><input type="checkbox" id="fac-isp" onchange="document.getElementById(\'fac-iva\').disabled=this.checked"> <b>Inversión del sujeto pasivo</b> — factura sin IVA (art. 84 LIVA, obra entre empresas)</label>'+
-    '</div>';
+    '</details>';
   html += '<div class="fila-btn" style="margin-top:12px">'+
           '<button class="btn verde" onclick="guardarYFacturar(true)">Certificar y facturar ✓</button></div>'+
           '<button class="btn sec peque" onclick="guardarYFacturar(false)">Guardar certificación sin facturar</button>';
   html += '</div>';
   document.getElementById('o-cer').innerHTML = html;
 }
+function pctPartida(pid,q,ant){ var i=document.getElementById('pct-'+pid); if(i){ i.value=q; previewLinea(pid,ant,0); } }
+function pctTodo(q){ var o=obraPorId(obraActual); o.capitulos.forEach(function(c){ c.partidas.forEach(function(p){ var i=document.getElementById('pct-'+p.id); if(i){ i.value=q; previewLinea(p.id,pctAnterior(o,p.id,999999),0); } }); }); }
 function previewLinea(pid, ant, totalPart){
   var inp = document.getElementById('pct-'+pid);
   var acum = parseFloat(String(inp.value).replace(',','.')); if(isNaN(acum)) acum=ant;
