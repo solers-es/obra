@@ -9,4 +9,6 @@ P="psql -q -d $DB -v ON_ERROR_STOP=1"
 $P -f tests/00_stub_supabase.sql
 $P -f esquema.sql 2>&1 | grep -v NOTICE || true
 $P -f 02_sync.sql 2>&1 | grep -v NOTICE || true
+$P -f 03_superadmin.sql 2>&1 | grep -v NOTICE || true
 psql -q -tA -d $DB -f tests/10_rls_sync.sql 2>&1 | grep -v '^$' | grep -v set_config
+psql -q -tA -d $DB -f tests/20_superadmin.sql 2>&1 | grep -v '^$' | grep -v set_config

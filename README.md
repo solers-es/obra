@@ -67,6 +67,24 @@ Cómo funciona: cada obra, parte, presupuesto, cliente… es un documento por em
 
 Limitaciones conocidas: dos personas editando la **misma obra** a la vez → gana el último; VeriFactu **no** está implementado (ver PR); no probado todavía contra un Supabase real (solo Postgres local con un `auth` simulado).
 
+## Superadmin de Solers (`admin@solers.es`)
+
+La cuenta maestra de Solers, **oculta** (no pertenece a ningún cliente, no sale en ninguna lista de equipo) y **única**: la base impide que otro correo tenga la marca `es_superadmin`. Entra por una puerta firmada, sin teclear nada, y gestiona todo desde un panel que solo ve ella.
+
+| Función | Dónde |
+|---|---|
+| 1. Dar de alta un cliente (empresa + primer administrador, 30 días de prueba) | `api/superadmin.js` · `alta_cliente` |
+| 2. Lista de clientes y sus datos (admin, usuarios, obras, presupuestos, partes, último movimiento) | `supabase/03_superadmin.sql` · `solers_clientes()` |
+| 3. Entrar dentro de un cliente (ve y edita sus datos; no se toca su equipo ni sus cuentas) | `solers_entrar()` + políticas de `03_superadmin.sql` |
+| 4. Cambiar/resetear la contraseña de cualquiera (la pone o genera un enlace de recuperación) | `api/superadmin.js` · `clave` |
+| 5. Puerta `/solers?llave=…` | `api/solers.js` + `api/_lib/llave-solers.js` |
+
+Todo lo que hace queda en `solers_registro` (bitácora; nunca guarda contraseñas ni enlaces).
+
+**La puerta.** `https://<dominio-brigada>/solers?llave=<LLAVE>`. La llave es `solers1.<alex|stalin>.<emitida>.<firma>` con firma HMAC-SHA256 del secreto `SOLERS_LLAVE_SECRETO` (el mismo del Centro, Brasa y GestorOS). Si la firma es buena, entra como `admin@solers.es` (contraseña derivada del `SUPABASE_SERVICE_ROLE_KEY`, que nadie teclea) y salta al panel. Una llave mala, vacía o sin secreto en el servidor: «esta llave no abre». Para fabricar el enlace del botón del Centro: `SOLERS_LLAVE_SECRETO=… node scripts/emitir-llave.js alex https://<dominio-brigada>`.
+
+**Para activarlo (no se hace solo):** (1) aplicar `supabase/03_superadmin.sql` en Supabase (aditivo; para el resto de usuarios todo sigue igual); (2) variables en Vercel: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` y `SOLERS_LLAVE_SECRETO`; (3) desplegar. Pruebas: `node tests/solers.js` · `sh supabase/tests/run.sh` · `sh tests/run-solers.sh`.
+
 ## Cumplimiento (lo obligatorio)
 
 VeriFactu (RD 1007/2023 tras el RD-ley 15/2025; sociedades 1-1-2027, resto 1-7-2027; Hacienda ha anunciado octubre de 2028, pendiente de norma), TicketBAI si hay clientes vascos, Facturae en obra pública, Libro de Subcontratación + REA, registro de jornada, seguridad y salud (RD 1627/1997). Detalle en `docs/normativa.html`.

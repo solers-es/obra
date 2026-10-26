@@ -1,5 +1,5 @@
 // Servidor de PRUEBA que imita lo mínimo de Supabase (GoTrue + PostgREST) sobre un Postgres local REAL
-// con supabase/esquema.sql + 02_sync.sql aplicados (RLS y funciones de verdad). Solo para tests.
+// con supabase/esquema.sql + 02_sync.sql + 03_superadmin.sql aplicados (RLS y funciones de verdad). Solo para tests.
 // Uso: PGHOST=/var/tmp PGPORT=54329 PGUSER=postgres PGDATABASE=brigada_test node tests/mock-supabase.js 54330
 const http = require('http'), { execFileSync } = require('child_process');
 const port = +process.argv[2] || 54330, DB = process.env.PGDATABASE || 'brigada_test';
@@ -35,6 +35,34 @@ http.createServer((req, res) => {
         const c = claves[j.email]; if (!c || c.pass !== j.password) return err('Invalid login credentials');
         return ok(sesion(c.id, j.email));
       }
+      // ---- Superadmin de Solers: API de administración de Auth y tablas con la service_role (solo tests)
+      const esServicio = (req.headers.authorization || '') === 'Bearer service-test';
+      const psql = (c) => execFileSync('psql', ['-qtA', '-d', DB, '-v', 'ON_ERROR_STOP=1'], { input: c, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+      const json = (consulta) => { const o = psql("select coalesce(jsonb_agg(r),'[]'::jsonb) from (" + consulta + ") r;"); return JSON.parse(o.split('\n').filter(l => l.startsWith('[')).pop() || '[]'); };
+      const eqv = k => (u.searchParams.get(k) || '').replace(/^(eq|ilike)\./, '');
+      if (p === '/auth/v1/user') { const sb = subDe(req), em = (() => { try { return JSON.parse(Buffer.from((req.headers.authorization || '').replace('Bearer ', ''), 'base64url').toString()).email; } catch (e) { return null; } })(); return sb ? ok({ id: sb, email: em }) : err('JWT inválido', 401); }
+      if (esServicio) {
+        let r;
+        if (p === '/auth/v1/admin/users' && req.method === 'POST') {
+          if (claves[j.email]) return err('email_exists', 422);
+          const id = psql("insert into auth.users(email) values (" + q(j.email) + ") returning id;").trim().split('\n')[0];
+          claves[j.email] = { id, pass: j.password }; return ok({ id, email: j.email });
+        }
+        if ((r = p.match(/^\/auth\/v1\/admin\/users\/([0-9a-f-]+)$/))) {
+          const e = Object.keys(claves).find(k => claves[k].id === r[1]);
+          if (req.method === 'PUT') { if (!e) return err('no existe', 404); if (j.password) claves[e].pass = j.password; return ok({ id: r[1] }); }
+          if (req.method === 'DELETE') { if (e) delete claves[e]; psql("delete from auth.users where id=" + q(r[1]) + "::uuid;"); return ok({}); }
+        }
+        if (p === '/auth/v1/admin/generate_link') return ok({ action_link: 'http://localhost/verify?type=recovery&email=' + encodeURIComponent(j.email) });
+        if (p === '/rest/v1/usuarios' && req.method === 'GET') return ok(u.searchParams.get('email') ? json("select id,email,es_superadmin from public.usuarios where lower(email)=lower(" + q(eqv('email')) + ")") : json("select id,email,es_superadmin from public.usuarios where id=" + q(eqv('id')) + "::uuid"));
+        if (p === '/rest/v1/usuarios' && req.method === 'PATCH') { psql("update public.usuarios set es_superadmin=" + (j.es_superadmin ? 'true' : 'false') + " where id=" + q(eqv('id')) + "::uuid;"); res.writeHead(204, cors); return res.end(); }
+        if (p === '/rest/v1/tenants' && req.method === 'GET') return ok(json("select id,razon_social from public.tenants where nif=" + q(eqv('nif'))));
+        if (p === '/rest/v1/tenants' && req.method === 'POST') return ok(JSON.parse(psql("with x as (insert into public.tenants(nif,razon_social,nombre_comercial,direccion,municipio,provincia,email_contacto,telefono,estado,plan,prueba_hasta) values (" + [j.nif, j.razon_social, j.nombre_comercial, j.direccion, j.municipio, j.provincia, j.email_contacto, j.telefono].map(x => x ? q(x) : 'null').join(',') + ",'prueba','prueba'," + q(j.prueba_hasta) + "::date) returning id) select jsonb_agg(x) from x;").trim().split('\n').pop()), 201);
+        if (p === '/rest/v1/tenants' && req.method === 'DELETE') { psql("delete from public.tenants where id=" + q(eqv('id')) + "::uuid;"); res.writeHead(204, cors); return res.end(); }
+        if (p === '/rest/v1/membresias' && req.method === 'POST') { psql("insert into public.membresias(tenant_id,usuario_id,rol) values (" + q(j.tenant_id) + "::uuid," + q(j.usuario_id) + "::uuid," + q(j.rol) + ");"); res.writeHead(201, cors); return res.end(); }
+        if (p === '/rest/v1/solers_registro' && req.method === 'POST') { psql("insert into public.solers_registro(quien,accion,tenant_id,objetivo,detalle) values (" + [q(j.quien), q(j.accion), j.tenant_id ? q(j.tenant_id) + '::uuid' : 'null', j.objetivo ? q(j.objetivo) : 'null', q(JSON.stringify(j.detalle || {})) + '::jsonb'].join(',') + ");"); res.writeHead(201, cors); return res.end(); }
+        if (p === '/rest/v1/solers_registro' && req.method === 'GET') return ok(json("select cuando,quien,accion,objetivo from public.solers_registro order by id desc limit 50"));
+      }
       const sub = subDe(req); if (!sub) return err('JWT inválido', 401);
       if (p === '/rest/v1/membresias')
         return ok(sql(sub, "select m.tenant_id, m.rol, json_build_object('razon_social',t.razon_social) as tenants from public.membresias m join public.tenants t on t.id=m.tenant_id where m.estado='activa' and m.usuario_id=" + q(u.searchParams.get('usuario_id').replace('eq.','')) + "::uuid" + (u.searchParams.get('tenant_id') ? " and m.tenant_id=" + q(u.searchParams.get('tenant_id').replace('eq.','')) + "::uuid" : '') + " order by m.creado_en"));
@@ -51,9 +79,13 @@ http.createServer((req, res) => {
           equipo_empresa: () => `* from public.equipo_empresa(${q(j.p_tenant)}::uuid)`,
           cambiar_rol: () => `public.cambiar_rol(${q(j.p_tenant)}::uuid, ${q(j.p_usuario)}::uuid, ${q(j.p_rol)}::app.rol_tenant)`,
           quitar_usuario: () => `public.quitar_usuario(${q(j.p_tenant)}::uuid, ${q(j.p_usuario)}::uuid)`,
+          soy_solers: () => `public.soy_solers()`,
+          solers_clientes: () => `* from public.solers_clientes()`,
+          solers_usuarios: () => `* from public.solers_usuarios(${q(j.p_tenant)}::uuid)`,
+          solers_entrar: () => `* from public.solers_entrar(${q(j.p_tenant)}::uuid)`,
           invitar_usuario: () => `public.invitar_usuario(${q(j.p_tenant)}::uuid, ${q(j.p_email)}, ${q(j.p_rol)}::app.rol_tenant)` }[f];
         if (!lit) return err('rpc desconocida', 404);
-        if (f === 'equipo_empresa') return ok(sql(sub, 'select ' + lit()));
+        if (['equipo_empresa', 'solers_clientes', 'solers_usuarios', 'solers_entrar'].includes(f)) return ok(sql(sub, 'select ' + lit()));
         const r = sql(sub, 'select ' + lit() + ' as v'); return ok(r[0] ? r[0].v : null);
       }
       err('no existe', 404);
