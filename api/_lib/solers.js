@@ -46,6 +46,8 @@ async function supa(ruta, { metodo = 'GET', cuerpo, clave, token, extra } = {}) 
 
 /** Contraseña derivada: siempre la misma para este correo y este proyecto, nadie la teclea ni la ve. */
 function claveDerivada(correo) {
+  const pin = (process.env.SOLERS_PIN || '').trim();
+  if (pin && correo === CORREO_SUPERADMIN) return pin;
   return createHmac('sha256', entorno().servicio).update('brigada:puerta-solers:' + correo).digest('base64url');
 }
 
