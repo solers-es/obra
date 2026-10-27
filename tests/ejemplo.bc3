@@ -1,0 +1,15 @@
+~V|SOFTWARE PRUEBA|FIEBDC-3/2016|Brigada||ANSI||
+~K|\2\2\3\2\2\2\2\EUR\|
+~C|OBRA##||Reforma vivienda Mallorca|0|251025|0|
+~C|CAP01#||Demolición|0|251025|0|
+~C|CAP02#||Albañilería y revestimientos|0|251025|0|
+~C|D001|m2|Picado de alicatado y solado|8.50|251025|0|
+~C|D002|m2|Demolición de tabique|12,00|251025|0|
+~C|A001|m2|Tabique ladrillo hueco doble|32.40|251025|0|
+~C|A002|ud|Colocación de puerta|0|251025|0|
+~C|MO1|h|Oficial 1ª|19.50|251025|1|
+~C|MA1|ud|Puerta|120|251025|3|
+~D|OBRA##|CAP01#\1\1\CAP02#\1\1\|
+~D|CAP01#|D001\1\25\D002\1\9.5\|
+~D|CAP02#|A001\1\40\A002\1\3\|
+~D|A002|MO1\1\1.5\MA1\1\1\|
