@@ -1,9 +1,11 @@
 name: Publicar Brigada Web (Hetzner)
 
-# Piloto: de momento solo BOTON (Actions -> Run workflow). Cuando verifiquemos que va bien,
-# se le anade el disparador automatico (push a main). Sube el codigo a un staging del servidor
-# y alli crea una version nueva y reenlaza (preservando config.js); si falla, no reenlaza.
+# AUTOMATICO al fusionar/empujar a main + boton (Actions -> Run workflow). Sube el codigo a un
+# staging del servidor y alli crea una version nueva = lo publicado + lo del repo ENCIMA (nunca
+# borra api/, sync.js, config.js...); reenlaza atomico y reinicia. Si falla, no reenlaza.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
